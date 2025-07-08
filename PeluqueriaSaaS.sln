@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PeluqueriaSaaS.Domain", "PeluqueriaSaaS.Domain\PeluqueriaSaaS.Domain.csproj", "{EADFD4FA-96CC-4503-B1F4-41989C972C98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PeluqueriaSaaS.Application", "PeluqueriaSaaS.Application\PeluqueriaSaaS.Application.csproj", "{37315541-A6FE-4A7B-A6D1-EADFA94699BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PeluqueriaSaaS.Infrastructure", "PeluqueriaSaaS.Infrastructure\PeluqueriaSaaS.Infrastructure.csproj", "{1E8798A8-7467-4EC2-A6ED-9D4EDF7F40E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PeluqueriaSaaS.Web", "PeluqueriaSaaS.Web\PeluqueriaSaaS.Web.csproj", "{C0E9DE44-17A7-4D9C-AD21-8A21077F3B5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PeluqueriaSaaS.Shared", "PeluqueriaSaaS.Shared\PeluqueriaSaaS.Shared.csproj", "{2D6C2936-C7D7-4DFD-BC37-9232517211ED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EADFD4FA-96CC-4503-B1F4-41989C972C98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EADFD4FA-96CC-4503-B1F4-41989C972C98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EADFD4FA-96CC-4503-B1F4-41989C972C98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EADFD4FA-96CC-4503-B1F4-41989C972C98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37315541-A6FE-4A7B-A6D1-EADFA94699BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37315541-A6FE-4A7B-A6D1-EADFA94699BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37315541-A6FE-4A7B-A6D1-EADFA94699BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37315541-A6FE-4A7B-A6D1-EADFA94699BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E8798A8-7467-4EC2-A6ED-9D4EDF7F40E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E8798A8-7467-4EC2-A6ED-9D4EDF7F40E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E8798A8-7467-4EC2-A6ED-9D4EDF7F40E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E8798A8-7467-4EC2-A6ED-9D4EDF7F40E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0E9DE44-17A7-4D9C-AD21-8A21077F3B5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0E9DE44-17A7-4D9C-AD21-8A21077F3B5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0E9DE44-17A7-4D9C-AD21-8A21077F3B5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0E9DE44-17A7-4D9C-AD21-8A21077F3B5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D6C2936-C7D7-4DFD-BC37-9232517211ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D6C2936-C7D7-4DFD-BC37-9232517211ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D6C2936-C7D7-4DFD-BC37-9232517211ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D6C2936-C7D7-4DFD-BC37-9232517211ED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EADFD4FA-96CC-4503-B1F4-41989C972C98} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{37315541-A6FE-4A7B-A6D1-EADFA94699BA} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{1E8798A8-7467-4EC2-A6ED-9D4EDF7F40E9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C0E9DE44-17A7-4D9C-AD21-8A21077F3B5A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{2D6C2936-C7D7-4DFD-BC37-9232517211ED} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {09810801-48E2-4F11-BC09-71C10FB8C449}
+	EndGlobalSection
+EndGlobal
