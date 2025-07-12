@@ -1,14 +1,14 @@
-﻿namespace PeluqueriaSaaS.Application.DTOs
+﻿using MediatR;
+using PeluqueriaSaaS.Application.DTOs;
+
+namespace PeluqueriaSaaS.Application.Features.Clientes.Commands
 {
-    public class ClienteDto
+    public class CrearClienteCommand : IRequest<ClienteDto>
     {
-        public Guid Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public string Apellido { get; set; } = string.Empty;
         public string? Email { get; set; }
         public string? Telefono { get; set; }
         public DateTime? FechaNacimiento { get; set; }
-        public string NombreCompleto { get; set; } = string.Empty;
-        public bool EsActivo { get; set; }
     }
 }

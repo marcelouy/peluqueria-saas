@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace PeluqueriaSaaS.Domain.Entities.Base
 {
@@ -28,12 +28,12 @@ namespace PeluqueriaSaaS.Domain.Entities.Base
             CreadoPor = usuario;
         }
 
-        public void Desactivar()
+        public virtual void Desactivar()
         {
             Activo = false;
         }
 
-        public void Activar()
+        public virtual void Activar()
         {
             Activo = true;
         }
