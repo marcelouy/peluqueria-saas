@@ -1,0 +1,48 @@
+﻿@model PeluqueriaSaaS.Application.Features.Clientes.Commands.CrearClienteCommand
+@{
+    ViewData["Title"] = "Nuevo Cliente";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Crear Nuevo Cliente</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label">Nombre *</label>
+                <input asp-for="Nombre" class="form-control" placeholder="Ej: Juan Pérez" required />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email *</label>
+                <input asp-for="Email" type="email" class="form-control" placeholder="juan@email.com" required />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Telefono" class="form-label">Teléfono *</label>
+                <input asp-for="Telefono" class="form-control" placeholder="+56912345678" required />
+                <span asp-validation-for="Telefono" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <button type="submit" class="btn btn-success">Crear Cliente</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Información</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Campos obligatorios:</strong> Todos los campos marcados con * son requeridos.</p>
+                <p><strong>Email:</strong> Se usará para enviar notificaciones.</p>
+                <p><strong>Teléfono:</strong> Formato internacional recomendado.</p>
+            </div>
+        </div>
+    </div>
+</div>
