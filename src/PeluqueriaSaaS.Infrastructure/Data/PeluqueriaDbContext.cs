@@ -1,48 +1,46 @@
+﻿// src/PeluqueriaSaaS.Infrastructure/Data/PeluqueriaDbContext.cs
 using Microsoft.EntityFrameworkCore;
-using PeluqueriaSaaS.Domain.Interfaces;
+using PeluqueriaSaaS.Domain.Entities;
 
-namespace PeluqueriaSaaS.Infrastructure.Data;
-
-public class PeluqueriaDbContext : DbContext
+namespace PeluqueriaSaaS.Infrastructure.Data
 {
-    public PeluqueriaDbContext(DbContextOptions<PeluqueriaDbContext> options) : base(options) { }
-
-    public DbSet<ClienteBasico> Clientes { get; set; }
-    public DbSet<EmpleadoBasico> Empleados { get; set; }
-    public DbSet<ServicioBasico> Servicios { get; set; }
-    public DbSet<CitaBasica> Citas { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public class PeluqueriaDbContext : DbContext
     {
-        modelBuilder.Entity<ClienteBasico>(entity =>
+        public PeluqueriaDbContext(DbContextOptions<PeluqueriaDbContext> options) : base(options)
         {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
-            entity.ToTable("Clientes");
-        });
+        }
 
-        modelBuilder.Entity<EmpleadoBasico>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
-            entity.ToTable("Empleados");
-        });
+        // DbSets para entidades básicas
+        public DbSet<ClienteBasico> ClientesBasicos { get; set; }
+        public DbSet<EmpleadoBasico> EmpleadosBasicos { get; set; }
 
-        modelBuilder.Entity<ServicioBasico>(entity =>
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Descripcion).HasMaxLength(500);
-            entity.ToTable("Servicios");
-        });
-
-        modelBuilder.Entity<CitaBasica>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.ClienteId).IsRequired();
-            entity.Property(e => e.EmpleadoId).IsRequired();
-            entity.Property(e => e.FechaHora).IsRequired();
-            entity.ToTable("Citas");
-        });
+            base.OnModelCreating(modelBuilder);
+            
+            // Configuración para ClienteBasico
+            modelBuilder.Entity<ClienteBasico>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Apellido).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Telefono).HasMaxLength(20);
+                entity.Property(e => e.FechaRegistro).IsRequired();
+            });
+            
+            // Configuración para EmpleadoBasico
+            modelBuilder.Entity<EmpleadoBasico>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Apellido).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Telefono).HasMaxLength(20);
+                entity.Property(e => e.FechaContratacion).IsRequired();
+                entity.Property(e => e.Cargo).HasMaxLength(100);
+                entity.Property(e => e.Salario).HasColumnType("decimal(18,2)");
+            });
+        }
     }
 }

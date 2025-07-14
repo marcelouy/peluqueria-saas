@@ -1,8 +1,8 @@
-﻿@* src/PeluqueriaSaaS.Web/Views/Clientes/Create.cshtml *@
-@model PeluqueriaSaaS.Application.Features.Clientes.Commands.CrearClienteCommand
+﻿@* src/PeluqueriaSaaS.Web/Views/Clientes/Edit.cshtml *@
+@model PeluqueriaSaaS.Application.Features.Clientes.Commands.UpdateClienteCommand
 
 @{
-    ViewData["Title"] = "Crear Cliente";
+    ViewData["Title"] = "Editar Cliente";
 }
 
 <div class="container">
@@ -10,24 +10,25 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h4><i class="fas fa-user-plus"></i> Crear Nuevo Cliente</h4>
+                    <h4><i class="fas fa-user-edit"></i> Editar Cliente</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-controller="Clientes" asp-action="Create" method="post">
+                    <form asp-action="Edit" method="post">
+                        <input asp-for="Id" type="hidden" />
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label asp-for="Nombre" class="form-label">Nombre *</label>
-                                    <input asp-for="Nombre" class="form-control" placeholder="Ingresa el nombre" />
+                                    <label asp-for="Nombre" class="form-label">Nombre</label>
+                                    <input asp-for="Nombre" class="form-control" />
                                     <span asp-validation-for="Nombre" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label asp-for="Apellido" class="form-label">Apellido *</label>
-                                    <input asp-for="Apellido" class="form-control" placeholder="Ingresa el apellido" />
+                                    <label asp-for="Apellido" class="form-label">Apellido</label>
+                                    <input asp-for="Apellido" class="form-control" />
                                     <span asp-validation-for="Apellido" class="text-danger"></span>
                                 </div>
                             </div>
@@ -36,15 +37,15 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label asp-for="Email" class="form-label">Email *</label>
-                                    <input asp-for="Email" class="form-control" type="email" placeholder="ejemplo@correo.com" />
+                                    <label asp-for="Email" class="form-label">Email</label>
+                                    <input asp-for="Email" class="form-control" type="email" />
                                     <span asp-validation-for="Email" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label asp-for="Telefono" class="form-label">Teléfono</label>
-                                    <input asp-for="Telefono" class="form-control" placeholder="Ej: +1234567890" />
+                                    <input asp-for="Telefono" class="form-control" />
                                     <span asp-validation-for="Telefono" class="text-danger"></span>
                                 </div>
                             </div>
@@ -62,14 +63,12 @@
                         
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar Cliente
+                                <i class="fas fa-save"></i> Actualizar Cliente
                             </button>
-                            <a asp-controller="Clientes" asp-action="Index" class="btn btn-secondary">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancelar
                             </a>
                         </div>
-                        
-                        <small class="text-muted">* Campos obligatorios</small>
                     </form>
                 </div>
             </div>

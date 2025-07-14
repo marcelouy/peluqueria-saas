@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PeluqueriaSaaS.Infrastructure.Data;
 using PeluqueriaSaaS.Infrastructure.Repositories;
 using PeluqueriaSaaS.Domain.Interfaces;
@@ -16,7 +16,7 @@ builder.Services.AddDbContext<PeluqueriaDbContext>(options =>
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(
     typeof(PeluqueriaSaaS.Application.Features.Clientes.Commands.CrearClienteCommand).Assembly));
 
-// 4. AutoMapper - busca todos los profiles autom�ticamente
+// 4. AutoMapper - busca todos los profiles automáticamente
 builder.Services.AddAutoMapper(typeof(PeluqueriaSaaS.Application.DTOs.ClienteDto).Assembly);
 
 // 5. Repository Pattern
@@ -32,7 +32,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Comentado para desarrollo local
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
@@ -43,6 +43,7 @@ app.MapControllerRoute(
     pattern: "{controller=Clientes}/{action=Index}/{id?}");
 
 app.Run();
+
 
 
 

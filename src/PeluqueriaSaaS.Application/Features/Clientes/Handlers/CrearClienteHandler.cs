@@ -1,31 +1,45 @@
+﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Handlers/CrearClienteHandler.cs
 using MediatR;
-using PeluqueriaSaaS.Application.Features.Clientes.Commands;
 using PeluqueriaSaaS.Application.DTOs;
+using PeluqueriaSaaS.Application.Features.Clientes.Commands;
 using PeluqueriaSaaS.Domain.Interfaces;
+using PeluqueriaSaaS.Domain.Entities;
 
-namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers;
-
-public class CrearClienteHandler : IRequestHandler<CrearClienteCommand, ClienteDto>
+namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
 {
-    private readonly IRepositoryManagerTemp _repository;
-
-    public CrearClienteHandler(IRepositoryManagerTemp repository)
+    public class CrearClienteHandler : IRequestHandler<CrearClienteCommand, ClienteDto>
     {
-        _repository = repository;
-    }
+        private readonly IRepositoryManagerTemp _repositoryManager;
 
-    public async Task<ClienteDto> Handle(CrearClienteCommand request, CancellationToken cancellationToken)
-    {
-        var cliente = new ClienteBasico { Nombre = request.Nombre };
-        await _repository.Cliente.AddAsync(cliente);
-        await _repository.SaveChangesAsync();
-
-        return new ClienteDto
+        public CrearClienteHandler(IRepositoryManagerTemp repositoryManager)
         {
-            Id = new Guid(cliente.Id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            Nombre = cliente.Nombre,
-            Email = "temp@email.com",
-            Telefono = "123456789"
-        };
+            _repositoryManager = repositoryManager;
+        }
+
+        public async Task<ClienteDto> Handle(CrearClienteCommand request, CancellationToken cancellationToken)
+        {
+            var cliente = new ClienteBasico
+            {
+                Nombre = request.Nombre,
+                Apellido = request.Apellido,
+                Email = request.Email,
+                Telefono = request.Telefono,
+                FechaNacimiento = request.FechaNacimiento,
+                FechaRegistro = DateTime.Now
+            };
+
+            var clienteCreado = await _repositoryManager.AddClienteAsync(cliente);
+
+            return new ClienteDto
+            {
+                Id = clienteCreado.Id,
+                Nombre = clienteCreado.Nombre,
+                Apellido = clienteCreado.Apellido,
+                Email = clienteCreado.Email,
+                Telefono = clienteCreado.Telefono,
+                FechaNacimiento = clienteCreado.FechaNacimiento,
+                FechaRegistro = clienteCreado.FechaRegistro
+            };
+        }
     }
 }

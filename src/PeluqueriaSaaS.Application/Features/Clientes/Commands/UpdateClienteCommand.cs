@@ -1,12 +1,14 @@
-﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Commands/CrearClienteCommand.cs
+﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Commands/UpdateClienteCommand.cs
 using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
 using System.ComponentModel.DataAnnotations;
 
 namespace PeluqueriaSaaS.Application.Features.Clientes.Commands
 {
-    public class CrearClienteCommand : IRequest<ClienteDto>
+    public class UpdateClienteCommand : IRequest<ClienteDto?>
     {
+        public int Id { get; set; }
+        
         [Required(ErrorMessage = "El nombre es obligatorio")]
         [StringLength(50, ErrorMessage = "El nombre no puede exceder los 50 caracteres")]
         public string Nombre { get; set; } = string.Empty;

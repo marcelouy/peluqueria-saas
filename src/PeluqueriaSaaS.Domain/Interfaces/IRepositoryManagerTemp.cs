@@ -1,40 +1,22 @@
-using PeluqueriaSaaS.Domain.Interfaces;
+ï»¿// src/PeluqueriaSaaS.Domain/Interfaces/IRepositoryManagerTemp.cs
+using PeluqueriaSaaS.Domain.Entities;
 
-namespace PeluqueriaSaaS.Domain.Interfaces;
-
-public interface IRepositoryManagerTemp
+namespace PeluqueriaSaaS.Domain.Interfaces
 {
-    IRepository<ClienteBasico> Cliente { get; }
-    IRepository<EmpleadoBasico> Empleado { get; }
-    IRepository<ServicioBasico> Servicio { get; }
-    IRepository<CitaBasica> Cita { get; }
-    Task<bool> SaveChangesAsync();
-}
+    public interface IRepositoryManagerTemp
+    {
+        // MÃ©todos para ClienteBasico
+        Task<IEnumerable<ClienteBasico>> GetAllClientesAsync();
+        Task<ClienteBasico?> GetClienteByIdAsync(int id);
+        Task<ClienteBasico> AddClienteAsync(ClienteBasico cliente);
+        Task<ClienteBasico> UpdateClienteAsync(ClienteBasico cliente);
+        Task<bool> DeleteClienteAsync(int id);
 
-// Entidades básicas en Domain también
-public class ClienteBasico
-{
-    public int Id { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-}
-
-public class EmpleadoBasico
-{
-    public int Id { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-}
-
-public class ServicioBasico
-{
-    public int Id { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-    public string Descripcion { get; set; } = string.Empty;
-}
-
-public class CitaBasica
-{
-    public int Id { get; set; }
-    public int ClienteId { get; set; }
-    public int EmpleadoId { get; set; }
-    public DateTime FechaHora { get; set; }
+        // MÃ©todos para EmpleadoBasico  
+        Task<IEnumerable<EmpleadoBasico>> GetAllEmpleadosAsync();
+        Task<EmpleadoBasico?> GetEmpleadoByIdAsync(int id);
+        Task<EmpleadoBasico> AddEmpleadoAsync(EmpleadoBasico empleado);
+        Task<EmpleadoBasico> UpdateEmpleadoAsync(EmpleadoBasico empleado);
+        Task<bool> DeleteEmpleadoAsync(int id);
+    }
 }

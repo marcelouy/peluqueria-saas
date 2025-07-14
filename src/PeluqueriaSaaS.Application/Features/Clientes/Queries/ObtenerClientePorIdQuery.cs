@@ -1,11 +1,16 @@
-﻿using MediatR;
+﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Queries/ObtenerClientePorIdQuery.cs
+using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
 
-namespace PeluqueriaSaaS.Application.Features.Clientes.Queries;
-
-// 📋 QUERY: Solo para LEER datos
-// No modifica nada, solo consulta
-public class ObtenerClientePorIdQuery : IRequest<ClienteDto?>
+namespace PeluqueriaSaaS.Application.Features.Clientes.Queries
 {
-    public Guid Id { get; set; }
+    public class ObtenerClientePorIdQuery : IRequest<ClienteDto?>
+    {
+        public int Id { get; set; }
+
+        public ObtenerClientePorIdQuery(int id)
+        {
+            Id = id;
+        }
+    }
 }

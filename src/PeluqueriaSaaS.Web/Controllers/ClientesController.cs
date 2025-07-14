@@ -3,81 +3,174 @@ using Microsoft.AspNetCore.Mvc;
 using PeluqueriaSaaS.Application.Features.Clientes.Commands;
 using PeluqueriaSaaS.Application.Features.Clientes.Queries;
 
-namespace PeluqueriaSaaS.Web.Controllers;
-
-// 📝 EXPLICACIÓN: Este es nuestro Controller
-// Solo tiene UNA dependencia: IMediator
-// No sabe NADA sobre bases de datos, repositorios, etc.
-public class ClientesController : Controller
+namespace PeluqueriaSaaS.Web.Controllers
 {
-    private readonly IMediator _mediator;
-
-    // 🎯 AQUÍ PASA LA MAGIA DE INYECCIÓN DE DEPENDENCIAS
-    // El framework automáticamente "inyecta" IMediator aquí
-    // Tu no tienes que crear nada, llega solo
-    public ClientesController(IMediator mediator)
+    public class ClientesController : Controller
     {
-        _mediator = mediator;
-    }
+        private readonly IMediator _mediator;
 
-    // 📋 ACCIÓN 1: Listar todos los clientes
-    // GET: /Clientes
-    public async Task<IActionResult> Index()
-    {
-        // 🚀 AQUÍ VES CQRS EN ACCIÓN
-        // Enviamos una QUERY (consulta) via MediatR
-        var query = new ObtenerClientesQuery();
-        var clientes = await _mediator.Send(query);
-        
-        // 📊 Los datos van directo a la Vista
-        return View(clientes);
-    }
-
-    // 📝 ACCIÓN 2: Mostrar formulario para crear cliente
-    // GET: /Clientes/Create
-    public IActionResult Create()
-    {
-        // 🎨 Solo muestra el formulario vacío
-        return View();
-    }
-
-    // 💾 ACCIÓN 3: Procesar formulario de crear cliente
-    // POST: /Clientes/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CrearClienteCommand command)
-    {
-        try
+        public ClientesController(IMediator mediator)
         {
-            // 🎯 AQUÍ VES CQRS OTRA VEZ
-            // Enviamos un COMMAND (modificación) via MediatR
-            var clienteId = await _mediator.Send(command);
-            
-            // ✅ Si todo salió bien, redirigimos a la lista
-            TempData["Success"] = $"Cliente creado exitosamente con ID: {clienteId}";
-            return RedirectToAction(nameof(Index));
+            _mediator = mediator;
         }
-        catch (Exception ex)
-        {
-            // ❌ Si algo falló, mostramos error
-            ModelState.AddModelError("", ex.Message);
-            return View(command);
-        }
-    }
 
-    // 👁️ ACCIÓN 4: Ver detalles de un cliente
-    // GET: /Clientes/Details/5
-    public async Task<IActionResult> Details(Guid id)
-    {
-        // 🔍 Consulta un cliente específico
-        var query = new ObtenerClientePorIdQuery { Id = id };
-        var cliente = await _mediator.Send(query);
-        
-        if (cliente == null)
+        // GET: Clientes
+        public async Task<IActionResult> Index()
         {
-            return NotFound();
+            try
+            {
+                var query = new ObtenerClientesQuery();
+                var clientes = await _mediator.Send(query);
+                return View(clientes);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al cargar clientes: {ex.Message}";
+                return View(new List<PeluqueriaSaaS.Application.DTOs.ClienteDto>());
+            }
         }
-        
-        return View(cliente);
+
+        // GET: Clientes/Details/5
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var query = new ObtenerClientePorIdQuery(id);
+                var cliente = await _mediator.Send(query);
+                
+                if (cliente == null)
+                {
+                    TempData["Error"] = "Cliente no encontrado";
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                return View(cliente);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al cargar cliente: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // GET: Clientes/Create
+        public IActionResult Create()
+        {
+            return View(new CrearClienteCommand());
+        }
+
+        // POST: Clientes/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CrearClienteCommand command)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return View(command);
+                }
+
+                var cliente = await _mediator.Send(command);
+                TempData["Success"] = "Cliente creado exitosamente";
+                return RedirectToAction(nameof(Details), new { id = cliente.Id });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al crear cliente: {ex.Message}";
+                ModelState.AddModelError("", "Ocurrió un error al guardar el cliente");
+                return View(command);
+            }
+        }
+
+        // GET: Clientes/Edit/5
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            try
+            {
+                var query = new ObtenerClientePorIdQuery(id);
+                var cliente = await _mediator.Send(query);
+                
+                if (cliente == null)
+                {
+                    TempData["Error"] = "Cliente no encontrado";
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                var command = new UpdateClienteCommand
+                {
+                    Id = cliente.Id,
+                    Nombre = cliente.Nombre,
+                    Apellido = cliente.Apellido,
+                    Email = cliente.Email,
+                    Telefono = cliente.Telefono,
+                    FechaNacimiento = cliente.FechaNacimiento
+                };
+                
+                return View(command);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al cargar cliente: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clientes/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(UpdateClienteCommand command)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return View(command);
+                
+                var cliente = await _mediator.Send(command);
+                
+                if (cliente == null)
+                {
+                    TempData["Error"] = "Cliente no encontrado";
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                TempData["Success"] = "Cliente actualizado exitosamente";
+                return RedirectToAction(nameof(Details), new { id = cliente.Id });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al actualizar cliente: {ex.Message}";
+                ModelState.AddModelError("", "Ocurrió un error al actualizar el cliente");
+                return View(command);
+            }
+        }
+
+        // POST: Clientes/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var command = new DeleteClienteCommand(id);
+                var result = await _mediator.Send(command);
+                
+                if (!result)
+                {
+                    TempData["Error"] = "Cliente no encontrado";
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                TempData["Success"] = "Cliente eliminado exitosamente";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al eliminar cliente: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
     }
 }

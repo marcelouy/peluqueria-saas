@@ -1,7 +1,7 @@
-﻿// src/PeluqueriaSaaS.Application/DTOs/ClienteDto.cs
-namespace PeluqueriaSaaS.Application.DTOs
+﻿// src/PeluqueriaSaaS.Domain/Entities/ClienteBasico.cs
+namespace PeluqueriaSaaS.Domain.Entities
 {
-    public class ClienteDto
+    public class ClienteBasico
     {
         public int Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
@@ -9,6 +9,6 @@ namespace PeluqueriaSaaS.Application.DTOs
         public string Email { get; set; } = string.Empty;
         public string? Telefono { get; set; }
         public DateTime? FechaNacimiento { get; set; }
-        public DateTime FechaRegistro { get; set; }
+        public DateTime FechaRegistro { get; set; } = DateTime.Now;
     }
 }
