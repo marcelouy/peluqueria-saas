@@ -14,7 +14,6 @@ namespace PeluqueriaSaaS.Web.Controllers
             _mediator = mediator;
         }
 
-        // GET: Clientes
         public async Task<IActionResult> Index()
         {
             try
@@ -30,7 +29,6 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // GET: Clientes/Details/5
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -54,13 +52,11 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // GET: Clientes/Create
         public IActionResult Create()
         {
             return View(new CrearClienteCommand());
         }
 
-        // POST: Clientes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CrearClienteCommand command)
@@ -68,9 +64,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                {
                     return View(command);
-                }
 
                 var cliente = await _mediator.Send(command);
                 TempData["Success"] = "Cliente creado exitosamente";
@@ -84,7 +78,6 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // GET: Clientes/Edit/5
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -106,7 +99,13 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Apellido = cliente.Apellido,
                     Email = cliente.Email,
                     Telefono = cliente.Telefono,
-                    FechaNacimiento = cliente.FechaNacimiento
+                    FechaNacimiento = cliente.FechaNacimiento,
+                    Direccion = cliente.Direccion,
+                    Ciudad = cliente.Ciudad,
+                    CodigoPostal = cliente.CodigoPostal,
+                    Notas = cliente.Notas,
+                    EsActivo = cliente.EsActivo,
+                    UltimaVisita = cliente.UltimaVisita
                 };
                 
                 return View(command);
@@ -118,7 +117,6 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // POST: Clientes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateClienteCommand command)
@@ -147,8 +145,9 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // POST: Clientes/Delete/5
+        // RUTA CORREGIDA - Acepta POST con parámetro en la URL
         [HttpPost]
+        [Route("Clientes/Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {

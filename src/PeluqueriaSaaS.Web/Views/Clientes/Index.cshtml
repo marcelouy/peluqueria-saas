@@ -1,5 +1,4 @@
-﻿@* src/PeluqueriaSaaS.Web/Views/Clientes/Index.cshtml *@
-@model IEnumerable<PeluqueriaSaaS.Application.DTOs.ClienteDto>
+﻿@model IEnumerable<PeluqueriaSaaS.Application.DTOs.ClienteDto>
 
 @{
     ViewData["Title"] = "Lista de Clientes";
@@ -23,6 +22,13 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
                     
                     @if (Model.Any())
                     {
@@ -32,23 +38,29 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Nombre</th>
-                                        <th>Apellido</th>
                                         <th>Email</th>
                                         <th>Teléfono</th>
-                                        <th>Fecha Registro</th>
+                                        <th>Ciudad</th>
+                                        <th>Estado</th>
+                                        <th>Última Visita</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var cliente in Model)
                                     {
-                                        <tr>
+                                        <tr class="@(cliente.EsActivo ? "" : "table-secondary")">
                                             <td>@cliente.Id</td>
-                                            <td>@cliente.Nombre</td>
-                                            <td>@cliente.Apellido</td>
+                                            <td>@cliente.Nombre @cliente.Apellido</td>
                                             <td>@cliente.Email</td>
-                                            <td>@cliente.Telefono</td>
-                                            <td>@cliente.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                            <td>@(cliente.Telefono ?? "-")</td>
+                                            <td>@(cliente.Ciudad ?? "-")</td>
+                                            <td>
+                                                <span class="badge @(cliente.EsActivo ? "bg-success" : "bg-danger")">
+                                                    @(cliente.EsActivo ? "Activo" : "Inactivo")
+                                                </span>
+                                            </td>
+                                            <td>@(cliente.UltimaVisita?.ToString("dd/MM/yyyy") ?? "-")</td>
                                             <td>
                                                 <div class="btn-group" role="group">
                                                     <a asp-action="Details" asp-route-id="@cliente.Id" 
@@ -87,7 +99,7 @@
     </div>
 </div>
 
-<!-- Modal de confirmación para eliminar -->
+<!-- Modal de confirmación -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -112,14 +124,12 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        function confirmarEliminacion(id, nombre, apellido) {
-            document.getElementById('clienteNombre').textContent = nombre + ' ' + apellido;
-            document.getElementById('deleteForm').action = '@Url.Action("Delete")/' + id;
-            
-            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
-        }
-    </script>
+<script>
+function confirmarEliminacion(id, nombre, apellido) {
+    document.getElementById('clienteNombre').textContent = nombre + ' ' + apellido;
+    document.getElementById('deleteForm').action = '/Clientes/Delete/' + id;
+    
+    var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
 }
+</script>

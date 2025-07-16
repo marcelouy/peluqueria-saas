@@ -25,7 +25,12 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
                 Email = request.Email,
                 Telefono = request.Telefono,
                 FechaNacimiento = request.FechaNacimiento,
-                FechaRegistro = DateTime.Now
+                FechaRegistro = DateTime.Now,
+                Direccion = request.Direccion,
+                Ciudad = request.Ciudad,
+                CodigoPostal = request.CodigoPostal,
+                Notas = request.Notas,
+                EsActivo = request.EsActivo
             };
 
             var clienteCreado = await _repositoryManager.AddClienteAsync(cliente);
@@ -38,7 +43,13 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
                 Email = clienteCreado.Email,
                 Telefono = clienteCreado.Telefono,
                 FechaNacimiento = clienteCreado.FechaNacimiento,
-                FechaRegistro = clienteCreado.FechaRegistro
+                FechaRegistro = clienteCreado.FechaRegistro,
+                Direccion = clienteCreado.Direccion,
+                Ciudad = clienteCreado.Ciudad,
+                CodigoPostal = clienteCreado.CodigoPostal,
+                Notas = clienteCreado.Notas,
+                EsActivo = clienteCreado.EsActivo,
+                UltimaVisita = clienteCreado.UltimaVisita
             };
         }
     }

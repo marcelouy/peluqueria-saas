@@ -10,5 +10,16 @@ namespace PeluqueriaSaaS.Domain.Entities
         public string? Telefono { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
+        
+        // 📍 Campos de Dirección  
+        public string? Direccion { get; set; }  // Calle y número
+        public string? CodigoPostal { get; set; }
+        // TODO: Después refactorizar a CiudadId y BarrioId
+        public string? Ciudad { get; set; }  // Temporal - será FK después
+        
+        // 📝 Información adicional
+        public string? Notas { get; set; }
+        public bool EsActivo { get; set; } = true;
+        public DateTime? UltimaVisita { get; set; }
     }
 }

@@ -10,23 +10,41 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Commands
         public int Id { get; set; }
         
         [Required(ErrorMessage = "El nombre es obligatorio")]
-        [StringLength(50, ErrorMessage = "El nombre no puede exceder los 50 caracteres")]
+        [StringLength(50)]
         public string Nombre { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "El apellido es obligatorio")]
-        [StringLength(50, ErrorMessage = "El apellido no puede exceder los 50 caracteres")]
+        [StringLength(50)]
         public string Apellido { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "El email es obligatorio")]
-        [EmailAddress(ErrorMessage = "El formato del email no es válido")]
-        [StringLength(100, ErrorMessage = "El email no puede exceder los 100 caracteres")]
+        [EmailAddress]
+        [StringLength(100)]
         public string Email { get; set; } = string.Empty;
         
-        [Phone(ErrorMessage = "El formato del teléfono no es válido")]
-        [StringLength(20, ErrorMessage = "El teléfono no puede exceder los 20 caracteres")]
+        [Phone]
+        [StringLength(20)]
         public string? Telefono { get; set; }
         
         [DataType(DataType.Date)]
         public DateTime? FechaNacimiento { get; set; }
+        
+        // Campos adicionales
+        [StringLength(200)]
+        public string? Direccion { get; set; }
+        
+        [StringLength(100)]
+        public string? Ciudad { get; set; }
+        
+        [StringLength(10)]
+        public string? CodigoPostal { get; set; }
+        
+        [StringLength(500)]
+        public string? Notas { get; set; }
+        
+        public bool EsActivo { get; set; } = true;
+        
+        [DataType(DataType.Date)]
+        public DateTime? UltimaVisita { get; set; }
     }
 }

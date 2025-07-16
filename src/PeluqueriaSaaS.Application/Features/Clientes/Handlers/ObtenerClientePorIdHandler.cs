@@ -18,9 +18,7 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
         public async Task<ClienteDto?> Handle(ObtenerClientePorIdQuery request, CancellationToken cancellationToken)
         {
             var cliente = await _repositoryManager.GetClienteByIdAsync(request.Id);
-            
-            if (cliente == null)
-                return null;
+            if (cliente == null) return null;
 
             return new ClienteDto
             {
@@ -30,7 +28,13 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
                 Email = cliente.Email,
                 Telefono = cliente.Telefono,
                 FechaNacimiento = cliente.FechaNacimiento,
-                FechaRegistro = cliente.FechaRegistro
+                FechaRegistro = cliente.FechaRegistro,
+                Direccion = cliente.Direccion,
+                Ciudad = cliente.Ciudad,
+                CodigoPostal = cliente.CodigoPostal,
+                Notas = cliente.Notas,
+                EsActivo = cliente.EsActivo,
+                UltimaVisita = cliente.UltimaVisita
             };
         }
     }

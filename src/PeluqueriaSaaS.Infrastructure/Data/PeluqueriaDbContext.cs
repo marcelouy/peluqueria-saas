@@ -10,7 +10,6 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         {
         }
 
-        // DbSets para entidades básicas
         public DbSet<ClienteBasico> ClientesBasicos { get; set; }
         public DbSet<EmpleadoBasico> EmpleadosBasicos { get; set; }
 
@@ -27,6 +26,13 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Telefono).HasMaxLength(20);
                 entity.Property(e => e.FechaRegistro).IsRequired();
+                
+                // Nuevos campos
+                entity.Property(e => e.Direccion).HasMaxLength(200);
+                entity.Property(e => e.Ciudad).HasMaxLength(100);
+                entity.Property(e => e.CodigoPostal).HasMaxLength(10);
+                entity.Property(e => e.Notas).HasMaxLength(500);
+                entity.Property(e => e.EsActivo).IsRequired().HasDefaultValue(true);
             });
             
             // Configuración para EmpleadoBasico
