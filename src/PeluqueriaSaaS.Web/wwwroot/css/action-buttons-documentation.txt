@@ -1,0 +1,59 @@
+﻿SISTEMA DE BOTONES ESTANDARIZADOS - DOCUMENTACIÓN
+=================================================
+
+CSS INCLUIDO: /css/action-buttons.css
+Clases disponibles: btn-action + modificador específico
+
+BOTONES PARA INDEX.CSHTML (listados):
+-------------------------------------
+<div class="action-buttons">
+    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-action btn-view">Ver</a>
+    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-action btn-edit">Editar</a>
+    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-action btn-delete">Eliminar</a>
+</div>
+
+BOTONES PARA CREATE.CSHTML:
+---------------------------
+<div class="form-group text-center mt-4">
+    <button type="submit" class="btn btn-action btn-create">Crear Empleado</button>
+    <a asp-action="Index" class="btn btn-action btn-back">Volver</a>
+</div>
+
+BOTONES PARA EDIT.CSHTML:
+-------------------------
+<div class="form-group text-center mt-4">
+    <button type="submit" class="btn btn-action btn-edit">Guardar Cambios</button>
+    <a asp-action="Index" class="btn btn-action btn-back">Cancelar</a>
+</div>
+
+BOTONES PARA DETAILS.CSHTML:
+----------------------------
+<div class="text-center mt-4">
+    <div class="action-buttons justify-content-center">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-action btn-edit">Editar</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-action btn-delete">Eliminar</a>
+        <a asp-action="Index" class="btn btn-action btn-back">Volver</a>
+    </div>
+</div>
+
+BOTONES PARA DELETE.CSHTML:
+---------------------------
+<div class="text-center mt-4">
+    <form asp-action="Delete" class="d-inline">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-action btn-delete">Confirmar Eliminación</button>
+    </form>
+    <a asp-action="Index" class="btn btn-action btn-back">Cancelar</a>
+</div>
+
+CLASES DISPONIBLES:
+------------------
+- btn-view: Botón azul para "Ver" (min-width: 90px)
+- btn-edit: Botón amarillo para "Editar" (min-width: 90px)
+- btn-delete: Botón rojo para "Eliminar" (min-width: 90px)
+- btn-create: Botón verde para "Crear" (min-width: 120px)
+- btn-back: Botón gris para "Volver/Cancelar" (min-width: 80px)
+
+RESPONSIVE:
+-----------
+En móviles los botones se centran automáticamente y reducen tamaño.

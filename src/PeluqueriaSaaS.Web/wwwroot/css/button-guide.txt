@@ -1,0 +1,24 @@
+﻿SISTEMA DE BOTONES ESTANDARIZADOS - GUÍA DE USO
+===============================================
+
+CSS INCLUIDO: /css/action-buttons.css
+
+CLASES DISPONIBLES:
+- btn-action btn-view (azul, 90px)
+- btn-action btn-edit (amarillo, 90px)  
+- btn-action btn-delete (rojo, 90px)
+- btn-action btn-create (verde, 120px)
+- btn-action btn-back (gris, 80px)
+
+EJEMPLOS DE USO:
+
+Index.cshtml:
+<div class="action-buttons">
+    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-action btn-view">Ver</a>
+    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-action btn-edit">Editar</a>
+    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-action btn-delete">Eliminar</a>
+</div>
+
+Create/Edit.cshtml:
+<button type="submit" class="btn btn-action btn-create">Crear</button>
+<a asp-action="Index" class="btn btn-action btn-back">Volver</a>

@@ -6,18 +6,6 @@ namespace PeluqueriaSaaS.Infrastructure.Extensions;
 
 public static class RepositoryExtensions
 {
-    public static async Task<IEnumerable<Empleado>> GetBySucursalAsync(
-        this IRepository<Empleado> repository, Guid sucursalId)
-    {
-        return await repository.FindAsync(e => e.SucursalId == sucursalId);
-    }
-    
-    public static async Task<IEnumerable<Empleado>> GetActivosAsync(
-        this IRepository<Empleado> repository)
-    {
-        return await repository.FindAsync(e => e.Activo == true);
-    }
-    
     public static async Task<IEnumerable<Cita>> GetByClienteAsync(
         this IRepository<Cita> repository, Guid clienteId)
     {

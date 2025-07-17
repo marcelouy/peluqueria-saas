@@ -1,0 +1,70 @@
+﻿@model IEnumerable<PeluqueriaSaaS.Domain.Entities.Empleado>
+@{
+    ViewData["Title"] = "Gestión de Empleados";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>👥 Gestión de Empleados</h2>
+        <a asp-action="Create" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nuevo Empleado
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            @if (Model?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var empleado in Model)
+                            {
+                                <tr>
+                                    <td>@empleado.Id</td>
+                                    <td>@empleado.Nombre</td>
+                                    <td>@empleado.Email</td>
+                                    <td>@empleado.Telefono</td>
+                                    <td>
+                                        <span class="badge bg-@(empleado.EsActivo ? "success" : "danger")">
+                                            @(empleado.EsActivo ? "Activo" : "Inactivo")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@empleado.Id" 
+                                               class="btn btn-info btn-sm">Ver</a>
+                                            <a asp-action="Edit" asp-route-id="@empleado.Id" 
+                                               class="btn btn-warning btn-sm">Editar</a>
+                                            <a asp-action="Delete" asp-route-id="@empleado.Id" 
+                                               class="btn btn-danger btn-sm">Eliminar</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info text-center">
+                    <h4>📝 No hay empleados registrados</h4>
+                    <p>Comienza agregando tu primer empleado</p>
+                    <a asp-action="Create" class="btn btn-primary">Agregar Empleado</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+

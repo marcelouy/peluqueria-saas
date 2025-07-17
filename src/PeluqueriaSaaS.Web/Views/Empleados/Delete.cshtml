@@ -1,0 +1,96 @@
+﻿<style>
+/* ===== ESTILOS BOTONES HERMOSOS ===== */
+.action-buttons { display: flex !important; gap: 8px !important; align-items: center !important; justify-content: center !important; }
+.btn-action { min-width: 100px !important; height: 40px !important; font-size: 0.875rem !important; font-weight: 500 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 8px !important; border: none !important; text-decoration: none !important; transition: all 0.3s ease !important; padding: 0 16px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; }
+.btn-action:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important; text-decoration: none !important; }
+.btn-delete { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%) !important; color: white !important; }
+.btn-delete:hover { background: linear-gradient(135deg, #b02a37 0%, #8b1e2b 100%) !important; color: white !important; }
+.btn-back { background: linear-gradient(135deg, #6c757d 0%, #545b62 100%) !important; color: white !important; }
+.btn-back:hover { background: linear-gradient(135deg, #545b62 0%, #383d41 100%) !important; color: white !important; }
+</style>
+
+@model PeluqueriaSaaS.Domain.Entities.Empleado
+@{
+    ViewData["Title"] = "Eliminar Empleado";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">🗑️ Eliminar Empleado</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model != null)
+                    {
+                        <div class="alert alert-warning">
+                            <h4>⚠️ Confirmar Eliminación</h4>
+                            <p>¿Está seguro que desea eliminar este empleado? Esta acción no se puede deshacer.</p>
+                        </div>
+                        
+                        <dl class="row">
+                            <dt class="col-sm-3">Nombre Completo:</dt>
+                            <dd class="col-sm-9"><strong>@Model.NombreCompleto</strong></dd>
+                            
+                            <dt class="col-sm-3">Email:</dt>
+                            <dd class="col-sm-9">@Model.Email</dd>
+                            
+                            <dt class="col-sm-3">Teléfono:</dt>
+                            <dd class="col-sm-9">@(Model.Telefono ?? "No especificado")</dd>
+                            
+                            <dt class="col-sm-3">Cargo:</dt>
+                            <dd class="col-sm-9">@(Model.Cargo ?? "No especificado")</dd>
+                            
+                            <dt class="col-sm-3">Salario:</dt>
+                            <dd class="col-sm-9">@(Model.Salario?.ToString("C") ?? "No especificado")</dd>
+                            
+                            <dt class="col-sm-3">Estado:</dt>
+                            <dd class="col-sm-9">
+                                @if (Model.EsActivo)
+                                {
+                                    <span class="badge bg-success">✅ Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">❌ Inactivo</span>
+                                }
+                            </dd>
+                            
+                            <dt class="col-sm-3">Fecha Contratación:</dt>
+                            <dd class="col-sm-9">@Model.FechaContratacion.ToString("dd/MM/yyyy")</dd>
+                        </dl>
+                        
+                        <form asp-action="Delete" method="post">
+                            <input type="hidden" asp-for="Id" />
+                            <div class="action-buttons mt-4">
+                                <button type="submit" class="btn btn-action btn-delete" 
+                                        onclick="return confirm('¿Está ABSOLUTAMENTE seguro de eliminar a @Model.NombreCompleto?')">
+                                    🗑️ SÍ, Eliminar
+                                </button>
+                                <a asp-action="Index" class="btn btn-action btn-back">↩️ Cancelar</a>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">
+                            <h4>❌ Error</h4>
+                            <p>No se pudo cargar la información del empleado.</p>
+                            <a asp-action="Index" class="btn btn-primary">Volver a la lista</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Debug info
+        console.log('Delete view loaded');
+        console.log('Model ID: @(Model?.Id ?? 0)');
+        console.log('Model Name: @(Model?.NombreCompleto ?? "null")');
+    </script>
+}

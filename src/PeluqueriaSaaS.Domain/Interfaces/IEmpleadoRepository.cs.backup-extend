@@ -1,0 +1,14 @@
+﻿using PeluqueriaSaaS.Domain.Entities;
+
+namespace PeluqueriaSaaS.Domain.Interfaces
+{
+    public interface IEmpleadoRepository
+    {
+        Task<IEnumerable<Empleado>> GetAllAsync();
+        Task<Empleado?> GetByIdAsync(int id);
+        Task<Empleado> AddAsync(Empleado empleado);
+        Task<Empleado> UpdateAsync(Empleado empleado);
+        Task<bool> DeleteAsync(int id);
+        Task<bool> ExistsAsync(int id);
+    }
+}

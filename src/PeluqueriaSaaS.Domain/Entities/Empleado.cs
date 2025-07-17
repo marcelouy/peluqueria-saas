@@ -1,51 +1,29 @@
-﻿using PeluqueriaSaaS.Domain.Entities.Base;
-using PeluqueriaSaaS.Domain.Entities.Configuration;
-using PeluqueriaSaaS.Domain.ValueObjects;
-
-namespace PeluqueriaSaaS.Domain.Entities
+﻿namespace PeluqueriaSaaS.Domain.Entities
 {
-    public class Empleado : TenantEntityBase
+    public class Empleado
     {
-        public string Nombre { get; private set; } = string.Empty;
-        public string Apellido { get; private set; } = string.Empty;
-        public Email? Email { get; private set; }
-        public Telefono? Telefono { get; private set; }
-        public Guid EstadoEmpleadoId { get; private set; }
-        public Guid SucursalId { get; private set; }
-        public bool EsActivo { get; private set; } = true;
-
-        // Navigation properties
-        public virtual EstadoEmpleado EstadoEmpleado { get; private set; } = null!;
-        public virtual Sucursal Sucursal { get; private set; } = null!;
-
-        private Empleado() { }
-
-        public Empleado(string nombre, string apellido, Guid estadoEmpleadoId, Guid sucursalId, string? email = null, string? telefono = null)
-        {
-            Nombre = nombre;
-            Apellido = apellido;
-            EstadoEmpleadoId = estadoEmpleadoId;
-            SucursalId = sucursalId;
-            
-            if (!string.IsNullOrEmpty(email))
-                Email = new Email(email);
-            if (!string.IsNullOrEmpty(telefono))
-                Telefono = new Telefono(telefono);
-        }
-
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Apellido { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? Telefono { get; set; }
+        public DateTime? FechaNacimiento { get; set; }
+        public DateTime FechaRegistro { get; set; } = DateTime.Now;
+        
+        // Campos específicos de Empleado
+        public string Cargo { get; set; } = string.Empty;
+        public decimal? Salario { get; set; }
+        public DateTime FechaContratacion { get; set; } = DateTime.Now;
+        public string? Horario { get; set; }
+        public string? Direccion { get; set; }
+        public string? Ciudad { get; set; }
+        public string? CodigoPostal { get; set; }
+        public string? Notas { get; set; }
+        public bool EsActivo { get; set; } = true;
+        
+        // Propiedades calculadas
         public string NombreCompleto => $"{Nombre} {Apellido}";
-
-        public void ActualizarInformacion(string nombre, string apellido, string? email = null, string? telefono = null)
-        {
-            Nombre = nombre;
-            Apellido = apellido;
-            
-            Email = !string.IsNullOrEmpty(email) ? new Email(email) : null;
-            Telefono = !string.IsNullOrEmpty(telefono) ? new Telefono(telefono) : null;
-        }
-
-        public void CambiarEstado(Guid estadoEmpleadoId) => EstadoEmpleadoId = estadoEmpleadoId;
-        public new void Activar() => EsActivo = true;
-        public new void Desactivar() => EsActivo = false;
+        public int? Edad => FechaNacimiento.HasValue ? 
+            DateTime.Now.Year - FechaNacimiento.Value.Year : null;
     }
 }

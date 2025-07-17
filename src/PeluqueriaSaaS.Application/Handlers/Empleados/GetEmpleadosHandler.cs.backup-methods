@@ -1,0 +1,25 @@
+﻿using MediatR;
+using PeluqueriaSaaS.Application.Queries.Empleados;
+using PeluqueriaSaaS.Domain.Entities;
+using PeluqueriaSaaS.Domain.Interfaces;
+
+namespace PeluqueriaSaaS.Application.Handlers.Empleados
+{
+    public class GetEmpleadosHandler : IRequestHandler<GetEmpleadosQuery, IEnumerable<Empleado>>
+    {
+        private readonly IEmpleadoRepository _repository;
+
+        public GetEmpleadosHandler(IEmpleadoRepository repository)
+        {
+            _repository = repository;
+        }
+
+        public async Task<IEnumerable<Empleado>> Handle(GetEmpleadosQuery request, CancellationToken cancellationToken)
+        {
+            if (request.SoloActivos == true)
+                return await _repository.GetActivosAsync();
+            
+            return await _repository.GetAllAsync();
+        }
+    }
+}

@@ -11,6 +11,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         }
 
         public DbSet<ClienteBasico> ClientesBasicos { get; set; }
+        public DbSet<Empleado> Empleados { get; set; } = null!;
         public DbSet<EmpleadoBasico> EmpleadosBasicos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -50,3 +51,4 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         }
     }
 }
+

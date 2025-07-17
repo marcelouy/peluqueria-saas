@@ -1,0 +1,94 @@
+﻿@model IEnumerable<PeluqueriaSaaS.Domain.Entities.Empleado>
+@{
+    ViewData["Title"] = "Empleados";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4 page-header">
+                <h2>👥 Gestión de Empleados</h2>
+                <a asp-action="Create" class="btn btn-action btn-create">
+                    ➕ Nuevo Empleado
+                </a>
+            </div>
+
+            @if (Model.Any())
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Cargo</th>
+                                        <th>Estado</th>
+                                        <th>Fecha Contratación</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.NombreCompleto</strong>
+                                                @if (!string.IsNullOrEmpty(item.Telefono))
+                                                {
+                                                    <br><small class="text-muted">📞 @item.Telefono</small>
+                                                }
+                                            </td>
+                                            <td>@item.Email</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Cargo))
+                                                {
+                                                    <span class="badge bg-info">@item.Cargo</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Sin cargo</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (item.EsActivo)
+                                                {
+                                                    <span class="badge bg-success">✅ Activo</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">❌ Inactivo</span>
+                                                }
+                                            </td>
+                                            <td>@item.FechaContratacion.ToString("dd/MM/yyyy")</td>
+                                            <td class="text-center align-middle">
+                                                <div class="action-buttons">
+                                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-action btn-view">Ver</a>
+                                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-action btn-edit">Editar</a>
+                                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-action btn-delete">Eliminar</a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <h4 class="text-muted">👥 No hay empleados registrados</h4>
+                        <p class="text-muted">Comienza agregando tu primer empleado</p>
+                        <a asp-action="Create" class="btn btn-action btn-create">
+                            ➕ Crear Primer Empleado
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

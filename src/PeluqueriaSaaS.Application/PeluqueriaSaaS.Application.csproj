@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -14,7 +14,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PeluqueriaSaaS.Domain\PeluqueriaSaaS.Domain.csproj" />
-    <ProjectReference Include="..\PeluqueriaSaaS.Infrastructure\PeluqueriaSaaS.Infrastructure.csproj" />
   </ItemGroup>
 
+  
+
 </Project>
+

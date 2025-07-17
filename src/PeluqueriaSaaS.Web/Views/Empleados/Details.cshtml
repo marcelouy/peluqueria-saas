@@ -1,0 +1,67 @@
+﻿<style>
+.btn-action { min-width: 85px !important; height: 36px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 8px !important; border: none !important; text-decoration: none !important; transition: all 0.3s ease !important; padding: 0 16px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; }
+.btn-action:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important; text-decoration: none !important; }
+.btn-edit { background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%) !important; color: white !important; }
+.btn-edit:hover { background: linear-gradient(135deg, #e55a00 0%, #cc4900 100%) !important; color: white !important; }
+.btn-delete { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%) !important; color: white !important; }
+.btn-delete:hover { background: linear-gradient(135deg, #b02a37 0%, #8b1e2b 100%) !important; color: white !important; }
+.btn-back { background: linear-gradient(135deg, #6c757d 0%, #545b62 100%) !important; color: white !important; }
+.btn-back:hover { background: linear-gradient(135deg, #545b62 0%, #383d41 100%) !important; color: white !important; }
+.action-buttons { display: flex !important; gap: 8px !important; justify-content: center !important; }
+</style>
+
+@model PeluqueriaSaaS.Domain.Entities.Empleado
+@{
+    ViewData["Title"] = "Detalles del Empleado";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>👤 Detalles del Empleado</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Nombre Completo:</dt>
+                        <dd class="col-sm-9">@Model.NombreCompleto</dd>
+                        
+                        <dt class="col-sm-3">Email:</dt>
+                        <dd class="col-sm-9">@Model.Email</dd>
+                        
+                        <dt class="col-sm-3">Teléfono:</dt>
+                        <dd class="col-sm-9">@(Model.Telefono ?? "No especificado")</dd>
+                        
+                        <dt class="col-sm-3">Cargo:</dt>
+                        <dd class="col-sm-9">@(Model.Cargo ?? "No especificado")</dd>
+                        
+                        <dt class="col-sm-3">Salario:</dt>
+                        <dd class="col-sm-9">@(Model.Salario?.ToString("C") ?? "No especificado")</dd>
+                        
+                        <dt class="col-sm-3">Estado:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.EsActivo)
+                            {
+                                <span class="badge bg-success">✅ Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">❌ Inactivo</span>
+                            }
+                        </dd>
+                        
+                        <dt class="col-sm-3">Fecha Contratación:</dt>
+                        <dd class="col-sm-9">@Model.FechaContratacion.ToString("dd/MM/yyyy")</dd>
+                    </dl>
+                    
+                    <div class="action-buttons mt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-action btn-edit">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-action btn-delete">Eliminar</a>
+                        <a asp-action="Index" class="btn btn-action btn-back">Volver</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

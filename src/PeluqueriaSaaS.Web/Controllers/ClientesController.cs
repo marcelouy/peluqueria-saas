@@ -145,11 +145,36 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // RUTA CORREGIDA - Acepta POST con parámetro en la URL
-        [HttpPost]
-        [Route("Clientes/Delete/{id}")]
-        [ValidateAntiForgeryToken]
+        
+
+        // GET: Clientes/Delete/5
+        [HttpGet]
         public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var query = new ObtenerClientePorIdQuery(id);
+                var cliente = await _mediator.Send(query);
+                
+                if (cliente == null)
+                {
+                    TempData["Error"] = "Cliente no encontrado";
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                return View(cliente);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al cargar cliente: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clientes/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {

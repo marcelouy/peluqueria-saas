@@ -1,0 +1,91 @@
+﻿using Microsoft.EntityFrameworkCore;
+using PeluqueriaSaaS.Domain.Entities;
+using PeluqueriaSaaS.Domain.Interfaces;
+using PeluqueriaSaaS.Infrastructure.Data;
+
+namespace PeluqueriaSaaS.Infrastructure.Repositories
+{
+    public class EmpleadoRepository : IEmpleadoRepository
+    {
+        private readonly PeluqueriaDbContext _context;
+
+        public EmpleadoRepository(PeluqueriaDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<Empleado>> GetAllAsync()
+        {
+            return await _context.Empleados
+                .OrderBy(e => e.Apellido)
+                .ThenBy(e => e.Nombre)
+                .ToListAsync();
+        }
+
+        public async Task<Empleado?> GetByIdAsync(int id)
+        {
+            return await _context.Empleados.FindAsync(id);
+        }
+
+        public async Task<Empleado> AddAsync(Empleado empleado)
+        {
+            _context.Empleados.Add(empleado);
+            await _context.SaveChangesAsync();
+            return empleado;
+        }
+
+        public async Task<Empleado> UpdateAsync(Empleado empleado)
+        {
+            _context.Entry(empleado).State = EntityState.Modified;
+            
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!(await ExistsAsync(empleado.Id)))
+                {
+                    throw new InvalidOperationException("El empleado no existe");
+                }
+                throw;
+            }
+            
+            return empleado;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+            {
+                return false;
+            }
+
+            _context.Empleados.Remove(empleado);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.Empleados.AnyAsync(e => e.Id == id);
+        }
+
+        // Métodos adicionales para los handlers
+        public async Task<Empleado> CreateAsync(Empleado empleado)
+        {
+            // CreateAsync es un alias para AddAsync
+            return await AddAsync(empleado);
+        }
+
+        public async Task<IEnumerable<Empleado>> GetActivosAsync()
+        {
+            return await _context.Empleados
+                .Where(e => e.EsActivo)
+                .OrderBy(e => e.Apellido)
+                .ThenBy(e => e.Nombre)
+                .ToListAsync();
+        }
+    }
+}

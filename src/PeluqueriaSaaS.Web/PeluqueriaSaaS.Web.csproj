@@ -13,12 +13,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.7" />
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\PeluqueriaSaaS.Application\PeluqueriaSaaS.Application.csproj" />
     <ProjectReference Include="..\PeluqueriaSaaS.Infrastructure\PeluqueriaSaaS.Infrastructure.csproj" />
+    <ProjectReference Include="..\PeluqueriaSaaS.Application\PeluqueriaSaaS.Application.csproj" />
     <ProjectReference Include="..\PeluqueriaSaaS.Domain\PeluqueriaSaaS.Domain.csproj" />
   </ItemGroup>
+  
+  
 </Project>
+

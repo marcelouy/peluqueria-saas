@@ -1,0 +1,134 @@
+﻿<style>
+/* ===== ESTILOS BOTONES HERMOSOS ===== */
+.action-buttons { display: flex !important; gap: 8px !important; align-items: center !important; justify-content: center !important; }
+.btn-action { min-width: 85px !important; height: 36px !important; font-size: 0.875rem !important; font-weight: 500 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 8px !important; border: none !important; text-decoration: none !important; transition: all 0.3s ease !important; padding: 0 16px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; }
+.btn-action:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important; text-decoration: none !important; }
+.btn-edit { background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%) !important; color: white !important; }
+.btn-edit:hover { background: linear-gradient(135deg, #e55a00 0%, #cc4900 100%) !important; color: white !important; }
+.btn-back { background: linear-gradient(135deg, #6c757d 0%, #545b62 100%) !important; color: white !important; }
+.btn-back:hover { background: linear-gradient(135deg, #545b62 0%, #383d41 100%) !important; color: white !important; }
+</style>
+
+@model PeluqueriaSaaS.Domain.Entities.Empleado
+@{
+    ViewData["Title"] = "Editar Empleado";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>✏️ Editar Empleado</h3>
+                    @if (Model != null)
+                    {
+                        <small class="text-muted">Editando: @Model.NombreCompleto</small>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model != null)
+                    {
+                        <form asp-action="Edit">
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="FechaContratacion" />
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Nombre" class="form-label">Nombre *</label>
+                                        <input asp-for="Nombre" class="form-control" placeholder="Ingrese el nombre" />
+                                        <span asp-validation-for="Nombre" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Apellido" class="form-label">Apellido *</label>
+                                        <input asp-for="Apellido" class="form-control" placeholder="Ingrese el apellido" />
+                                        <span asp-validation-for="Apellido" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Email" class="form-label">Email *</label>
+                                        <input asp-for="Email" class="form-control" type="email" placeholder="ejemplo@correo.com" />
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Telefono" class="form-label">Teléfono</label>
+                                        <input asp-for="Telefono" class="form-control" placeholder="+598 99 123 456" />
+                                        <span asp-validation-for="Telefono" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Cargo" class="form-label">Cargo</label>
+                                        <input asp-for="Cargo" class="form-control" placeholder="Ej: Estilista Senior" />
+                                        <span asp-validation-for="Cargo" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Salario" class="form-label">Salario (USD)</label>
+                                        <input asp-for="Salario" class="form-control" type="number" step="0.01" min="0" />
+                                        <span asp-validation-for="Salario" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Estado</label>
+                                        <div class="form-check">
+                                            <input asp-for="EsActivo" class="form-check-input" type="checkbox" />
+                                            <label asp-for="EsActivo" class="form-check-label">Empleado Activo</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Fecha Contratación</label>
+                                        <input type="text" class="form-control" value="@Model.FechaContratacion.ToString("dd/MM/yyyy")" readonly />
+                                        <small class="form-text text-muted">Esta fecha no se puede modificar</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons mt-4">
+                                <button type="submit" class="btn btn-action btn-edit">💾 Guardar Cambios</button>
+                                <a asp-action="Index" class="btn btn-action btn-back">↩️ Cancelar</a>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">
+                            <h4>❌ Error</h4>
+                            <p>No se pudo cargar la información del empleado.</p>
+                            <a asp-action="Index" class="btn btn-primary">Volver a la lista</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Debug info
+        console.log('Edit view loaded');
+        console.log('Model ID: @(Model?.Id ?? 0)');
+        console.log('Model Name: @(Model?.Nombre ?? "null")');
+    </script>
+}
