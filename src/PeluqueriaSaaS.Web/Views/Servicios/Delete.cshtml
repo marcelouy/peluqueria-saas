@@ -1,0 +1,143 @@
+﻿@model PeluqueriaSaaS.Application.DTOs.ServicioDto
+
+@{
+    ViewData["Title"] = "Eliminar Servicio";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Alerta de advertencia -->
+            <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                <i class="fas fa-exclamation-triangle me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">¡Esta acción es irreversible!</h5>
+                    <p class="mb-2">Una vez eliminado, no podrás recuperar este servicio ni su información asociada.</p>
+                    <p class="mb-0"><strong>Recomendación:</strong> Si no deseas usar más este servicio, considera desactivarlo en lugar de eliminarlo.</p>
+                </div>
+            </div>
+
+            <!-- Información del servicio -->
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Servicio que se eliminará:
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 class="text-primary mb-2">
+                                <i class="fas fa-cut me-2"></i>
+                                @Model.Nombre
+                            </h4>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-tag me-1"></i>
+                                @Model.TipoServicioNombre
+                            </p>
+                            @if (!string.IsNullOrEmpty(Model.Descripcion))
+                            {
+                                <p class="mb-2">@Model.Descripcion</p>
+                            }
+                            <p class="mb-1">
+                                <strong>Precio:</strong> 
+                                <span class="text-success fs-5">@Model.PrecioFormateado</span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Duración:</strong> @Model.DuracionFormateada
+                                <i class="fas fa-clock ms-1 text-muted"></i>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-@(Model.EsActivo ? "success" : "danger") fs-6">
+                                <i class="fas fa-@(Model.EsActivo ? "check-circle" : "times-circle") me-1"></i>
+                                @Model.EstadoTexto
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmación por nombre y checkbox -->
+            <div class="card border-warning mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <input type="checkbox" id="confirmCheck" class="form-check-input me-2" onchange="toggleDeleteButton()">
+                        Entiendo que esta acción es irreversible
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">Para confirmar, escribe el nombre del servicio:</p>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="text" id="confirmName" class="form-control" 
+                                   placeholder="Escribe exactamente: @Model.Nombre"
+                                   oninput="toggleDeleteButton()">
+                            <small class="form-text text-muted">
+                                Escribe exactamente: <strong>@Model.Nombre</strong>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between">
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Cancelar
+                </a>
+                
+                <form asp-action="Delete" method="post" style="display: inline;">
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" id="deleteButton" class="btn btn-secondary" disabled>
+                        <i class="fas fa-trash me-2"></i>
+                        Eliminar Permanentemente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDeleteButton() {
+    const checkbox = document.getElementById('confirmCheck');
+    const nameInput = document.getElementById('confirmName');
+    const deleteButton = document.getElementById('deleteButton');
+    const expectedName = '@Model.Nombre';
+    
+    // Verificar ambas condiciones
+    const isChecked = checkbox.checked;
+    const nameMatches = nameInput.value.trim() === expectedName;
+    
+    // Habilitar solo si ambas condiciones se cumplen
+    deleteButton.disabled = !(isChecked && nameMatches);
+    
+    // Cambiar estilos visuales
+    if (deleteButton.disabled) {
+        deleteButton.classList.remove('btn-danger');
+        deleteButton.classList.add('btn-secondary');
+    } else {
+        deleteButton.classList.remove('btn-secondary');
+        deleteButton.classList.add('btn-danger');
+    }
+}
+
+// Prevenir envío accidental
+document.querySelector('form').addEventListener('submit', function(e) {
+    const deleteButton = document.getElementById('deleteButton');
+    if (deleteButton.disabled) {
+        e.preventDefault();
+        alert('Debes completar la confirmación antes de eliminar.');
+        return false;
+    }
+    
+    // Confirmación final
+    if (!confirm('¿Estás absolutamente seguro de que deseas eliminar este servicio? Esta acción NO se puede deshacer.')) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>

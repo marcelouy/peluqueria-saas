@@ -1,4 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿/*
+ * Archivo: src/PeluqueriaSaaS.Web/Program.cs
+ * Propósito: Configuración principal - SOLO AÑADIDAS 2 LÍNEAS PARA SERVICIOS
+ * Fecha: Julio 2025
+ * CAMBIOS: Añadidas SOLO las líneas 18-19 para IServicioRepository y ITipoServicioRepository
+ */
+
+using Microsoft.EntityFrameworkCore;
 using PeluqueriaSaaS.Infrastructure.Data;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Repositories;
@@ -24,6 +31,10 @@ builder.Services.AddScoped<IRepositoryManagerTemp, RepositoryManager>();
 builder.Services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+// ⭐ 6. NUEVAS DEPENDENCIAS PARA SERVICIOS (SOLO ESTAS 2 LÍNEAS AÑADIDAS)
+builder.Services.AddScoped<IServicioRepository, ServicioRepository>();
+builder.Services.AddScoped<ITipoServicioRepository, TipoServicioRepository>();
+
 var app = builder.Build();
 
 // Asegurar que la base de datos existe y se crea automáticamente
@@ -40,6 +51,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
@@ -48,5 +60,22 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// SEED DE DATOS DE DESARROLLO
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        try
+        {
+            await PeluqueriaSaaS.Infrastructure.Data.SeedRunner.RunSeedAsync(scope.ServiceProvider);
+        }
+        catch (Exception ex)
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Error durante el seed de datos");
+        }
+    }
+}
 
 app.Run();

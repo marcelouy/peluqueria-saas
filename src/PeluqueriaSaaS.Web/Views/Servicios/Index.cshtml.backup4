@@ -1,0 +1,347 @@
+@*
+    Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Index.cshtml
+    Propósito: Vista principal de servicios con filtros - BOTONES HERMOSOS
+    Fecha: Julio 2025
+*@
+
+@model IEnumerable<PeluqueriaSaaS.Application.DTOs.ServicioListDto>
+@{
+    ViewData["Title"] = "Gestión de Servicios";
+    var filtroActual = ViewBag.FiltroActual as PeluqueriaSaaS.Application.DTOs.ServicioFiltroDto;
+    var tiposServicio = ViewBag.TiposServicio as SelectList;
+}
+
+<!-- Header de la página -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-scissors me-3"></i>
+            Gestión de Servicios
+        </h1>
+        <p class="page-subtitle">
+            Administra los servicios de tu peluquería de forma profesional
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Mensajes de notificación -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success fade-in">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger fade-in">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- Toolbar principal -->
+    <div class="btn-toolbar fade-in">
+        <div class="d-flex gap-2">
+            <!-- Botón Crear Nuevo Servicio - VERDE HERMOSO -->
+            <a href="@Url.Action("Create")" class="btn btn-create btn-icon">
+                <i class="fas fa-plus"></i>
+                Nuevo Servicio
+            </a>
+
+            <!-- Botón Estadísticas -->
+            <button type="button" class="btn btn-secondary btn-icon" onclick="mostrarEstadisticas()">
+                <i class="fas fa-chart-bar"></i>
+                Estadísticas
+            </button>
+        </div>
+
+        <!-- Contador de servicios -->
+        <div class="d-flex align-items-center">
+            <span class="badge badge-info">
+                Total: @Model.Count() servicios
+            </span>
+        </div>
+    </div>
+
+    <!-- Panel de filtros -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body">
+            @using (Html.BeginForm("Index", "Servicios", FormMethod.Get))
+            {
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Servicio</label>
+                            @Html.TextBoxFor(m => filtroActual.Nombre, new { @class = "form-control", @placeholder = "Buscar por nombre..." })
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Servicio</label>
+                            @Html.DropDownListFor(m => filtroActual.TipoServicioId, tiposServicio, "-- Todos los tipos --", new { @class = "form-control" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="form-label">Precio Mín.</label>
+                            @Html.TextBoxFor(m => filtroActual.PrecioMin, new { @class = "form-control", @type = "number", @step = "0.01", @placeholder = "0.00" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="form-label">Precio Máx.</label>
+                            @Html.TextBoxFor(m => filtroActual.PrecioMax, new { @class = "form-control", @type = "number", @step = "0.01", @placeholder = "9999.99" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <div class="d-flex align-items-center" style="height: 100%;">
+                                <div class="form-check">
+                                    @Html.CheckBoxFor(m => filtroActual.SoloActivos, new { @class = "form-check-input" })
+                                    <label class="form-check-label">Solo Activos</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-group mt-3">
+                    <!-- Botón Buscar - AZUL HERMOSO -->
+                    <button type="submit" class="btn btn-primary btn-icon">
+                        <i class="fas fa-search"></i>
+                        Buscar
+                    </button>
+                    <!-- Botón Limpiar -->
+                    <a href="@Url.Action("Index")" class="btn btn-secondary btn-icon">
+                        <i class="fas fa-times"></i>
+                        Limpiar
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tabla de servicios -->
+    <div class="table-container fade-in">
+        @if (Model.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-tag me-1"></i>Nombre</th>
+                        <th><i class="fas fa-list me-1"></i>Tipo</th>
+                        <th><i class="fas fa-dollar-sign me-1"></i>Precio</th>
+                        <th><i class="fas fa-clock me-1"></i>Duración</th>
+                        <th><i class="fas fa-toggle-on me-1"></i>Estado</th>
+                        <th class="text-center"><i class="fas fa-cogs me-1"></i>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var servicio in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@servicio.Nombre</strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">
+                                    @servicio.TipoServicioNombre
+                                </span>
+                            </td>
+                            <td>
+                                <strong class="text-success">@servicio.PrecioFormateado</strong>
+                            </td>
+                            <td>
+                                @servicio.DuracionFormateada
+                            </td>
+                            <td>
+                                <span class="badge @servicio.EstadoCssClass">
+                                    @(servicio.EsActivo ? "Activo" : "Inactivo")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group justify-content-center">
+                                    <!-- Botón Ver Detalles - AZUL HERMOSO -->
+                                    <a href="@Url.Action("Details", new { id = servicio.Id })" 
+                                       class="btn btn-view btn-sm btn-icon" 
+                                       title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <!-- Botón Editar - NARANJA HERMOSO -->
+                                    <a href="@Url.Action("Edit", new { id = servicio.Id })" 
+                                       class="btn btn-edit btn-sm btn-icon" 
+                                       title="Editar servicio">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <!-- Botón Cambiar Estado -->
+                                    @if (servicio.EsActivo)
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-warning btn-sm btn-icon" 
+                                                onclick="cambiarEstado('@servicio.Id', false, '@servicio.Nombre')" 
+                                                title="Desactivar servicio">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-success btn-sm btn-icon" 
+                                                onclick="cambiarEstado('@servicio.Id', true, '@servicio.Nombre')" 
+                                                title="Activar servicio">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                    }
+
+                                    <!-- Botón Eliminar - ROJO HERMOSO -->
+                                    <a href="@Url.Action("Delete", new { id = servicio.Id })" 
+                                       class="btn btn-delete btn-sm btn-icon" 
+                                       title="Eliminar servicio">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="card-body text-center">
+                <div class="py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No se encontraron servicios</h4>
+                    <p class="text-muted">
+                        @if (filtroActual?.TieneFiltros == true)
+                        {
+                            <span>No hay servicios que coincidan con los filtros aplicados.</span>
+                            <br>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary btn-sm mt-2">
+                                <i class="fas fa-times me-1"></i>
+                                Limpiar filtros
+                            </a>
+                        }
+                        else
+                        {
+                            <span>Aún no has creado ningún servicio.</span>
+                            <br>
+                            <a href="@Url.Action("Create")" class="btn btn-create btn-sm mt-2">
+                                <i class="fas fa-plus me-1"></i>
+                                Crear primer servicio
+                            </a>
+                        }
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal para mostrar estadísticas -->
+<div class="modal fade" id="estadisticasModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estadísticas de Servicios
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="estadisticasContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario oculto para cambiar estado -->
+<form id="cambiarEstadoForm" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        // Función para cambiar estado de servicio
+        function cambiarEstado(servicioId, activar, nombreServicio) {
+            const accion = activar ? 'activar' : 'desactivar';
+            const mensaje = `¿Estás seguro de que deseas ${accion} el servicio "${nombreServicio}"?`;
+            
+            if (confirm(mensaje)) {
+                const form = document.getElementById('cambiarEstadoForm');
+                form.action = '@Url.Action("CambiarEstado")' + '/' + servicioId + '?activar=' + activar;
+                form.submit();
+            }
+        }
+
+        // Función para mostrar estadísticas
+        async function mostrarEstadisticas() {
+            const modal = new bootstrap.Modal(document.getElementById('estadisticasModal'));
+            modal.show();
+
+            try {
+                const response = await fetch('@Url.Action("Estadisticas")');
+                const data = await response.json();
+                
+                document.getElementById('estadisticasContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 class="text-primary">${data.totalServicios}</h4>
+                                    <p>Total Servicios</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 class="text-success">${data.serviciosActivos}</h4>
+                                    <p>Servicios Activos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 class="text-warning">$${data.precioPromedio}</h4>
+                                    <p>Precio Promedio</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 class="text-info">${data.duracionPromedio} min</h4>
+                                    <p>Duración Promedio</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('estadisticasContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error al cargar estadísticas
+                    </div>
+                `;
+            }
+        }
+    </script>
+}

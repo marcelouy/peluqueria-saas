@@ -1,0 +1,530 @@
+@*
+    Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Edit.cshtml
+    Propósito: Formulario para editar servicio existente - BOTONES HERMOSOS
+    Fecha: Julio 2025
+*@
+
+@model PeluqueriaSaaS.Application.DTOs.ServicioUpdateDto
+@{
+    ViewData["Title"] = $"Editar - {Model.Nombre}";
+}
+
+<!-- Header de la página -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-edit me-3"></i>
+            Editar Servicio
+        </h1>
+        <p class="page-subtitle">
+            Modifica la información del servicio "<strong>@Model.Nombre</strong>"
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Navegación breadcrumb -->
+    <nav aria-label="breadcrumb" class="fade-in">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="@Url.Action("Index")" class="text-decoration-none">
+                    <i class="fas fa-scissors me-1"></i>
+                    Servicios
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="@Url.Action("Details", new { id = Model.Id })" class="text-decoration-none">
+                    <i class="fas fa-eye me-1"></i>
+                    @Model.Nombre
+                </a>
+            </li>
+            <li class="breadcrumb-item active">
+                <i class="fas fa-edit me-1"></i>
+                Editar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Alerta de información -->
+    <div class="alert alert-info fade-in">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Editando servicio:</strong> Los cambios se guardarán inmediatamente al presionar "Actualizar Servicio".
+        <button type="button" class="btn btn-sm btn-outline-info ms-3" onclick="verHistorial()">
+            <i class="fas fa-history me-1"></i>
+            Ver Historial
+        </button>
+    </div>
+
+    <!-- Formulario principal -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-form me-2"></i>
+                    Información del Servicio
+                </h5>
+                <div class="badge @(Model.EsActivo ? "badge-success" : "badge-danger")">
+                    @(Model.EsActivo ? "Activo" : "Inactivo")
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @using (Html.BeginForm("Edit", "Servicios", FormMethod.Post, new { @class = "needs-validation", @novalidate = "novalidate" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Id)
+                
+                <!-- Mensajes de validación generales -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Por favor corrige los siguientes errores:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="row">
+                    <!-- Nombre del Servicio -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Nombre, new { @class = "form-label" })
+                            @Html.TextBoxFor(m => m.Nombre, new { 
+                                @class = "form-control " + (Html.ViewData.ModelState["Nombre"]?.Errors.Count > 0 ? "is-invalid" : ""),
+                                @placeholder = "Ej: Corte de cabello clásico",
+                                @maxlength = "100",
+                                @required = "required"
+                            })
+                            @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "invalid-feedback" })
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Servicio -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.TipoServicioId, new { @class = "form-label" })
+                            @Html.DropDownListFor(m => m.TipoServicioId, ViewBag.TipoServicioId as SelectList, 
+                                "-- Seleccione un tipo --", new { 
+                                @class = "form-control " + (Html.ViewData.ModelState["TipoServicioId"]?.Errors.Count > 0 ? "is-invalid" : ""),
+                                @required = "required"
+                            })
+                            @Html.ValidationMessageFor(m => m.TipoServicioId, "", new { @class = "invalid-feedback" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Precio -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Precio, new { @class = "form-label" })
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                @Html.TextBoxFor(m => m.Precio, new { 
+                                    @class = "form-control " + (Html.ViewData.ModelState["Precio"]?.Errors.Count > 0 ? "is-invalid" : ""),
+                                    @type = "number",
+                                    @step = "0.01",
+                                    @min = "0.01",
+                                    @max = "999999.99",
+                                    @required = "required"
+                                })
+                                @Html.ValidationMessageFor(m => m.Precio, "", new { @class = "invalid-feedback" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moneda -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.MonedaCodigo, new { @class = "form-label" })
+                            @Html.DropDownListFor(m => m.MonedaCodigo, new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "Pesos Uruguayos (UYU)", Value = "UYU" },
+                                new SelectListItem { Text = "Dólares (USD)", Value = "USD" },
+                                new SelectListItem { Text = "Euros (EUR)", Value = "EUR" }
+                            }, new { 
+                                @class = "form-control " + (Html.ViewData.ModelState["MonedaCodigo"]?.Errors.Count > 0 ? "is-invalid" : ""),
+                                @required = "required"
+                            })
+                            @Html.ValidationMessageFor(m => m.MonedaCodigo, "", new { @class = "invalid-feedback" })
+                        </div>
+                    </div>
+
+                    <!-- Duración -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.DuracionMinutos, new { @class = "form-label" })
+                            <div class="input-group">
+                                @Html.TextBoxFor(m => m.DuracionMinutos, new { 
+                                    @class = "form-control " + (Html.ViewData.ModelState["DuracionMinutos"]?.Errors.Count > 0 ? "is-invalid" : ""),
+                                    @type = "number",
+                                    @min = "1",
+                                    @max = "1440",
+                                    @required = "required"
+                                })
+                                <span class="input-group-text">min</span>
+                                @Html.ValidationMessageFor(m => m.DuracionMinutos, "", new { @class = "invalid-feedback" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.EsActivo, new { @class = "form-label" })
+                            <div class="form-control d-flex align-items-center" style="height: auto; padding: 12px;">
+                                <div class="form-check form-switch">
+                                    @Html.CheckBoxFor(m => m.EsActivo, new { @class = "form-check-input", @role = "switch" })
+                                    <label class="form-check-label">
+                                        <span class="estado-texto">@(Model.EsActivo ? "Activo" : "Inactivo")</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Descripcion, new { @class = "form-label" })
+                    @Html.TextAreaFor(m => m.Descripcion, new { 
+                        @class = "form-control " + (Html.ViewData.ModelState["Descripcion"]?.Errors.Count > 0 ? "is-invalid" : ""),
+                        @rows = "4",
+                        @placeholder = "Describe detalladamente el servicio, técnicas utilizadas, productos incluidos, etc.",
+                        @maxlength = "500"
+                    })
+                    @Html.ValidationMessageFor(m => m.Descripcion, "", new { @class = "invalid-feedback" })
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Descripción opcional (máximo 500 caracteres)
+                    </small>
+                </div>
+
+                <!-- Comparación: Antes vs Después -->
+                <div class="card mt-4" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Vista Previa de Cambios
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">
+                                    <i class="fas fa-clock-rotate-left me-1"></i>
+                                    Valores Originales
+                                </h6>
+                                <div class="service-card" style="opacity: 0.7;">
+                                    <div class="service-header">
+                                        <div class="service-title" id="original-nombre">@Model.Nombre</div>
+                                        <div class="service-category" id="original-tipo">Cargando...</div>
+                                    </div>
+                                    <div class="service-body">
+                                        <div class="service-price" id="original-precio">$@Model.Precio.ToString("F2") @Model.MonedaCodigo</div>
+                                        <div class="service-duration" id="original-duracion">@Model.DuracionMinutos min</div>
+                                        <div class="service-description" id="original-descripcion">
+                                            @(string.IsNullOrWhiteSpace(Model.Descripcion) ? "Sin descripción" : Model.Descripcion)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-sparkles me-1"></i>
+                                    Nuevos Valores
+                                </h6>
+                                <div class="service-card" id="preview-card">
+                                    <div class="service-header">
+                                        <div class="service-title" id="preview-nombre">@Model.Nombre</div>
+                                        <div class="service-category" id="preview-tipo">Cargando...</div>
+                                    </div>
+                                    <div class="service-body">
+                                        <div class="service-price" id="preview-precio">$@Model.Precio.ToString("F2") @Model.MonedaCodigo</div>
+                                        <div class="service-duration" id="preview-duracion">@Model.DuracionMinutos min</div>
+                                        <div class="service-description" id="preview-descripcion">
+                                            @(string.IsNullOrWhiteSpace(Model.Descripcion) ? "Sin descripción" : Model.Descripcion)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pie del formulario con botones -->
+        <div class="card-footer">
+            <div class="btn-toolbar justify-content-between">
+                <div class="btn-group">
+                    <!-- Botón Actualizar - NARANJA HERMOSO (color editar) -->
+                    <button type="submit" form="form" class="btn btn-edit btn-icon">
+                        <i class="fas fa-save"></i>
+                        Actualizar Servicio
+                    </button>
+
+                    <!-- Botón Aplicar Cambios (sin salir) -->
+                    <button type="button" class="btn btn-warning btn-icon" onclick="aplicarCambios()">
+                        <i class="fas fa-check"></i>
+                        Aplicar Cambios
+                    </button>
+                </div>
+
+                <div class="btn-group">
+                    <!-- Botón Ver Detalles - AZUL -->
+                    <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-view btn-icon">
+                        <i class="fas fa-eye"></i>
+                        Ver Detalles
+                    </a>
+
+                    <!-- Botón Cancelar - GRIS -->
+                    <a href="@Url.Action("Index")" class="btn btn-secondary btn-icon">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </a>
+
+                    <!-- Botón Restaurar -->
+                    <button type="button" class="btn btn-secondary btn-icon" onclick="restaurarValores()">
+                        <i class="fas fa-undo"></i>
+                        Restaurar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de acciones rápidas -->
+    <div class="card mt-4 fade-in">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-lightning-bolt me-2"></i>
+                Acciones Rápidas
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="btn-group flex-wrap gap-2">
+                @if (Model.EsActivo)
+                {
+                    <button type="button" class="btn btn-warning btn-sm btn-icon" onclick="cambiarEstado(false)">
+                        <i class="fas fa-pause"></i>
+                        Desactivar Servicio
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-success btn-sm btn-icon" onclick="cambiarEstado(true)">
+                        <i class="fas fa-play"></i>
+                        Activar Servicio
+                    </button>
+                }
+
+                <button type="button" class="btn btn-info btn-sm btn-icon" onclick="duplicarServicio()">
+                    <i class="fas fa-copy"></i>
+                    Duplicar Servicio
+                </button>
+
+                <a href="@Url.Action("Create")" class="btn btn-create btn-sm btn-icon">
+                    <i class="fas fa-plus"></i>
+                    Crear Nuevo
+                </a>
+
+                <a href="@Url.Action("Delete", new { id = Model.Id })" class="btn btn-delete btn-sm btn-icon">
+                    <i class="fas fa-trash"></i>
+                    Eliminar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario oculto para cambio de estado -->
+<form id="cambiarEstadoForm" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        // Configurar el formulario principal
+        const mainForm = document.querySelector('form:not([style*="display: none"])');
+        mainForm.id = 'form';
+
+        // Valores originales para restaurar
+        const valoresOriginales = {
+            nombre: '@Html.Raw(Model.Nombre)',
+            precio: '@Model.Precio',
+            moneda: '@Model.MonedaCodigo',
+            duracion: '@Model.DuracionMinutos',
+            descripcion: '@Html.Raw(Model.Descripcion ?? "")',
+            tipoServicio: '@Model.TipoServicioId',
+            esActivo: @Model.EsActivo.ToString().ToLower()
+        };
+
+        // Vista previa en tiempo real
+        function actualizarVistaPrevia() {
+            const nombre = document.getElementById('Nombre').value || 'Nombre del servicio';
+            const precio = document.getElementById('Precio').value || '0.00';
+            const moneda = document.getElementById('MonedaCodigo').value || 'UYU';
+            const duracion = document.getElementById('DuracionMinutos').value || '0';
+            const descripcion = document.getElementById('Descripcion').value || 'Sin descripción';
+            const tipoSelect = document.getElementById('TipoServicioId');
+            const tipo = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Tipo de servicio';
+
+            document.getElementById('preview-nombre').textContent = nombre;
+            document.getElementById('preview-tipo').textContent = tipo !== '-- Seleccione un tipo --' ? tipo : 'Tipo de servicio';
+            document.getElementById('preview-precio').textContent = `$${parseFloat(precio || 0).toFixed(2)} ${moneda}`;
+            document.getElementById('preview-duracion').textContent = formatearDuracion(parseInt(duracion || 0));
+            document.getElementById('preview-descripcion').textContent = descripcion;
+
+            // Actualizar texto del estado
+            const estadoCheckbox = document.getElementById('EsActivo');
+            const estadoTexto = document.querySelector('.estado-texto');
+            if (estadoTexto) {
+                estadoTexto.textContent = estadoCheckbox.checked ? 'Activo' : 'Inactivo';
+            }
+        }
+
+        // Formatear duración
+        function formatearDuracion(minutos) {
+            if (minutos === 0) return '0 minutos';
+            if (minutos < 60) return `${minutos} min`;
+            if (minutos === 60) return '1 hora';
+            if (minutos % 60 === 0) return `${minutos / 60} horas`;
+            
+            const horas = Math.floor(minutos / 60);
+            const mins = minutos % 60;
+            return `${horas}h ${mins}min`;
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const campos = ['Nombre', 'Precio', 'MonedaCodigo', 'DuracionMinutos', 'Descripcion', 'TipoServicioId', 'EsActivo'];
+            campos.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                if (elemento) {
+                    elemento.addEventListener('input', actualizarVistaPrevia);
+                    elemento.addEventListener('change', actualizarVistaPrevia);
+                }
+            });
+            
+            // Cargar tipo de servicio original
+            const tipoSelect = document.getElementById('TipoServicioId');
+            const tipoOriginalText = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Sin tipo';
+            document.getElementById('original-tipo').textContent = tipoOriginalText;
+            
+            actualizarVistaPrevia();
+        });
+
+        // Función para aplicar cambios sin salir
+        function aplicarCambios() {
+            if (document.getElementById('form').checkValidity()) {
+                // Mostrar indicador de carga
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Aplicando...';
+                btn.disabled = true;
+
+                // Enviar formulario vía AJAX
+                const formData = new FormData(document.getElementById('form'));
+                
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Mostrar éxito temporalmente
+                        btn.innerHTML = '<i class="fas fa-check me-2"></i>¡Aplicado!';
+                        btn.classList.remove('btn-warning');
+                        btn.classList.add('btn-success');
+                        
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.classList.remove('btn-success');
+                            btn.classList.add('btn-warning');
+                            btn.disabled = false;
+                        }, 2000);
+                    } else {
+                        throw new Error('Error al aplicar cambios');
+                    }
+                })
+                .catch(error => {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error';
+                    btn.classList.remove('btn-warning');
+                    btn.classList.add('btn-danger');
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('btn-danger');
+                        btn.classList.add('btn-warning');
+                        btn.disabled = false;
+                    }, 3000);
+                });
+            } else {
+                document.getElementById('form').reportValidity();
+            }
+        }
+
+        // Función para restaurar valores originales
+        function restaurarValores() {
+            if (confirm('¿Estás seguro de que deseas restaurar todos los valores originales?')) {
+                document.getElementById('Nombre').value = valoresOriginales.nombre;
+                document.getElementById('Precio').value = valoresOriginales.precio;
+                document.getElementById('MonedaCodigo').value = valoresOriginales.moneda;
+                document.getElementById('DuracionMinutos').value = valoresOriginales.duracion;
+                document.getElementById('Descripcion').value = valoresOriginales.descripcion;
+                document.getElementById('TipoServicioId').value = valoresOriginales.tipoServicio;
+                document.getElementById('EsActivo').checked = valoresOriginales.esActivo;
+                
+                actualizarVistaPrevia();
+            }
+        }
+
+        // Función para cambiar estado rápido
+        function cambiarEstado(activar) {
+            const accion = activar ? 'activar' : 'desactivar';
+            if (confirm(`¿Estás seguro de que deseas ${accion} este servicio?`)) {
+                const form = document.getElementById('cambiarEstadoForm');
+                form.action = '@Url.Action("CambiarEstado")' + '/@Model.Id' + '?activar=' + activar;
+                form.submit();
+            }
+        }
+
+        // Función para duplicar servicio
+        function duplicarServicio() {
+            if (confirm('¿Deseas crear un nuevo servicio basado en este?')) {
+                // Crear formulario temporal para enviar a Create con datos pre-llenados
+                const form = document.createElement('form');
+                form.method = 'GET';
+                form.action = '@Url.Action("Create")';
+                
+                const campos = ['Nombre', 'Precio', 'MonedaCodigo', 'DuracionMinutos', 'Descripcion', 'TipoServicioId'];
+                campos.forEach(campo => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = campo;
+                    input.value = document.getElementById(campo).value;
+                    form.appendChild(input);
+                });
+                
+                // Modificar nombre para indicar que es una copia
+                const nombreInput = form.querySelector('[name="Nombre"]');
+                nombreInput.value = `Copia de ${nombreInput.value}`;
+                
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+            }
+        }
+
+        // Función placeholder para historial
+        function verHistorial() {
+            alert('Función de historial en desarrollo. Próximamente podrás ver todos los cambios realizados al servicio.');
+        }
+    </script>
+}

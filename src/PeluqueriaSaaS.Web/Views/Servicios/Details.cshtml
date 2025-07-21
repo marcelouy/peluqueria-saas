@@ -1,0 +1,583 @@
+﻿@*
+    Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Details.cshtml
+    PropÃ³sito: Vista detallada del servicio - DISEÃ‘O HERMOSO
+    Fecha: Julio 2025
+*@
+
+@model PeluqueriaSaaS.Application.DTOs.ServicioDto
+@{
+    ViewData["Title"] = $"Detalles - {Model.Nombre}";
+}
+
+<!-- Header de la pÃ¡gina -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-info-circle me-3"></i>
+            Detalles del Servicio
+        </h1>
+        <p class="page-subtitle">
+            InformaciÃ³n completa del servicio "<strong>@Model.Nombre</strong>"
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- NavegaciÃ³n breadcrumb -->
+    <nav aria-label="breadcrumb" class="fade-in">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="@Url.Action("Index")" class="text-decoration-none">
+                    <i class="fas fa-scissors me-1"></i>
+                    Servicios
+                </a>
+            </li>
+            <li class="breadcrumb-item active">
+                <i class="fas fa-info-circle me-1"></i>
+                @Model.Nombre
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Toolbar de acciones principales -->
+    <div class="btn-toolbar fade-in">
+        <div class="btn-group">
+            <!-- BotÃ³n Editar - NARANJA HERMOSO -->
+            <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-edit btn-icon">
+                <i class="fas fa-edit"></i>
+                Editar Servicio
+            </a>
+
+            <!-- BotÃ³n Cambiar Estado -->
+            @if (Model.EsActivo)
+            {
+                <button type="button" class="btn btn-warning btn-icon" onclick="cambiarEstado(false)">
+                    <i class="fas fa-pause"></i>
+                    Desactivar
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-success btn-icon" onclick="cambiarEstado(true)">
+                    <i class="fas fa-play"></i>
+                    Activar
+                </button>
+            }
+
+            <!-- BotÃ³n Duplicar -->
+            <button type="button" class="btn btn-info btn-icon" onclick="duplicarServicio()">
+                <i class="fas fa-copy"></i>
+                Duplicar
+            </button>
+        </div>
+
+        <div class="btn-group">
+            <!-- BotÃ³n Eliminar - ROJO HERMOSO -->
+            <a href="@Url.Action("Delete", new { id = Model.Id })" class="btn btn-delete btn-icon">
+                <i class="fas fa-trash"></i>
+                Eliminar
+            </a>
+
+            <!-- BotÃ³n Volver - GRIS -->
+            <a href="@Url.Action("Index")" class="btn btn-secondary btn-icon">
+                <i class="fas fa-arrow-left"></i>
+                Volver a Lista
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- InformaciÃ³n principal del servicio -->
+        <div class="col-lg-8">
+            <!-- Card principal -->
+            <div class="service-card fade-in">
+                <div class="service-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="service-title mb-2">@Model.Nombre</h2>
+                            <div class="service-category">
+                                <i class="fas fa-tag me-2"></i>
+                                @Model.TipoServicioNombre
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge @Model.EstadoCssClass fs-6">
+                                <i class="fas fa-@(Model.EsActivo ? "check-circle" : "pause-circle") me-1"></i>
+                                @Model.EstadoTexto
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="service-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="service-price">
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                @Model.PrecioFormateado
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="service-duration">
+                                <i class="fas fa-clock me-2"></i>
+                                @Model.DuracionFormateada
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrWhiteSpace(Model.Descripcion))
+                    {
+                        <div class="service-description mt-4">
+                            <h6><i class="fas fa-align-left me-2"></i>DescripciÃ³n</h6>
+                            <p class="mb-0">@Model.Descripcion</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="service-description mt-4">
+                            <p class="text-muted fst-italic mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Sin descripciÃ³n detallada
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- InformaciÃ³n tÃ©cnica -->
+            <div class="card mt-4 fade-in">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        InformaciÃ³n TÃ©cnica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">
+                                    <i class="fas fa-hashtag me-2"></i>
+                                    ID del Servicio
+                                </label>
+                                <div class="info-value">
+                                    <code>@Model.Id</code>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="copiarAlPortapapeles('@Model.Id')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">
+                                    <i class="fas fa-building me-2"></i>
+                                    Tenant ID
+                                </label>
+                                <div class="info-value">
+                                    <code>@Model.TenantId</code>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">
+                                    <i class="fas fa-calendar-plus me-2"></i>
+                                    Fecha de CreaciÃ³n
+                                </label>
+                                <div class="info-value">
+                                    @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">
+                                    <i class="fas fa-calendar-edit me-2"></i>
+                                    Ãšltima ModificaciÃ³n
+                                </label>
+                                <div class="info-value">
+                                    @if (Model.FechaActualizacion.HasValue)
+                                    {
+                                        @Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Sin modificaciones</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">
+                                    <i class="fas fa-coins me-2"></i>
+                                    Moneda
+                                </label>
+                                <div class="info-value">
+                                    <span class="badge badge-info">@Model.MonedaCodigo</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">
+                                    <i class="fas fa-list me-2"></i>
+                                    Tipo de Servicio ID
+                                </label>
+                                <div class="info-value">
+                                    <code>@Model.TipoServicioId</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar con acciones y estadÃ­sticas -->
+        <div class="col-lg-4">
+            <!-- Acciones rÃ¡pidas -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightning-bolt me-2"></i>
+                        Acciones RÃ¡pidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <!-- BotÃ³n Crear Nuevo - VERDE -->
+                        <a href="@Url.Action("Create")" class="btn btn-create btn-icon">
+                            <i class="fas fa-plus"></i>
+                            Crear Nuevo Servicio
+                        </a>
+
+                        <!-- BotÃ³n Ver Lista - AZUL -->
+                        <a href="@Url.Action("Index")" class="btn btn-view btn-icon">
+                            <i class="fas fa-list"></i>
+                            Ver Todos los Servicios
+                        </a>
+
+                        <!-- BotÃ³n Imprimir -->
+                        <button type="button" class="btn btn-secondary btn-icon" onclick="imprimirDetalles()">
+                            <i class="fas fa-print"></i>
+                            Imprimir Detalles
+                        </button>
+
+                        <!-- BotÃ³n Exportar -->
+                        <button type="button" class="btn btn-secondary btn-icon" onclick="exportarPDF()">
+                            <i class="fas fa-file-pdf"></i>
+                            Exportar a PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EstadÃ­sticas del servicio -->
+            <div class="card mt-4 fade-in">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        EstadÃ­sticas del Servicio
+                    </h6>
+                </div>
+                <div class="card-body" id="estadisticas-servicio">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando estadÃ­sticas...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- InformaciÃ³n de precio -->
+            <div class="card mt-4 fade-in">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i>
+                        AnÃ¡lisis de Precio
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <div class="border rounded p-3" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);">
+                                <h4 class="text-success mb-1">@Model.PrecioFormateado</h4>
+                                <small class="text-muted">Precio actual</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <div class="h6 text-info mb-1" id="precio-por-minuto">$0.00</div>
+                                <small class="text-muted">Por minuto</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <div class="h6 text-warning mb-1" id="precio-por-hora">$0.00</div>
+                                <small class="text-muted">Por hora</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Servicios relacionados -->
+            <div class="card mt-4 fade-in">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-link me-2"></i>
+                        Servicios del Mismo Tipo
+                    </h6>
+                </div>
+                <div class="card-body" id="servicios-relacionados">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando servicios relacionados...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario oculto para cambio de estado -->
+<form id="cambiarEstadoForm" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        // Calcular precios derivados
+        document.addEventListener('DOMContentLoaded', function() {
+            const precio = @Model.Precio;
+            const duracion = @Model.DuracionMinutos;
+            
+            const precioPorMinuto = precio / duracion;
+            const precioPorHora = precioPorMinuto * 60;
+            
+            document.getElementById('precio-por-minuto').textContent = `$${precioPorMinuto.toFixed(2)}`;
+            document.getElementById('precio-por-hora').textContent = `$${precioPorHora.toFixed(2)}`;
+            
+            // Cargar estadÃ­sticas y servicios relacionados
+            cargarEstadisticas();
+            cargarServiciosRelacionados();
+        });
+
+        // FunciÃ³n para cambiar estado
+        function cambiarEstado(activar) {
+        const accion = activar ? 'activar' : 'desactivar';
+        const mensaje = `¿Estás seguro de que deseas ${accion} el servicio "${@Html.Raw(Json.Serialize(Model.Nombre))}"?`;
+        
+        if (confirm(mensaje)) {
+            // Obtener el token antiforgery
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            // Hacer petición AJAX con fetch moderno
+            fetch('@Url.Action("CambiarEstado")' + '/@Model.Id', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: 'activar=' + activar + '&__RequestVerificationToken=' + token
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recargar la página para actualizar el estado
+                    location.reload();
+                } else {
+                    alert('Error al cambiar el estado del servicio.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error de conexión al cambiar el estado.');
+            });
+        }
+    }
+
+        // FunciÃ³n para duplicar servicio
+        function duplicarServicio() {
+            if (confirm('Â¿Deseas crear un nuevo servicio basado en "@Model.Nombre"?')) {
+                const url = '@Url.Action("Create")' + '?duplicarDesde=@Model.Id';
+                window.location.href = url;
+            }
+        }
+
+        // FunciÃ³n para copiar al portapapeles
+        function copiarAlPortapapeles(texto) {
+            navigator.clipboard.writeText(texto).then(function() {
+                // Mostrar feedback visual
+                const btn = event.target.closest('button');
+                const icon = btn.querySelector('i');
+                const originalClass = icon.className;
+                
+                icon.className = 'fas fa-check text-success';
+                setTimeout(() => {
+                    icon.className = originalClass;
+                }, 1500);
+            }).catch(function(err) {
+                alert('Error al copiar: ' + err);
+            });
+        }
+
+        // FunciÃ³n para imprimir
+        function imprimirDetalles() {
+            const printWindow = window.open('', '_blank');
+            const printContent = `
+                <html>
+                <head>
+                    <title>Servicio - @Model.Nombre</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 20px; margin-bottom: 20px; }
+                        .info-row { margin: 10px 0; }
+                        .label { font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>@Model.Nombre</h1>
+                        <p>Detalles del Servicio - PeluqueriaSaaS</p>
+                    </div>
+                    <div class="info-row"><span class="label">Tipo:</span> @Model.TipoServicioNombre</div>
+                    <div class="info-row"><span class="label">Precio:</span> @Model.PrecioFormateado</div>
+                    <div class="info-row"><span class="label">DuraciÃ³n:</span> @Model.DuracionFormateada</div>
+                    <div class="info-row"><span class="label">Estado:</span> @Model.EstadoTexto</div>
+                    <div class="info-row"><span class="label">DescripciÃ³n:</span> @(Model.Descripcion ?? "Sin descripciÃ³n")</div>
+                    <div class="info-row"><span class="label">Fecha de creaciÃ³n:</span> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // FunciÃ³n placeholder para exportar PDF
+        function exportarPDF() {
+            alert('FunciÃ³n de exportaciÃ³n PDF en desarrollo. PrÃ³ximamente podrÃ¡s exportar los detalles del servicio.');
+        }
+
+        // Cargar estadÃ­sticas del servicio
+        async function cargarEstadisticas() {
+            try {
+                // SimulaciÃ³n de estadÃ­sticas (reemplazar con llamada real a API)
+                setTimeout(() => {
+                    document.getElementById('estadisticas-servicio').innerHTML = `
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-primary mb-1">15</h6>
+                                    <small class="text-muted">Veces reservado</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-success mb-1">4.8</h6>
+                                    <small class="text-muted">CalificaciÃ³n</small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-info mb-1">@Model.PrecioFormateado</h6>
+                                    <small class="text-muted">Ingresos generados</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }, 1000);
+            } catch (error) {
+                document.getElementById('estadisticas-servicio').innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No se pudieron cargar las estadÃ­sticas
+                    </div>
+                `;
+            }
+        }
+
+        // Cargar servicios relacionados
+        async function cargarServiciosRelacionados() {
+            try {
+                // SimulaciÃ³n de servicios relacionados (reemplazar con llamada real a API)
+                setTimeout(() => {
+                    document.getElementById('servicios-relacionados').innerHTML = `
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Servicio Similar 1</h6>
+                                        <small class="text-muted">$45.00 - 60 min</small>
+                                    </div>
+                                    <span class="badge badge-success">Activo</span>
+                                </div>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Servicio Similar 2</h6>
+                                        <small class="text-muted">$35.00 - 45 min</small>
+                                    </div>
+                                    <span class="badge badge-success">Activo</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="@Url.Action("Index", new { filtro = new { TipoServicioId = Model.TipoServicioId } })" class="btn btn-sm btn-outline-primary">
+                                Ver todos del tipo
+                            </a>
+                        </div>
+                    `;
+                }, 1500);
+            } catch (error) {
+                document.getElementById('servicios-relacionados').innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No se pudieron cargar servicios relacionados
+                    </div>
+                `;
+            }
+        }
+    </script>
+}
+
+<style>
+    .info-item {
+        margin-bottom: 1rem;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .info-value {
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-value code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    @@media print {
+        .btn-toolbar, .card:not(:first-child) {
+            display: none !important;
+        }
+    }
+</style>
+
+
+

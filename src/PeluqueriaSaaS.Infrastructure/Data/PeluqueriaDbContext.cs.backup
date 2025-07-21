@@ -1,0 +1,188 @@
+﻿/*
+ * Archivo: src/PeluqueriaSaaS.Infrastructure/Data/PeluqueriaDbContext.cs
+ * Propósito: DbContext actualizado - RESPETANDO ESTRUCTURA EXISTENTE
+ * Fecha: Julio 2025
+ * CAMBIOS: SOLO añadir Servicios y TiposServicio SIN tocar lo existente
+ */
+
+using Microsoft.EntityFrameworkCore;
+using PeluqueriaSaaS.Domain.Entities;
+using PeluqueriaSaaS.Domain.Entities.Configuration;
+
+namespace PeluqueriaSaaS.Infrastructure.Data
+{
+    public class PeluqueriaDbContext : DbContext
+    {
+        public PeluqueriaDbContext(DbContextOptions<PeluqueriaDbContext> options) : base(options)
+        {
+        }
+
+        // ===== ENTIDADES EXISTENTES (NO TOCAR) =====
+        public DbSet<ClienteBasico> ClientesBasicos { get; set; }
+        public DbSet<Empleado> Empleados { get; set; } = null!;
+        public DbSet<EmpleadoBasico> EmpleadosBasicos { get; set; }
+
+        // ===== ⭐ NUEVAS ENTIDADES PARA SERVICIOS =====
+        public DbSet<Servicio> Servicios { get; set; } = null!;
+        public DbSet<TipoServicio> TiposServicio { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            
+            // ===== CONFIGURACIONES EXISTENTES (NO TOCAR) =====
+            
+            // Configuración para ClienteBasico
+            modelBuilder.Entity<ClienteBasico>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Apellido).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Telefono).HasMaxLength(20);
+                entity.Property(e => e.FechaRegistro).IsRequired();
+                
+                // Nuevos campos
+                entity.Property(e => e.Direccion).HasMaxLength(200);
+                entity.Property(e => e.Ciudad).HasMaxLength(100);
+                entity.Property(e => e.CodigoPostal).HasMaxLength(10);
+                entity.Property(e => e.Notas).HasMaxLength(500);
+                entity.Property(e => e.EsActivo).IsRequired().HasDefaultValue(true);
+            });
+            
+            // Configuración para EmpleadoBasico
+            modelBuilder.Entity<EmpleadoBasico>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Apellido).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Telefono).HasMaxLength(20);
+                entity.Property(e => e.FechaContratacion).IsRequired();
+                entity.Property(e => e.Cargo).HasMaxLength(100);
+                entity.Property(e => e.Salario).HasColumnType("decimal(18,2)");
+            });
+
+            // ===== ⭐ NUEVAS CONFIGURACIONES PARA SERVICIOS =====
+            ConfigurarServicios(modelBuilder);
+            ConfigurarTiposServicio(modelBuilder);
+            ConfigurarRelacionesServicios(modelBuilder);
+        }
+
+        /// <summary>
+        /// ⭐ NUEVA: Configuración de la entidad Servicio con ValueObjects
+        /// </summary>
+        private static void ConfigurarServicios(ModelBuilder modelBuilder)
+        {
+            var servicio = modelBuilder.Entity<Servicio>();
+            
+            // Clave primaria
+            servicio.HasKey(s => s.Id);
+            servicio.Property(s => s.Id).ValueGeneratedOnAdd();
+            
+            // Propiedades básicas
+            servicio.Property(s => s.Nombre)
+                .IsRequired()
+                .HasMaxLength(100);
+                
+            servicio.Property(s => s.Descripcion)
+                .HasMaxLength(500);
+                
+            servicio.Property(s => s.DuracionMinutos)
+                .IsRequired();
+                
+            servicio.Property(s => s.EsActivo)
+                .IsRequired()
+                .HasDefaultValue(true);
+                
+            // ⭐ CONFIGURACIÓN CRÍTICA: ValueObject Dinero
+            servicio.OwnsOne(s => s.Precio, precio =>
+            {
+                precio.Property(p => p.Monto)
+                    .HasColumnName("Precio")
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired();
+                    
+                precio.Property(p => p.Moneda)
+                    .HasColumnName("MonedaCodigo")
+                    .HasMaxLength(3)
+                    .IsRequired()
+                    .HasDefaultValue("UYU");
+            });
+            
+            // Configuración de TenantEntityBase (heredada)
+            servicio.Property(s => s.TenantId)
+                .IsRequired();
+                
+            servicio.Property(s => s.FechaCreacion)
+                .IsRequired()
+                .HasDefaultValueSql("GETUTCDATE()");
+                
+            servicio.Property(s => s.FechaModificacion);
+            
+            // Relación con TipoServicio
+            servicio.Property(s => s.TipoServicioId)
+                .IsRequired();
+
+            // Índices para performance
+            servicio.HasIndex(s => new { s.TenantId, s.EsActivo })
+                .HasDatabaseName("IX_Servicios_TenantId_EsActivo");
+                
+            servicio.HasIndex(s => s.Nombre)
+                .HasDatabaseName("IX_Servicios_Nombre");
+                
+            servicio.HasIndex(s => new { s.TenantId, s.TipoServicioId })
+                .HasDatabaseName("IX_Servicios_TenantId_TipoServicioId");
+        }
+
+        /// <summary>
+        /// ⭐ NUEVA: Configuración de la entidad TipoServicio
+        /// </summary>
+        private static void ConfigurarTiposServicio(ModelBuilder modelBuilder)
+        {
+            var tipoServicio = modelBuilder.Entity<TipoServicio>();
+            
+            tipoServicio.HasKey(ts => ts.Id);
+            tipoServicio.Property(ts => ts.Id).ValueGeneratedOnAdd();
+            
+            tipoServicio.Property(ts => ts.Nombre)
+                .IsRequired()
+                .HasMaxLength(50);
+                
+            tipoServicio.Property(ts => ts.Descripcion)
+                .HasMaxLength(200);
+                
+            tipoServicio.Property(ts => ts.EsActivo)
+                .IsRequired()
+                .HasDefaultValue(true);
+                
+            // Configuración de TenantEntityBase
+            tipoServicio.Property(ts => ts.TenantId)
+                .IsRequired();
+                
+            tipoServicio.Property(ts => ts.FechaCreacion)
+                .IsRequired()
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            // Índices
+            tipoServicio.HasIndex(ts => new { ts.TenantId, ts.EsActivo })
+                .HasDatabaseName("IX_TiposServicio_TenantId_EsActivo");
+                
+            tipoServicio.HasIndex(ts => ts.Nombre)
+                .HasDatabaseName("IX_TiposServicio_Nombre");
+        }
+
+        /// <summary>
+        /// ⭐ NUEVA: Configuración de relaciones para Servicios
+        /// </summary>
+        private static void ConfigurarRelacionesServicios(ModelBuilder modelBuilder)
+        {
+            // Relación Servicio -> TipoServicio
+            modelBuilder.Entity<Servicio>()
+                .HasOne(s => s.TipoServicio)
+                .WithMany()
+                .HasForeignKey(s => s.TipoServicioId)
+                .OnDelete(DeleteBehavior.Restrict); // No permitir eliminar tipo si hay servicios
+        }
+    }
+}

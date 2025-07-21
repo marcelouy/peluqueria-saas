@@ -1,0 +1,157 @@
+﻿using Microsoft.EntityFrameworkCore;
+using PeluqueriaSaaS.Domain.Entities;
+using PeluqueriaSaaS.Domain.Interfaces;
+using PeluqueriaSaaS.Infrastructure.Data;
+using PeluqueriaSaaS.Domain.ValueObjects;
+
+namespace PeluqueriaSaaS.Infrastructure.Repositories
+{
+    public class ServicioRepository : IServicioRepository
+    {
+        private readonly PeluqueriaDbContext _context;
+
+        public ServicioRepository(PeluqueriaDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<Servicio>> GetAllAsync(string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .Where(s => s.TenantId == tenantId)
+                .OrderBy(s => s.Nombre)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetActivosAsync(string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .Where(s => s.TenantId == tenantId && s.EsActivo)
+                .OrderBy(s => s.Nombre)
+                .ToListAsync();
+        }
+
+        public async Task<Servicio?> GetByIdAsync(int id, string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .FirstOrDefaultAsync(s => s.Id == id && s.TenantId == tenantId);
+        }
+
+        public async Task<Servicio> CreateAsync(Servicio servicio)
+        {
+            _context.Servicios.Add(servicio);
+            await _context.SaveChangesAsync();
+            return servicio;
+        }
+
+        public async Task<Servicio> UpdateAsync(Servicio servicio)
+        {
+            _context.Servicios.Update(servicio);
+            await _context.SaveChangesAsync();
+            return servicio;
+        }
+
+        public async Task<bool> DeleteAsync(int id, string tenantId)
+        {
+            var servicio = await GetByIdAsync(id, tenantId);
+            if (servicio == null) return false;
+
+            _context.Servicios.Remove(servicio);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // ✅ CORREGIDO: Guid → int
+        public async Task<IEnumerable<Servicio>> GetByTipoAsync(int tipoServicioId, string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .Where(s => s.TenantId == tenantId && s.TipoServicioId == tipoServicioId) // ✅ CORREGIDO: int == int
+                .OrderBy(s => s.Nombre)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetByPrecioRangoAsync(decimal precioMin, decimal precioMax, string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .Where(s => s.TenantId == tenantId && 
+                           s.Precio.Valor >= precioMin && s.Precio.Valor <= precioMax)
+                .OrderBy(s => s.Precio.Valor)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetByDuracionRangoAsync(int duracionMin, int duracionMax, string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .Where(s => s.TenantId == tenantId && 
+                           s.DuracionMinutos >= duracionMin && s.DuracionMinutos <= duracionMax)
+                .OrderBy(s => s.DuracionMinutos)
+                .ToListAsync();
+        }
+
+        public async Task<bool> ExisteNombreAsync(string nombre, string tenantId, int? idExcluir = null)
+        {
+            var query = _context.Servicios
+                .Where(s => s.TenantId == tenantId && 
+                           s.Nombre.ToLower() == nombre.ToLower());
+
+            if (idExcluir.HasValue)
+            {
+                query = query.Where(s => s.Id != idExcluir.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+
+        public async Task<decimal> GetPrecioPromedioAsync(string tenantId)
+        {
+            var serviciosActivos = await _context.Servicios
+                .Where(s => s.TenantId == tenantId && s.EsActivo)
+                .ToListAsync();
+
+            return serviciosActivos.Any() ? serviciosActivos.Average(s => s.Precio.Valor) : 0;
+        }
+
+        // ✅ CORREGIDO: Guid → int  
+        public async Task<int> GetCountByTipoAsync(int tipoServicioId, string tenantId)
+        {
+            return await _context.Servicios
+                .CountAsync(s => s.TenantId == tenantId && s.TipoServicioId == tipoServicioId); // ✅ CORREGIDO: int == int
+        }
+
+        // ✅ MÉTODOS ADICIONALES ÚTILES
+        public async Task<IEnumerable<Servicio>> BuscarAsync(string termino, string tenantId)
+        {
+            return await _context.Servicios
+                .Include(s => s.TipoServicio)
+                .Where(s => s.TenantId == tenantId && 
+                           (s.Nombre.Contains(termino) || 
+                            (s.Descripcion != null && s.Descripcion.Contains(termino))))
+                .OrderBy(s => s.Nombre)
+                .ToListAsync();
+        }
+
+        public async Task<bool> TieneServiciosRelacionados(int tipoServicioId, string tenantId)
+        {
+            return await _context.Servicios
+                .AnyAsync(s => s.TenantId == tenantId && s.TipoServicioId == tipoServicioId);
+        }
+    }
+
+        public async Task CreateWithTenantAsync(Servicio servicio, string tenantId)
+        {
+            var servicioEntity = _context.Servicios.Add(servicio);
+            servicioEntity.Property("TenantId").CurrentValue = tenantId;
+            servicioEntity.Property("CreadoPor").CurrentValue = "system";
+            servicioEntity.Property("ActualizadoPor").CurrentValue = "system";
+            servicioEntity.Property("FechaCreacion").CurrentValue = DateTime.UtcNow;
+            servicioEntity.Property("FechaActualizacion").CurrentValue = DateTime.UtcNow;
+            servicioEntity.Property("Activo").CurrentValue = true;
+            await _context.SaveChangesAsync();
+        }
+}

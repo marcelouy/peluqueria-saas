@@ -10,7 +10,7 @@ namespace PeluqueriaSaaS.Domain.Entities
         public string? Descripcion { get; private set; }
         public Dinero Precio { get; private set; } = Dinero.Cero;
         public int DuracionMinutos { get; private set; }
-        public Guid TipoServicioId { get; private set; }
+        public int TipoServicioId { get; private set; } // ✅ CORREGIDO: Guid → int
         public bool EsActivo { get; private set; } = true;
 
         // Navigation properties
@@ -18,12 +18,12 @@ namespace PeluqueriaSaaS.Domain.Entities
 
         private Servicio() { }
 
-        public Servicio(string nombre, Dinero precio, int duracionMinutos, Guid tipoServicioId, string? descripcion = null)
+        public Servicio(string nombre, Dinero precio, int duracionMinutos, int tipoServicioId, string? descripcion = null) // ✅ CORREGIDO: int tipoServicioId
         {
             Nombre = nombre;
             Precio = precio;
             DuracionMinutos = duracionMinutos;
-            TipoServicioId = tipoServicioId;
+            TipoServicioId = tipoServicioId; // ✅ CORREGIDO
             Descripcion = descripcion;
         }
 
@@ -33,6 +33,12 @@ namespace PeluqueriaSaaS.Domain.Entities
             Precio = precio;
             DuracionMinutos = duracionMinutos;
             Descripcion = descripcion;
+        }
+
+        // ✅ NUEVO MÉTODO: Para actualizar TipoServicioId
+        public void ActualizarTipoServicio(int tipoServicioId)
+        {
+            TipoServicioId = tipoServicioId;
         }
 
         public new void Activar() => EsActivo = true;
