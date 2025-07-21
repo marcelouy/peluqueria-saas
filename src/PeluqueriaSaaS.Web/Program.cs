@@ -35,6 +35,8 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IServicioRepository, ServicioRepository>();
 builder.Services.AddScoped<ITipoServicioRepository, TipoServicioRepository>();
 
+//🆕 NUEVO - REGISTRO VENTA REPOSITORY:
+builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 var app = builder.Build();
 
 // Asegurar que la base de datos existe y se crea automáticamente

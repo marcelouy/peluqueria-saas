@@ -20,6 +20,8 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<Estacion> Estaciones { get; set; }
         public DbSet<Cita> Citas { get; set; }
         public DbSet<CitaServicio> CitaServicios { get; set; }
+        public DbSet<Venta> Ventas { get; set; }
+        public DbSet<VentaDetalle> VentaDetalles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -94,6 +96,68 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 
                 // Índice único por tenant
                 entity.HasIndex(e => new { e.TenantId, e.Nombre }).IsUnique();
+            });
+
+            // Configuración Venta
+            modelBuilder.Entity<Venta>(entity =>
+            {
+                entity.HasKey(v => v.VentaId);
+                entity.Property(v => v.NumeroVenta).IsRequired().HasMaxLength(20);
+                entity.Property(v => v.SubTotal).HasColumnType("decimal(10,2)");
+                entity.Property(v => v.Descuento).HasColumnType("decimal(10,2)");
+                entity.Property(v => v.Total).HasColumnType("decimal(10,2)");
+                entity.Property(v => v.EstadoVenta).IsRequired().HasMaxLength(20);
+                entity.Property(v => v.Observaciones).HasMaxLength(500);
+                entity.Property(v => v.TenantId).IsRequired().HasMaxLength(50);
+                
+                // Relación con Empleado
+                entity.HasOne(v => v.Empleado)
+                      .WithMany()
+                      .HasForeignKey(v => v.EmpleadoId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                
+                // Relación con Cliente
+                entity.HasOne(v => v.Cliente)
+                      .WithMany()
+                      .HasForeignKey(v => v.ClienteId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                
+                // Índices para performance
+                entity.HasIndex(v => new { v.FechaVenta, v.TenantId });
+                entity.HasIndex(v => v.NumeroVenta).IsUnique();
+            });
+
+            // Configuración VentaDetalle
+            modelBuilder.Entity<VentaDetalle>(entity =>
+            {
+                entity.HasKey(vd => vd.VentaDetalleId);
+                entity.Property(vd => vd.NombreServicio).IsRequired().HasMaxLength(100);
+                entity.Property(vd => vd.PrecioUnitario).HasColumnType("decimal(10,2)");
+                entity.Property(vd => vd.Subtotal).HasColumnType("decimal(10,2)");
+                entity.Property(vd => vd.NotasServicio).HasMaxLength(200);
+                entity.Property(vd => vd.TenantId).IsRequired().HasMaxLength(50);
+                
+                // Relación con Venta
+                entity.HasOne(vd => vd.Venta)
+                      .WithMany(v => v.VentaDetalles)
+                      .HasForeignKey(vd => vd.VentaId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // Relación con Servicio
+                entity.HasOne(vd => vd.Servicio)
+                      .WithMany()
+                      .HasForeignKey(vd => vd.ServicioId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                
+                // Relación opcional con Empleado específico del servicio
+                entity.HasOne(vd => vd.EmpleadoServicio)
+                      .WithMany()
+                      .HasForeignKey(vd => vd.EmpleadoServicioId)
+                      .OnDelete(DeleteBehavior.SetNull);
+                
+                // Índices para performance
+                entity.HasIndex(vd => vd.VentaId);
+                entity.HasIndex(vd => vd.ServicioId);
             });
 
             base.OnModelCreating(modelBuilder);
