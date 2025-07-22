@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
+using PeluqueriaSaaS.Application.Features.Clientes.Queries;
 using PeluqueriaSaaS.Domain.Entities;
+using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Repositories;
 
 namespace PeluqueriaSaaS.Web.Controllers
@@ -10,19 +13,19 @@ namespace PeluqueriaSaaS.Web.Controllers
     {
         private readonly IVentaRepository _ventaRepository;
         private readonly IEmpleadoRepository _empleadoRepository;
-        private readonly IClienteRepository _clienteRepository;
+        private readonly IMediator _mediator;
         private readonly IServicioRepository _servicioRepository;
         private const string TENANT_ID = "default";
 
         public VentasController(
             IVentaRepository ventaRepository,
             IEmpleadoRepository empleadoRepository,
-            IClienteRepository clienteRepository,
+            IMediator mediator,
             IServicioRepository servicioRepository)
         {
             _ventaRepository = ventaRepository;
             _empleadoRepository = empleadoRepository;
-            _clienteRepository = clienteRepository;
+            _mediator = mediator;
             _servicioRepository = servicioRepository;
         }
 
@@ -47,18 +50,19 @@ namespace PeluqueriaSaaS.Web.Controllers
                 var model = new PosViewModel();
                 
                 // Cargar empleados
-                var empleados = await _empleadoRepository.GetAllAsync(TENANT_ID);
+                var empleados = await _empleadoRepository.GetAllAsync();
                 model.Empleados = empleados.Where(e => e.EsActivo).Select(e => new EmpleadoBasicoDto
                 {
-                    EmpleadoId = e.EmpleadoId,
+                    EmpleadoId = e.Id,
                     Nombre = e.Nombre
                 }).ToList();
 
-                // Cargar clientes  
-                var clientes = await _clienteRepository.GetAllAsync(TENANT_ID);
-                model.Clientes = clientes.Where(c => c.EsActivo).Select(c => new ClienteBasicoDto
+                // Cargar clientes usando MediatR
+                var clientesQuery = new ObtenerClientesQuery();
+                var clientesData = await _mediator.Send(clientesQuery);
+                model.Clientes = clientesData.Where(c => c.EsActivo).Select(c => new ClienteBasicoDto
                 {
-                    ClienteId = c.ClienteId,
+                    ClienteId = c.Id,
                     Nombre = c.Nombre
                 }).ToList();
 
@@ -66,7 +70,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 var servicios = await _servicioRepository.GetAllAsync(TENANT_ID);
                 model.Servicios = servicios.Where(s => s.EsActivo).Select(s => new ServicioBasicoDto
                 {
-                    ServicioId = s.ServicioId,
+                    ServicioId = s.Id,
                     Nombre = s.Nombre,
                     Precio = s.Precio.Valor
                 }).ToList();
@@ -122,27 +126,61 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        public async Task<IActionResult> Reportes()
+        public async Task<IActionResult> Reportes(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? empleadoId = null)
         {
             try
             {
+                // Valores por defecto
+                fechaDesde ??= DateTime.Today.AddMonths(-1);
+                fechaHasta ??= DateTime.Today;
+
                 var ventas = await _ventaRepository.GetAllAsync(TENANT_ID);
+                
+                // Cargar empleados para dropdown filtros
+                var empleados = await _empleadoRepository.GetAllAsync();
+                ViewBag.Empleados = new SelectList(empleados.Where(e => e.EsActivo), "Id", "NombreCompleto");
+                
+                // Filtrar ventas
+                var ventasFiltradas = ventas.Where(v => 
+                    v.FechaVenta.Date >= fechaDesde.Value.Date && 
+                    v.FechaVenta.Date <= fechaHasta.Value.Date);
+                
+                if (empleadoId.HasValue)
+                    ventasFiltradas = ventasFiltradas.Where(v => v.EmpleadoId == empleadoId.Value);
+
+                var ventasLista = ventasFiltradas.ToList();
+                
                 var model = new ReporteVentasViewModel
                 {
-                    Ventas = ventas.Select(v => new VentaDto
+                    FechaDesde = fechaDesde.Value,
+                    FechaHasta = fechaHasta.Value,
+                    CantidadVentas = ventasLista.Count,
+                    TotalVentas = ventasLista.Sum(v => v.Total),
+                    PromedioVenta = ventasLista.Any() ? ventasLista.Average(v => v.Total) : 0,
+                    Ventas = ventasLista.Select(v => new VentaDto
                     {
                         VentaId = v.VentaId,
-                        NumeroVenta = v.NumeroVenta,
+                        NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",
                         FechaVenta = v.FechaVenta,
-                        Total = v.Total
+                        Total = v.Total,
+                        ClienteNombre = "Cliente", // Temporal
+                        EmpleadoNombre = "Empleado", // Temporal
+                        EstadoVenta = "Completada"
                     }).ToList()
                 };
+                
                 return View(model);
             }
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error: {ex.Message}";
-                return View(new ReporteVentasViewModel());
+                ViewBag.Empleados = new SelectList(new List<object>(), "Id", "Nombre");
+                return View(new ReporteVentasViewModel 
+                { 
+                    FechaDesde = DateTime.Today.AddMonths(-1), 
+                    FechaHasta = DateTime.Today,
+                    Ventas = new List<VentaDto>()
+                });
             }
         }
     }

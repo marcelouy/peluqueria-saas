@@ -1,0 +1,176 @@
+/* CSS PARA ESTRUCTURA REAL POS - SERVICIOS */
+
+/* Botón servicio principal */
+.btn-agregar-servicio {
+    padding: 15px 12px !important;
+    min-height: 80px !important;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    margin-bottom: 8px !important;
+}
+
+.btn-agregar-servicio:hover {
+    border-color: #007bff !important;
+    background-color: #f8f9ff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.15) !important;
+}
+
+.btn-agregar-servicio:active,
+.btn-agregar-servicio.active {
+    border-color: #28a745 !important;
+    background-color: #f8fff9 !important;
+    box-shadow: 0 2px 8px rgba(40,167,69,0.2) !important;
+}
+
+/* Contenedor interno del botón */
+.btn-agregar-servicio .text-start {
+    width: 100%;
+    display: block;
+    text-align: left !important;
+    line-height: 1.2 !important;
+    padding: 2px 0;
+}
+
+/* Nombre del servicio */
+.btn-agregar-servicio strong {
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #007bff !important;
+    margin: 0 0 6px 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.3 !important;
+}
+
+/* OCULTAR small vacío que causa espaciado */
+.btn-agregar-servicio .text-muted {
+    display: none !important; 
+}
+
+/* OCULTAR br después de small vacío */
+.btn-agregar-servicio .text-muted + br {
+    display: none !important;
+}
+
+/* BR entre strong y precio - reducir espacio */
+.btn-agregar-servicio strong + br {
+    line-height: 0.5 !important;
+    margin: 2px 0 !important;
+}
+
+/* Precio del servicio */
+.btn-agregar-servicio .text-success {
+    display: block !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #28a745 !important;
+    margin: 2px 0 0 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Grid contenedor servicios */
+.servicios-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .servicios-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .btn-agregar-servicio {
+        min-height: 70px !important;
+        padding: 12px 10px !important;
+    }
+    
+    .btn-agregar-servicio strong {
+        font-size: 13px !important;
+    }
+    
+    .btn-agregar-servicio .text-success {
+        font-size: 14px !important;
+    }
+}
+
+/* TABLA SERVICIOS EN VENTA */
+.servicios-venta-table {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.servicios-venta-table th,
+.servicios-venta-table td {
+    padding: 8px 12px;
+    vertical-align: middle;
+}
+
+/* TOTALES DESTACADOS */
+.total-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.total-final {
+    font-size: 2em;
+    font-weight: 900;
+    color: #28a745;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* BOTONES MEJORADOS */
+.btn-procesar-venta {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-procesar-venta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+}
+
+.btn-limpiar-venta {
+    background: linear-gradient(45deg, #dc3545, #e85d75);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .servicios-grid {
+        grid-template-columns: 1fr;
+        max-height: 250px;
+    }
+    
+    .servicio-item {
+        min-height: 50px;
+        padding: 8px 12px;
+    }
+    
+    .servicio-nombre {
+        font-size: 13px;
+    }
+    
+    .servicio-precio {
+        font-size: 14px;
+        margin-left: 10px;
+    }
+}
