@@ -1,0 +1,379 @@
+@model PeluqueriaSaaS.Application.DTOs.PosViewModel
+@{
+    ViewData["Title"] = "POS - Punto de Venta";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-cash-register text-primary"></i>
+                    Punto de Venta (POS)
+                </h2>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> Ver Ventas
+                    </a>
+                    <a href="@Url.Action("Reportes")" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar"></i> Reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @using (Html.BeginForm("POS", "Ventas", FormMethod.Post, new { id = "posForm", @class = "needs-validation", novalidate = "novalidate" }))
+    {
+        @Html.AntiForgeryToken()
+        
+        <div class="row">
+            <!-- COLUMNA IZQUIERDA: DATOS VENTA -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shopping-cart"></i>
+                            Nueva Venta
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- DATOS BÁSICOS VENTA -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="FechaVenta" class="form-label">Fecha de Venta</label>
+                                @Html.TextBoxFor(m => m.VentaActual.FechaVenta, "{0:yyyy-MM-dd}", new { @class = "form-control", @type = "date", @required = "required" })
+                                @Html.ValidationMessageFor(m => m.VentaActual.FechaVenta, "", new { @class = "text-danger" })
+                            </div>
+                            <div class="col-md-4">
+                                <label for="EmpleadoId" class="form-label">Empleado</label>
+                                @Html.DropDownListFor(m => m.VentaActual.EmpleadoId, 
+                                    new SelectList(Model.Empleados, "EmpleadoId", "Nombre"), 
+                                    "Seleccionar empleado...", 
+                                    new { @class = "form-select", @required = "required" })
+                                @Html.ValidationMessageFor(m => m.VentaActual.EmpleadoId, "", new { @class = "text-danger" })
+                            </div>
+                            <div class="col-md-4">
+                                <label for="ClienteId" class="form-label">Cliente</label>
+                                @Html.DropDownListFor(m => m.VentaActual.ClienteId, 
+                                    new SelectList(Model.Clientes, "ClienteId", "Nombre"), 
+                                    "Seleccionar cliente...", 
+                                    new { @class = "form-select", @required = "required" })
+                                @Html.ValidationMessageFor(m => m.VentaActual.ClienteId, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <!-- SERVICIOS DISPONIBLES -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2">
+                                <i class="fas fa-cut"></i>
+                                Servicios Disponibles
+                            </h6>
+                            <div class="row" id="serviciosDisponibles">
+                                @foreach (var servicio in Model.Servicios)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-2">
+                                        <button type="button" 
+                                                class="btn btn-outline-primary w-100 btn-agregar-servicio" 
+                                                data-servicio-id="@servicio.ServicioId"
+                                                data-servicio-nombre="@servicio.Nombre"
+                                                data-servicio-precio="@servicio.Precio.ToString("F2")"
+                                                data-servicio-tipo="@servicio.TipoServicioNombre">
+                                            <div class="text-start">
+                                                <strong>@servicio.Nombre</strong><br>
+                                                <small class="text-muted">@servicio.TipoServicioNombre</small><br>
+                                                <span class="text-success">$@servicio.Precio.ToString("F2")</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- SERVICIOS EN LA VENTA -->
+                        <div class="mb-3">
+                            <h6 class="border-bottom pb-2">
+                                <i class="fas fa-list"></i>
+                                Servicios en la Venta
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="tablaServicios">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Servicio</th>
+                                            <th>Precio</th>
+                                            <th>Cantidad</th>
+                                            <th>Subtotal</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="serviciosVenta">
+                                        <!-- Los servicios se agregan dinámicamente con JavaScript -->
+                                    </tbody>
+                                </table>
+                                <div id="noServicios" class="text-center text-muted py-3" style="display: none;">
+                                    <i class="fas fa-info-circle"></i>
+                                    No hay servicios agregados a la venta
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OBSERVACIONES -->
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="Observaciones" class="form-label">Observaciones</label>
+                                @Html.TextAreaFor(m => m.VentaActual.Observaciones, new { @class = "form-control", @rows = "2", @placeholder = "Observaciones adicionales..." })
+                                @Html.ValidationMessageFor(m => m.VentaActual.Observaciones, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: TOTALES Y ACCIONES -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calculator"></i>
+                            Resumen de Venta
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- TOTALES -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span class="fw-bold" id="subtotalDisplay">$0.00</span>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label for="Descuento" class="form-label">Descuento:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    @Html.TextBoxFor(m => m.VentaActual.Descuento, new { @class = "form-control", @type = "number", @step = "0.01", @min = "0", @id = "descuentoInput" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.VentaActual.Descuento, "", new { @class = "text-danger" })
+                            </div>
+
+                            <hr>
+                            
+                            <div class="d-flex justify-content-between">
+                                <strong>TOTAL:</strong>
+                                <strong class="text-success fs-4" id="totalDisplay">$0.00</strong>
+                            </div>
+                        </div>
+
+                        <!-- ACCIONES -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" id="btnProcesarVenta" disabled>
+                                <i class="fas fa-check"></i>
+                                Procesar Venta
+                            </button>
+                            
+                            <button type="button" class="btn btn-warning" id="btnLimpiarVenta">
+                                <i class="fas fa-redo"></i>
+                                Limpiar Venta
+                            </button>
+
+                            <hr>
+
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver a Lista
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFORMACIÓN ADICIONAL -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info"></i>
+                            Información
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success"></i> Seleccione empleado y cliente</li>
+                                <li><i class="fas fa-check text-success"></i> Agregue servicios haciendo clic</li>
+                                <li><i class="fas fa-check text-success"></i> Ajuste cantidad si necesario</li>
+                                <li><i class="fas fa-check text-success"></i> Aplique descuento opcional</li>
+                                <li><i class="fas fa-check text-success"></i> Procese la venta</li>
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- HIDDEN INPUTS PARA SERVICIOS (se llenan dinámicamente) -->
+<div id="hiddenInputsContainer"></div>
+
+@section Scripts {
+<script>
+$(document).ready(function() {
+    let serviciosEnVenta = [];
+    let contadorServicios = 0;
+
+    // Agregar servicio a la venta
+    $('.btn-agregar-servicio').click(function() {
+        const servicioId = $(this).data('servicio-id');
+        const servicioNombre = $(this).data('servicio-nombre');
+        const servicioPrecio = parseFloat($(this).data('servicio-precio'));
+        const servicioTipo = $(this).data('servicio-tipo');
+
+        // Verificar si el servicio ya está en la venta
+        const servicioExistente = serviciosEnVenta.find(s => s.servicioId === servicioId);
+        
+        if (servicioExistente) {
+            // Incrementar cantidad
+            servicioExistente.cantidad++;
+            actualizarFilaServicio(servicioExistente);
+        } else {
+            // Agregar nuevo servicio
+            const nuevoServicio = {
+                id: contadorServicios++,
+                servicioId: servicioId,
+                nombre: servicioNombre,
+                precio: servicioPrecio,
+                cantidad: 1,
+                tipo: servicioTipo
+            };
+            
+            serviciosEnVenta.push(nuevoServicio);
+            agregarFilaServicio(nuevoServicio);
+        }
+        
+        actualizarTotales();
+        actualizarHiddenInputs();
+    });
+
+    // Agregar fila de servicio a la tabla
+    function agregarFilaServicio(servicio) {
+        const fila = `
+            <tr data-servicio-id="${servicio.id}">
+                <td>
+                    <strong>${servicio.nombre}</strong><br>
+                    <small class="text-muted">${servicio.tipo}</small>
+                </td>
+                <td>$${servicio.precio.toFixed(2)}</td>
+                <td>
+                    <div class="input-group input-group-sm" style="width: 100px;">
+                        <button class="btn btn-outline-secondary btn-cantidad" type="button" data-action="minus">-</button>
+                        <input type="number" class="form-control text-center cantidad-input" value="${servicio.cantidad}" min="1" readonly>
+                        <button class="btn btn-outline-secondary btn-cantidad" type="button" data-action="plus">+</button>
+                    </div>
+                </td>
+                <td class="subtotal-servicio">$${(servicio.precio * servicio.cantidad).toFixed(2)}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-servicio">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        
+        $('#serviciosVenta').append(fila);
+        $('#noServicios').hide();
+    }
+
+    // Actualizar fila de servicio existente
+    function actualizarFilaServicio(servicio) {
+        const fila = $(`tr[data-servicio-id="${servicio.id}"]`);
+        fila.find('.cantidad-input').val(servicio.cantidad);
+        fila.find('.subtotal-servicio').text(`$${(servicio.precio * servicio.cantidad).toFixed(2)}`);
+    }
+
+    // Eventos para cambiar cantidad
+    $(document).on('click', '.btn-cantidad', function() {
+        const action = $(this).data('action');
+        const fila = $(this).closest('tr');
+        const servicioId = parseInt(fila.data('servicio-id'));
+        const servicio = serviciosEnVenta.find(s => s.id === servicioId);
+        
+        if (action === 'plus') {
+            servicio.cantidad++;
+        } else if (action === 'minus' && servicio.cantidad > 1) {
+            servicio.cantidad--;
+        }
+        
+        actualizarFilaServicio(servicio);
+        actualizarTotales();
+        actualizarHiddenInputs();
+    });
+
+    // Eliminar servicio
+    $(document).on('click', '.btn-eliminar-servicio', function() {
+        const fila = $(this).closest('tr');
+        const servicioId = parseInt(fila.data('servicio-id'));
+        
+        // Remover del array
+        serviciosEnVenta = serviciosEnVenta.filter(s => s.id !== servicioId);
+        
+        // Remover fila
+        fila.remove();
+        
+        // Mostrar mensaje si no hay servicios
+        if (serviciosEnVenta.length === 0) {
+            $('#noServicios').show();
+        }
+        
+        actualizarTotales();
+        actualizarHiddenInputs();
+    });
+
+    // Actualizar totales cuando cambia el descuento
+    $('#descuentoInput').on('input', function() {
+        actualizarTotales();
+    });
+
+    // Actualizar totales
+    function actualizarTotales() {
+        const subtotal = serviciosEnVenta.reduce((sum, servicio) => sum + (servicio.precio * servicio.cantidad), 0);
+        const descuento = parseFloat($('#descuentoInput').val()) || 0;
+        const total = Math.max(0, subtotal - descuento);
+        
+        $('#subtotalDisplay').text(`$${subtotal.toFixed(2)}`);
+        $('#totalDisplay').text(`$${total.toFixed(2)}`);
+        
+        // Habilitar/deshabilitar botón procesar venta
+        $('#btnProcesarVenta').prop('disabled', serviciosEnVenta.length === 0);
+    }
+
+    // Actualizar hidden inputs para el formulario
+    function actualizarHiddenInputs() {
+        $('#hiddenInputsContainer').empty();
+        
+        serviciosEnVenta.forEach((servicio, index) => {
+            $('#hiddenInputsContainer').append(`
+                <input type="hidden" name="VentaActual.Detalles[${index}].ServicioId" value="${servicio.servicioId}">
+                <input type="hidden" name="VentaActual.Detalles[${index}].NombreServicio" value="${servicio.nombre}">
+                <input type="hidden" name="VentaActual.Detalles[${index}].PrecioUnitario" value="${servicio.precio}">
+                <input type="hidden" name="VentaActual.Detalles[${index}].Cantidad" value="${servicio.cantidad}">
+            `);
+        });
+    }
+
+    // Limpiar venta
+    $('#btnLimpiarVenta').click(function() {
+        if (confirm('¿Está seguro que desea limpiar la venta actual?')) {
+            serviciosEnVenta = [];
+            $('#serviciosVenta').empty();
+            $('#noServicios').show();
+            $('#descuentoInput').val(0);
+            actualizarTotales();
+            actualizarHiddenInputs();
+        }
+    });
+
+    // Inicializar
+    $('#noServicios').show();
+    actualizarTotales();
+});
+</script>
+}

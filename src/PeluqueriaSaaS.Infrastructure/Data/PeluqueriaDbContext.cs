@@ -25,6 +25,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             // IGNORAR TODOS LOS VALUEOBJECTS
             modelBuilder.Ignore<Email>();
             modelBuilder.Ignore<Telefono>();
@@ -110,19 +111,18 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(v => v.Observaciones).HasMaxLength(500);
                 entity.Property(v => v.TenantId).IsRequired().HasMaxLength(50);
                 
-                // Relación con Empleado
+                // Relaciones
                 entity.HasOne(v => v.Empleado)
-                      .WithMany()
-                      .HasForeignKey(v => v.EmpleadoId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                    .WithMany()
+                    .HasForeignKey(v => v.EmpleadoId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 
-                // Relación con Cliente
                 entity.HasOne(v => v.Cliente)
-                      .WithMany()
-                      .HasForeignKey(v => v.ClienteId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                    .WithMany()
+                    .HasForeignKey(v => v.ClienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 
-                // Índices para performance
+                // Índices
                 entity.HasIndex(v => new { v.FechaVenta, v.TenantId });
                 entity.HasIndex(v => v.NumeroVenta).IsUnique();
             });
@@ -137,30 +137,26 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(vd => vd.NotasServicio).HasMaxLength(200);
                 entity.Property(vd => vd.TenantId).IsRequired().HasMaxLength(50);
                 
-                // Relación con Venta
+                // Relaciones
                 entity.HasOne(vd => vd.Venta)
-                      .WithMany(v => v.VentaDetalles)
-                      .HasForeignKey(vd => vd.VentaId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                    .WithMany(v => v.VentaDetalles)
+                    .HasForeignKey(vd => vd.VentaId)
+                    .OnDelete(DeleteBehavior.Cascade);
                 
-                // Relación con Servicio
                 entity.HasOne(vd => vd.Servicio)
-                      .WithMany()
-                      .HasForeignKey(vd => vd.ServicioId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                    .WithMany()
+                    .HasForeignKey(vd => vd.ServicioId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 
-                // Relación opcional con Empleado específico del servicio
                 entity.HasOne(vd => vd.EmpleadoServicio)
-                      .WithMany()
-                      .HasForeignKey(vd => vd.EmpleadoServicioId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                    .WithMany()
+                    .HasForeignKey(vd => vd.EmpleadoServicioId)
+                    .OnDelete(DeleteBehavior.SetNull);
                 
-                // Índices para performance
+                // Índices
                 entity.HasIndex(vd => vd.VentaId);
                 entity.HasIndex(vd => vd.ServicioId);
             });
-
-            base.OnModelCreating(modelBuilder);
         }
     }
 }

@@ -1,0 +1,293 @@
+@model PeluqueriaSaaS.Application.DTOs.ReporteVentasViewModel
+@{
+    ViewData["Title"] = "Reportes de Ventas";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-chart-bar text-primary"></i>
+                    Reportes de Ventas
+                </h2>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> Ver Ventas
+                    </a>
+                    <a href="@Url.Action("POS")" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Nueva Venta
+                    </a>
+                </div>
+            </div>
+
+            <!-- FILTROS -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i>
+                        Filtros de Reporte
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("Reportes")">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="fechaDesde" class="form-label">Fecha Desde:</label>
+                                <input type="date" 
+                                       name="fechaDesde" 
+                                       id="fechaDesde"
+                                       value="@Model.FechaDesde.ToString("yyyy-MM-dd")" 
+                                       class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="fechaHasta" class="form-label">Fecha Hasta:</label>
+                                <input type="date" 
+                                       name="fechaHasta" 
+                                       id="fechaHasta"
+                                       value="@Model.FechaHasta.ToString("yyyy-MM-dd")" 
+                                       class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="empleadoId" class="form-label">Empleado:</label>
+                                @Html.DropDownList("empleadoId", 
+                                    ViewBag.Empleados as SelectList, 
+                                    "Todos los empleados", 
+                                    new { @class = "form-select" })
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i>
+                                    Generar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MÉTRICAS RESUMEN -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-receipt fa-2x text-primary mb-2"></i>
+                            <h4 class="text-primary">@Model.CantidadVentas</h4>
+                            <p class="text-muted mb-0">Total Ventas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                            <h4 class="text-success">$@Model.TotalVentas.ToString("F2")</h4>
+                            <p class="text-muted mb-0">Total Ingresos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                            <h4 class="text-info">$@Model.PromedioVenta.ToString("F2")</h4>
+                            <p class="text-muted mb-0">Promedio por Venta</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar-day fa-2x text-warning mb-2"></i>
+                            <h4 class="text-warning">
+                                @if (Model.CantidadVentas > 0)
+                                {
+                                    @(((DateTime.Now - Model.FechaDesde).Days > 0 ? (Model.TotalVentas / (DateTime.Now - Model.FechaDesde).Days) : Model.TotalVentas).ToString("F2"))
+                                }
+                                else
+                                {
+                                    @("0.00")
+                                }
+                            </h4>
+                            <p class="text-muted mb-0">Promedio Diario</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLA DE VENTAS -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table"></i>
+                        Detalle de Ventas
+                        <small class="text-muted">
+                            (@Model.FechaDesde.ToString("dd/MM/yyyy") - @Model.FechaHasta.ToString("dd/MM/yyyy"))
+                        </small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Ventas.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Número</th>
+                                        <th>Cliente</th>
+                                        <th>Empleado</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var venta in Model.Ventas.OrderByDescending(v => v.FechaVenta))
+                                    {
+                                        <tr>
+                                            <td>@venta.FechaVenta.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <strong class="text-primary">@venta.NumeroVenta</strong>
+                                            </td>
+                                            <td>@venta.ClienteNombre</td>
+                                            <td>@venta.EmpleadoNombre</td>
+                                            <td>
+                                                <strong class="text-success">$@venta.Total.ToString("F2")</strong>
+                                            </td>
+                                            <td>
+                                                @if (venta.EstadoVenta == "Completada")
+                                                {
+                                                    <span class="badge bg-success">@venta.EstadoVenta</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">@venta.EstadoVenta</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("Details", new { id = venta.VentaId })" 
+                                                   class="btn btn-sm btn-outline-info"
+                                                   title="Ver detalles">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- RESUMEN POR EMPLEADO -->
+                        @if (Model.Ventas.Any())
+                        {
+                            <hr>
+                            <h6>
+                                <i class="fas fa-users"></i>
+                                Resumen por Empleado
+                            </h6>
+                            <div class="row">
+                                @foreach (var empleadoGroup in Model.Ventas.GroupBy(v => v.EmpleadoNombre))
+                                {
+                                    var totalEmpleado = empleadoGroup.Sum(v => v.Total);
+                                    var cantidadEmpleado = empleadoGroup.Count();
+                                    
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body text-center py-2">
+                                                <strong>@empleadoGroup.Key</strong><br>
+                                                <span class="text-success">$@totalEmpleado.ToString("F2")</span>
+                                                <small class="text-muted">(@cantidadEmpleado ventas)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay ventas en el período seleccionado</h5>
+                            <p class="text-muted">
+                                Ajuste las fechas del filtro o 
+                                <a href="@Url.Action("POS")" class="text-decoration-none">
+                                    <strong>cree una nueva venta</strong>
+                                </a>
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ACCIONES RÁPIDAS -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar-day fa-2x text-primary mb-2"></i>
+                            <h6>Ventas de Hoy</h6>
+                            <a href="@Url.Action("Reportes", new { fechaDesde = DateTime.Today, fechaHasta = DateTime.Today })" 
+                               class="btn btn-primary">
+                                <i class="fas fa-today"></i> Ver Hoy
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar-week fa-2x text-info mb-2"></i>
+                            <h6>Esta Semana</h6>
+                            <a href="@Url.Action("Reportes", new { fechaDesde = DateTime.Today.AddDays(-7), fechaHasta = DateTime.Today })" 
+                               class="btn btn-info">
+                                <i class="fas fa-calendar-week"></i> Ver Semana
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar-alt fa-2x text-success mb-2"></i>
+                            <h6>Este Mes</h6>
+                            <a href="@Url.Action("Reportes", new { fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1), fechaHasta = DateTime.Today })" 
+                               class="btn btn-success">
+                                <i class="fas fa-calendar-alt"></i> Ver Mes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(document).ready(function() {
+    // Auto-completar fecha hasta cuando cambia fecha desde
+    $('#fechaDesde').change(function() {
+        const fechaDesde = new Date($(this).val());
+        const fechaHasta = new Date($('#fechaHasta').val());
+        
+        if (fechaDesde > fechaHasta) {
+            $('#fechaHasta').val($(this).val());
+        }
+    });
+
+    // Validar que fecha hasta sea mayor o igual a fecha desde
+    $('#fechaHasta').change(function() {
+        const fechaDesde = new Date($('#fechaDesde').val());
+        const fechaHasta = new Date($(this).val());
+        
+        if (fechaHasta < fechaDesde) {
+            alert('La fecha hasta debe ser mayor o igual a la fecha desde');
+            $(this).val($('#fechaDesde').val());
+        }
+    });
+});
+</script>
+}
