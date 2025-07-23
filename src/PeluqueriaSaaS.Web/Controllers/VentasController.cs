@@ -53,11 +53,16 @@ namespace PeluqueriaSaaS.Web.Controllers
                     })
                     .ToListAsync();
 
-                // ⚡ OBTENER NOMBRES DE TABLA CLIENTES UNIFICADA
+                // ⚡ OBTENER NOMBRES DE TABLA CLIENTES - QUERY ESPECÍFICO COLUMNAS EXISTENTES
                 foreach (var venta in ventas)
                 {
                     var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
-                    var cliente = await _dbContext.Clientes.FindAsync(venta.ClienteId);
+                    
+                    // ✅ FIX: Query específico solo columnas existentes
+                    var cliente = await _dbContext.Clientes
+                        .Where(c => c.Id == venta.ClienteId)
+                        .Select(c => new { c.Nombre, c.Apellido })
+                        .FirstOrDefaultAsync();
                     
                     venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
                     venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
