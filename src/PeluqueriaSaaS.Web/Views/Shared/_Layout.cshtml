@@ -1,7 +1,7 @@
 ﻿@*
   Archivo: src/PeluqueriaSaaS.Web/Views/Shared/_Layout.cshtml
   Actualizado: Julio 2025
-  Cambios: Añadida referencia al CSS unificado
+  Cambios: Añadida jQuery + removido site.js faltante
 *@
 
 <!DOCTYPE html>
@@ -102,9 +102,9 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- ⚡ SCRIPTS CORREGIDOS - jQuery agregado, site.js removido -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js"></script>
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>

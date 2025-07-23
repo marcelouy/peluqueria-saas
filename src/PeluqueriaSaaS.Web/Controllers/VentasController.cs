@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
 using PeluqueriaSaaS.Application.Features.Clientes.Queries;
@@ -15,29 +16,58 @@ namespace PeluqueriaSaaS.Web.Controllers
         private readonly IEmpleadoRepository _empleadoRepository;
         private readonly IMediator _mediator;
         private readonly IServicioRepository _servicioRepository;
+        private readonly PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext _dbContext;
         private const string TENANT_ID = "default";
 
         public VentasController(
             IVentaRepository ventaRepository,
             IEmpleadoRepository empleadoRepository,
             IMediator mediator,
-            IServicioRepository servicioRepository)
+            IServicioRepository servicioRepository,
+            PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext dbContext)
         {
             _ventaRepository = ventaRepository;
             _empleadoRepository = empleadoRepository;
             _mediator = mediator;
             _servicioRepository = servicioRepository;
+            _dbContext = dbContext;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                var ventas = await _ventaRepository.GetAllAsync(TENANT_ID);
+                // ⚡ USAR QUERY DIRECTA CON TABLA CLIENTES UNIFICADA
+                var ventas = await _dbContext.Ventas
+                    .Where(v => v.TenantId == TENANT_ID && v.EsActivo)
+                    .OrderByDescending(v => v.FechaVenta)
+                    .Select(v => new VentaDto
+                    {
+                        VentaId = v.VentaId,
+                        NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",
+                        FechaVenta = v.FechaVenta,
+                        Total = v.Total,
+                        EmpleadoId = v.EmpleadoId,
+                        ClienteId = v.ClienteId,
+                        EstadoVenta = v.EstadoVenta ?? "Completada"
+                    })
+                    .ToListAsync();
+
+                // ⚡ OBTENER NOMBRES DE TABLA CLIENTES UNIFICADA
+                foreach (var venta in ventas)
+                {
+                    var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
+                    var cliente = await _dbContext.Clientes.FindAsync(venta.ClienteId);
+                    
+                    venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
+                    venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
+                }
+
                 return View(ventas);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error en Index: {ex.Message}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 return View(new List<VentaDto>());
             }
@@ -57,13 +87,16 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Nombre = e.Nombre
                 }).ToList();
 
-                // Cargar clientes usando MediatR
-                var clientesQuery = new ObtenerClientesQuery();
-                var clientesData = await _mediator.Send(clientesQuery);
-                model.Clientes = clientesData.Where(c => c.EsActivo).Select(c => new ClienteBasicoDto
+                // ⚡ CARGAR CLIENTES DESDE TABLA UNIFICADA CLIENTES
+                var clientes = await _dbContext.Clientes
+                    .Where(c => c.EsActivo)
+                    .Select(c => new { c.Id, c.Nombre, c.Apellido })
+                    .ToListAsync();
+                    
+                model.Clientes = clientes.Select(c => new ClienteBasicoDto
                 {
                     ClienteId = c.Id,
-                    Nombre = c.Nombre
+                    Nombre = $"{c.Nombre} {c.Apellido}".Trim()
                 }).ToList();
 
                 // Cargar servicios
@@ -79,6 +112,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error en POS GET: {ex.Message}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
@@ -89,6 +123,35 @@ namespace PeluqueriaSaaS.Web.Controllers
         {
             try
             {
+                // 🔍 DEBUG ESPECÍFICO - Mantener temporalmente
+                Console.WriteLine($"=== DEBUG POST VENTA ===");
+                Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+                Console.WriteLine($"VentaActual es null: {model.VentaActual == null}");
+                Console.WriteLine($"Detalles count: {model.VentaActual?.Detalles?.Count ?? 0}");
+                Console.WriteLine($"EmpleadoId: {model.VentaActual?.EmpleadoId}");
+                Console.WriteLine($"ClienteId: {model.VentaActual?.ClienteId}");
+                
+                // Debug ModelState errors
+                if (!ModelState.IsValid)
+                {
+                    foreach (var error in ModelState)
+                    {
+                        Console.WriteLine($"ModelState Error - Key: {error.Key}, Errors: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                    }
+                }
+                
+                // Debug detalles específicos
+                if (model.VentaActual?.Detalles != null)
+                {
+                    for (int i = 0; i < model.VentaActual.Detalles.Count; i++)
+                    {
+                        var detalle = model.VentaActual.Detalles[i];
+                        Console.WriteLine($"Detalle {i}: ServicioId={detalle.ServicioId}, Cantidad={detalle.Cantidad}, Precio={detalle.PrecioUnitario}");
+                    }
+                }
+                
+                Console.WriteLine($"========================");
+
                 if (!ModelState.IsValid || !model.VentaActual.Detalles.Any())
                 {
                     TempData["Error"] = "Debe agregar servicios a la venta";
@@ -115,12 +178,24 @@ namespace PeluqueriaSaaS.Web.Controllers
                     }).ToList()
                 };
 
+                // 🔍 DEBUG antes de guardar
+                Console.WriteLine($"=== ANTES GUARDAR VENTA ===");
+                Console.WriteLine($"Venta Total: {venta.Total}");
+                Console.WriteLine($"Detalles count: {venta.VentaDetalles.Count}");
+                
                 await _ventaRepository.CreateAsync(venta);
+                
+                Console.WriteLine($"=== VENTA GUARDADA EXITOSAMENTE ===");
+                
                 TempData["Success"] = "Venta creada exitosamente";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"=== ERROR EN POST VENTA ===");
+                Console.WriteLine($"Exception: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToAction(nameof(POS));
             }
@@ -134,37 +209,36 @@ namespace PeluqueriaSaaS.Web.Controllers
                 fechaDesde ??= DateTime.Today.AddMonths(-1);
                 fechaHasta ??= DateTime.Today;
 
-                var ventas = await _ventaRepository.GetAllAsync(TENANT_ID);
+                // ⚡ QUERY DIRECTA EVITANDO JOIN PROBLEMÁTICO
+                var ventas = await _dbContext.Ventas
+                    .Where(v => v.TenantId == TENANT_ID && 
+                               v.FechaVenta.Date >= fechaDesde.Value.Date && 
+                               v.FechaVenta.Date <= fechaHasta.Value.Date)
+                    .ToListAsync();
                 
                 // Cargar empleados para dropdown filtros
                 var empleados = await _empleadoRepository.GetAllAsync();
-                ViewBag.Empleados = new SelectList(empleados.Where(e => e.EsActivo), "Id", "NombreCompleto");
+                ViewBag.Empleados = new SelectList(empleados.Where(e => e.EsActivo), "Id", "Nombre");
                 
-                // Filtrar ventas
-                var ventasFiltradas = ventas.Where(v => 
-                    v.FechaVenta.Date >= fechaDesde.Value.Date && 
-                    v.FechaVenta.Date <= fechaHasta.Value.Date);
-                
+                // Filtrar por empleado si especificado
                 if (empleadoId.HasValue)
-                    ventasFiltradas = ventasFiltradas.Where(v => v.EmpleadoId == empleadoId.Value);
+                    ventas = ventas.Where(v => v.EmpleadoId == empleadoId.Value).ToList();
 
-                var ventasLista = ventasFiltradas.ToList();
-                
                 var model = new ReporteVentasViewModel
                 {
                     FechaDesde = fechaDesde.Value,
                     FechaHasta = fechaHasta.Value,
-                    CantidadVentas = ventasLista.Count,
-                    TotalVentas = ventasLista.Sum(v => v.Total),
-                    PromedioVenta = ventasLista.Any() ? ventasLista.Average(v => v.Total) : 0,
-                    Ventas = ventasLista.Select(v => new VentaDto
+                    CantidadVentas = ventas.Count,
+                    TotalVentas = ventas.Sum(v => v.Total),
+                    PromedioVenta = ventas.Any() ? ventas.Average(v => v.Total) : 0,
+                    Ventas = ventas.Select(v => new VentaDto
                     {
                         VentaId = v.VentaId,
                         NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",
                         FechaVenta = v.FechaVenta,
                         Total = v.Total,
-                        ClienteNombre = "Cliente", // Temporal
-                        EmpleadoNombre = "Empleado", // Temporal
+                        ClienteNombre = "Cliente", // Cargar después si necesario
+                        EmpleadoNombre = "Empleado", // Cargar después si necesario
                         EstadoVenta = "Completada"
                     }).ToList()
                 };
@@ -173,6 +247,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error en Reportes: {ex.Message}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 ViewBag.Empleados = new SelectList(new List<object>(), "Id", "Nombre");
                 return View(new ReporteVentasViewModel 

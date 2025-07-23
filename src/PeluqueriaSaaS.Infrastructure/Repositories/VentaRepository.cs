@@ -195,19 +195,22 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
         }
 
         public async Task<string> GetNextNumeroVentaAsync(string tenantId = "default")
+    {
+        try
         {
-            var ultimaVenta = await _context.Ventas
+            // ✅ Query específico solo para NumeroVenta evitando materialización objeto completo
+            var ultimoNumero = await _context.Ventas
                 .Where(v => v.TenantId == tenantId)
                 .OrderByDescending(v => v.VentaId)
+                .Select(v => v.NumeroVenta) // ← Solo NumeroVenta, no objeto completo
                 .FirstOrDefaultAsync();
 
-            if (ultimaVenta == null)
+            if (string.IsNullOrEmpty(ultimoNumero))
             {
                 return "V-001";
             }
 
             // Extraer número del formato V-XXX
-            var ultimoNumero = ultimaVenta.NumeroVenta;
             if (ultimoNumero.StartsWith("V-") && int.TryParse(ultimoNumero.Substring(2), out int numero))
             {
                 return $"V-{(numero + 1):D3}";
@@ -217,6 +220,14 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
             var totalVentas = await _context.Ventas.CountAsync(v => v.TenantId == tenantId);
             return $"V-{(totalVentas + 1):D3}";
         }
+        catch (Exception ex)
+        {
+            // Fallback seguro si query falla
+            Console.WriteLine($"Error en GetNextNumeroVentaAsync: {ex.Message}");
+            var totalVentas = await _context.Ventas.CountAsync(v => v.TenantId == tenantId);
+            return $"V-{(totalVentas + 1):D3}";
+        }
+    }
 
         // ==========================================
         // CON DETALLES (INCLUDES)

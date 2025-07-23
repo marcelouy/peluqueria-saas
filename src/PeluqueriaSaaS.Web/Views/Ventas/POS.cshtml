@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="~/css/pos.css" />
 }
 
+<!-- DEBUG TEMPORAL -->
+<div class="alert alert-info">
+    <strong>DEBUG:</strong><br>
+    Empleados count: @Model.Empleados.Count<br>
+    Clientes count: @Model.Clientes.Count<br>
+    @if(Model.Empleados.Any()) {
+        <text>Primer empleado: @Model.Empleados.First().Nombre (ID: @Model.Empleados.First().EmpleadoId)</text><br>
+    }
+    @if(Model.Clientes.Any()) {
+        <text>Primer cliente: @Model.Clientes.First().Nombre (ID: @Model.Clientes.First().ClienteId)</text>
+    }
+</div>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -212,12 +225,10 @@
                 </div>
             </div>
         </div>
+
+        <!-- ⚡ HIDDEN INPUTS MOVIDOS DENTRO DEL FORM -->
+        <div id="hiddenInputsContainer"></div>
     }
-</div>
-
-<!-- HIDDEN INPUTS PARA SERVICIOS (se llenan dinámicamente) -->
-<div id="hiddenInputsContainer"></div>
-
 @section Scripts {
 <script>
 $(document).ready(function() {
