@@ -1,4 +1,4 @@
-﻿@*
+@*
     Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Details.cshtml
     PropÃ³sito: Vista detallada del servicio - DISEÃ‘O HERMOSO
     Fecha: Julio 2025
@@ -17,7 +17,7 @@
             Detalles del Servicio
         </h1>
         <p class="page-subtitle">
-            InformaciÃ³n completa del servicio "<strong>@Model.Nombre</strong>"
+            Información completa del servicio "<strong>@Model.Nombre</strong>"
         </p>
     </div>
 </div>
@@ -127,7 +127,7 @@
                     @if (!string.IsNullOrWhiteSpace(Model.Descripcion))
                     {
                         <div class="service-description mt-4">
-                            <h6><i class="fas fa-align-left me-2"></i>DescripciÃ³n</h6>
+                            <h6><i class="fas fa-align-left me-2"></i>Descripción</h6>
                             <p class="mb-0">@Model.Descripcion</p>
                         </div>
                     }
@@ -136,7 +136,7 @@
                         <div class="service-description mt-4">
                             <p class="text-muted fst-italic mb-0">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Sin descripciÃ³n detallada
+                                Sin descripción detallada
                             </p>
                         </div>
                     }
@@ -148,7 +148,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-cogs me-2"></i>
-                        InformaciÃ³n TÃ©cnica
+                        Información Técnica
                     </h5>
                 </div>
                 <div class="card-body">
@@ -182,7 +182,7 @@
                             <div class="info-item">
                                 <label class="info-label">
                                     <i class="fas fa-calendar-plus me-2"></i>
-                                    Fecha de CreaciÃ³n
+                                    Fecha de Creación
                                 </label>
                                 <div class="info-value">
                                     @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
@@ -193,7 +193,7 @@
                             <div class="info-item">
                                 <label class="info-label">
                                     <i class="fas fa-calendar-edit me-2"></i>
-                                    Ãšltima ModificaciÃ³n
+                                    Última Modificación
                                 </label>
                                 <div class="info-value">
                                     @if (Model.FechaActualizacion.HasValue)
@@ -241,7 +241,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-lightning-bolt me-2"></i>
-                        Acciones RÃ¡pidas
+                        Acciones Rápidas
                     </h6>
                 </div>
                 <div class="card-body">
@@ -278,13 +278,13 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-chart-pie me-2"></i>
-                        EstadÃ­sticas del Servicio
+                        Estadísticas del Servicio
                     </h6>
                 </div>
                 <div class="card-body" id="estadisticas-servicio">
                     <div class="text-center">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando estadÃ­sticas...</span>
+                            <span class="visually-hidden">Cargando estadísticas...</span>
                         </div>
                     </div>
                 </div>
@@ -295,7 +295,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-calculator me-2"></i>
-                        AnÃ¡lisis de Precio
+                        Análisis de Precio
                     </h6>
                 </div>
                 <div class="card-body">
@@ -447,7 +447,7 @@
                     <div class="info-row"><span class="label">Precio:</span> @Model.PrecioFormateado</div>
                     <div class="info-row"><span class="label">DuraciÃ³n:</span> @Model.DuracionFormateada</div>
                     <div class="info-row"><span class="label">Estado:</span> @Model.EstadoTexto</div>
-                    <div class="info-row"><span class="label">DescripciÃ³n:</span> @(Model.Descripcion ?? "Sin descripciÃ³n")</div>
+                    <div class="info-row"><span class="label">Descripción:</span> @(Model.Descripcion ?? "Sin Descripción")</div>
                     <div class="info-row"><span class="label">Fecha de creaciÃ³n:</span> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
                 </body>
                 </html>
@@ -460,7 +460,7 @@
 
         // FunciÃ³n placeholder para exportar PDF
         function exportarPDF() {
-            alert('FunciÃ³n de exportaciÃ³n PDF en desarrollo. PrÃ³ximamente podrÃ¡s exportar los detalles del servicio.');
+            alert('Función de exportación PDF en desarrollo. PrÃ³ximamente podrás exportar los detalles del servicio.');
         }
 
         // Cargar estadÃ­sticas del servicio
@@ -479,7 +479,7 @@
                             <div class="col-6 mb-3">
                                 <div class="border rounded p-2">
                                     <h6 class="text-success mb-1">4.8</h6>
-                                    <small class="text-muted">CalificaciÃ³n</small>
+                                    <small class="text-muted">Calificación</small>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -495,7 +495,7 @@
                 document.getElementById('estadisticas-servicio').innerHTML = `
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        No se pudieron cargar las estadÃ­sticas
+                        No se pudieron cargar las estadísticas
                     </div>
                 `;
             }

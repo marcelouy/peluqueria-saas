@@ -226,20 +226,21 @@ namespace PeluqueriaSaaS.Web.Controllers
         {
             try
             {
+                // ✅ SELECT ESPECÍFICO NULL-SAFE (pattern validado)
                 var venta = await _dbContext.Ventas
                     .Where(v => v.VentaId == id && v.TenantId == TENANT_ID && v.EsActivo)
                     .Select(v => new VentaDto
                     {
                         VentaId = v.VentaId,
-                        NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",  // ✅ NULL-safe
+                        NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",
                         FechaVenta = v.FechaVenta,
                         Total = v.Total,
                         SubTotal = v.SubTotal,
                         Descuento = v.Descuento,
                         EmpleadoId = v.EmpleadoId,
                         ClienteId = v.ClienteId,
-                        EstadoVenta = v.EstadoVenta ?? "Completada",          // ✅ NULL-safe
-                        Observaciones = v.Observaciones ?? ""                // ✅ NULL-safe
+                        EstadoVenta = v.EstadoVenta ?? "Completada",
+                        Observaciones = v.Observaciones ?? ""
                     })
                     .FirstOrDefaultAsync();
 
@@ -249,7 +250,26 @@ namespace PeluqueriaSaaS.Web.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Cargar nombres como en otros métodos
+                // ✅ CARGAR DETALLES SEPARADAMENTE NULL-SAFE
+                var ventaDetalles = await _dbContext.VentaDetalles
+                    .Where(vd => vd.VentaId == id)
+                    .Select(vd => new VentaDetalleDto
+                    {
+                        VentaDetalleId = vd.VentaDetalleId,
+                        ServicioId = vd.ServicioId,
+                        NombreServicio = vd.NombreServicio ?? "Servicio",        // ✅ NULL-safe
+                        PrecioUnitario = vd.PrecioUnitario,
+                        Cantidad = vd.Cantidad,
+                        Subtotal = vd.Subtotal,
+                        EmpleadoServicioId = vd.EmpleadoServicioId,
+                        NotasServicio = vd.NotasServicio ?? ""                   // ✅ NULL-safe
+                    })
+                    .ToListAsync();
+
+                // ✅ ASIGNAR DETALLES CARGADOS
+                venta.Detalles = ventaDetalles;
+
+                // ✅ CARGAR NOMBRES COMO PATTERN VALIDADO
                 var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
                 var cliente = await _dbContext.Clientes
                     .Where(c => c.Id == venta.ClienteId)
