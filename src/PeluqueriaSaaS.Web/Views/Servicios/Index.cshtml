@@ -1,4 +1,4 @@
-﻿@*
+@*
     Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Index.cshtml
     PropÃ³sito: Vista principal de servicios con filtros - BOTONES HERMOSOS
     Fecha: Julio 2025
@@ -6,7 +6,7 @@
 
 @model IEnumerable<PeluqueriaSaaS.Application.DTOs.ServicioListDto>
 @{
-    ViewData["Title"] = "GestiÃ³n de Servicios";
+    ViewData["Title"] = "Gestión de Servicios";
     var filtroActual = ViewBag.FiltroActual as PeluqueriaSaaS.Application.DTOs.ServicioFiltroDto;
     var tiposServicio = ViewBag.TiposServicio as SelectList;
 }
@@ -16,10 +16,10 @@
     <div class="container">
         <h1 class="page-title">
             <i class="fas fa-scissors me-3"></i>
-            GestiÃ³n de Servicios
+            Gestión de Servicios
         </h1>
         <p class="page-subtitle">
-            Administra los servicios de tu peluquerÃ­a de forma profesional
+            Administra los servicios de tu peluquería de forma profesional
         </p>
     </div>
 </div>
@@ -71,7 +71,7 @@
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-filter me-2"></i>
-                Filtros de BÃºsqueda
+                Filtros de Búsqueda
             </h5>
         </div>
         <div class="card-body">

@@ -33,13 +33,16 @@ namespace PeluqueriaSaaS.Web.Controllers
             _dbContext = dbContext;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? fecha = null)
         {
             try
             {
-                // ⚡ USAR QUERY DIRECTA CON TABLA CLIENTES UNIFICADA
+                fecha ??= DateTime.Today;  // Default hoy si no especifica
+                
+                // ⚡ QUERY CON FILTRO FECHA
                 var ventas = await _dbContext.Ventas
-                    .Where(v => v.TenantId == TENANT_ID && v.EsActivo)
+                    .Where(v => v.TenantId == TENANT_ID && v.EsActivo 
+                             && v.FechaVenta.Date == fecha.Value.Date)  // ← FILTRO FECHA
                     .OrderByDescending(v => v.FechaVenta)
                     .Select(v => new VentaDto
                     {
@@ -67,6 +70,19 @@ namespace PeluqueriaSaaS.Web.Controllers
                     venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
                     venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
                 }
+
+                // ⚡ CALCULAR RESUMEN DEL DÍA
+                var ventasHoy = ventas; // Ya están filtradas por fecha!
+                
+                ViewBag.CantidadVentas = ventasHoy.Count;
+                ViewBag.TotalVentas = ventasHoy.Sum(v => v.Total);
+                ViewBag.FechaFiltro = fecha.Value;  // Para mostrar en calendar
+
+                Console.WriteLine($"=== RESUMEN DÍA DEBUG ===");
+                Console.WriteLine($"Fecha filtrada: {fecha.Value:yyyy-MM-dd}");
+                Console.WriteLine($"Ventas hoy count: {ventasHoy.Count}");
+                Console.WriteLine($"Total hoy: ${ventasHoy.Sum(v => v.Total)}");
+                Console.WriteLine($"========================");
 
                 return View(ventas);
             }
@@ -193,7 +209,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"=== VENTA GUARDADA EXITOSAMENTE ===");
                 
                 TempData["Success"] = "Venta creada exitosamente";
-                return RedirectToAction(nameof(Index));
+               return RedirectToAction(nameof(POS));
             }
             catch (Exception ex)
             {
@@ -205,26 +221,82 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return RedirectToAction(nameof(POS));
             }
         }
+        
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var venta = await _dbContext.Ventas
+                    .Where(v => v.VentaId == id && v.TenantId == TENANT_ID && v.EsActivo)
+                    .Select(v => new VentaDto
+                    {
+                        VentaId = v.VentaId,
+                        NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",  // ✅ NULL-safe
+                        FechaVenta = v.FechaVenta,
+                        Total = v.Total,
+                        SubTotal = v.SubTotal,
+                        Descuento = v.Descuento,
+                        EmpleadoId = v.EmpleadoId,
+                        ClienteId = v.ClienteId,
+                        EstadoVenta = v.EstadoVenta ?? "Completada",          // ✅ NULL-safe
+                        Observaciones = v.Observaciones ?? ""                // ✅ NULL-safe
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (venta == null)
+                {
+                    TempData["Error"] = "Venta no encontrada";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Cargar nombres como en otros métodos
+                var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
+                var cliente = await _dbContext.Clientes
+                    .Where(c => c.Id == venta.ClienteId)
+                    .Select(c => new { c.Nombre, c.Apellido })
+                    .FirstOrDefaultAsync();
+                
+                venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
+                venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
+
+                return View(venta);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en Details: {ex.Message}");
+                TempData["Error"] = $"Error: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
         public async Task<IActionResult> Reportes(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? empleadoId = null)
         {
             try
             {
                 // Valores por defecto
-                fechaDesde ??= DateTime.Today.AddMonths(-1);
-                fechaHasta ??= DateTime.Today;
+                fechaDesde ??= new DateTime(2025, 7, 22);     // ✅ Fecha exacta ventas BD
+                fechaHasta ??= DateTime.Today;                // Hasta hoy 23/07/2025
 
                 // ⚡ QUERY DIRECTA EVITANDO JOIN PROBLEMÁTICO
                 var ventas = await _dbContext.Ventas
-                    .Where(v => v.TenantId == TENANT_ID && 
-                               v.FechaVenta.Date >= fechaDesde.Value.Date && 
-                               v.FechaVenta.Date <= fechaHasta.Value.Date)
-                    .ToListAsync();
-                
+                .Where(v => v.TenantId == TENANT_ID &&
+                        v.FechaVenta.Date >= fechaDesde.Value.Date &&
+                        v.FechaVenta.Date <= fechaHasta.Value.Date)
+                .Select(v => new
+                {
+                    v.VentaId,
+                    v.FechaVenta,
+                    v.Total,
+                    v.EmpleadoId,
+                    v.ClienteId,
+                    NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}"
+                })
+                .ToListAsync();
+
                 // Cargar empleados para dropdown filtros
                 var empleados = await _empleadoRepository.GetAllAsync();
                 ViewBag.Empleados = new SelectList(empleados.Where(e => e.EsActivo), "Id", "Nombre");
-                
+
                 // Filtrar por empleado si especificado
                 if (empleadoId.HasValue)
                     ventas = ventas.Where(v => v.EmpleadoId == empleadoId.Value).ToList();
@@ -242,12 +314,26 @@ namespace PeluqueriaSaaS.Web.Controllers
                         NumeroVenta = v.NumeroVenta ?? $"V-{v.VentaId:000}",
                         FechaVenta = v.FechaVenta,
                         Total = v.Total,
+                        EmpleadoId = v.EmpleadoId,        // ← AGREGAR ESTA LÍNEA
+                        ClienteId = v.ClienteId,
                         ClienteNombre = "Cliente", // Cargar después si necesario
                         EmpleadoNombre = "Empleado", // Cargar después si necesario
                         EstadoVenta = "Completada"
                     }).ToList()
                 };
-                
+
+                foreach (var venta in model.Ventas)
+                {
+                    var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
+                    var cliente = await _dbContext.Clientes
+                        .Where(c => c.Id == venta.ClienteId)
+                        .Select(c => new { c.Nombre, c.Apellido })
+                        .FirstOrDefaultAsync();
+
+                    venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
+                    venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
+                }
+
                 return View(model);
             }
             catch (Exception ex)
@@ -255,9 +341,9 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"Error en Reportes: {ex.Message}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 ViewBag.Empleados = new SelectList(new List<object>(), "Id", "Nombre");
-                return View(new ReporteVentasViewModel 
-                { 
-                    FechaDesde = DateTime.Today.AddMonths(-1), 
+                return View(new ReporteVentasViewModel
+                {
+                    FechaDesde = DateTime.Today.AddMonths(-1),
                     FechaHasta = DateTime.Today,
                     Ventas = new List<VentaDto>()
                 });

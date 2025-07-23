@@ -1,0 +1,209 @@
+@model PeluqueriaSaaS.Application.DTOs.VentaDto
+@{
+    ViewData["Title"] = $"Detalle Venta {Model.NumeroVenta}";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-receipt text-primary"></i>
+                    Detalle de Venta @Model.NumeroVenta
+                </h2>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Lista
+                    </a>
+                    <a href="@Url.Action("POS")" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Nueva Venta
+                    </a>
+                </div>
+            </div>
+
+            <!-- INFORMACIÓN BÁSICA VENTA -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                Información de la Venta
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong><i class="fas fa-hashtag text-muted"></i> Número:</strong></td>
+                                            <td><span class="badge bg-primary fs-6">@Model.NumeroVenta</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-calendar text-muted"></i> Fecha:</strong></td>
+                                            <td>@Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-user text-muted"></i> Cliente:</strong></td>
+                                            <td>@Model.ClienteNombre</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><i class="fas fa-user-tie text-muted"></i> Empleado:</strong></td>
+                                            <td>@Model.EmpleadoNombre</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong><i class="fas fa-check-circle text-muted"></i> Estado:</strong></td>
+                                            <td>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> @Model.EstadoVenta
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        @if (!string.IsNullOrEmpty(Model.Observaciones))
+                                        {
+                                            <tr>
+                                                <td><strong><i class="fas fa-sticky-note text-muted"></i> Observaciones:</strong></td>
+                                                <td>@Model.Observaciones</td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RESUMEN FINANCIERO -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calculator"></i>
+                                Resumen Financiero
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span class="fw-bold">$@Model.SubTotal.ToString("F2")</span>
+                            </div>
+                            
+                            @if (Model.Descuento > 0)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-warning">
+                                        <i class="fas fa-tag"></i> Descuento:
+                                    </span>
+                                    <span class="fw-bold text-warning">-$@Model.Descuento.ToString("F2")</span>
+                                </div>
+                            }
+                            
+                            <hr>
+                            
+                            <div class="d-flex justify-content-between">
+                                <strong class="fs-5">TOTAL:</strong>
+                                <strong class="text-success fs-4">$@Model.Total.ToString("F2")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTA: DETALLES SERVICIOS -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        Servicios de la Venta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Información:</strong> Los detalles de servicios se mostrarán aquí una vez que se implemente la carga de VentaDetalles en el controller.
+                    </div>
+                    
+                    <!-- TABLA PLACEHOLDER PARA SERVICIOS -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Cantidad</th>
+                                    <th>Subtotal</th>
+                                    <th>Empleado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Cargando detalles de servicios...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCIONES ADICIONALES -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card border-secondary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-print fa-2x text-secondary mb-2"></i>
+                            <h6>Imprimir</h6>
+                            <p class="text-muted small">Generar comprobante impreso</p>
+                            <button class="btn btn-secondary" onclick="window.print()">
+                                <i class="fas fa-print"></i> Imprimir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-edit fa-2x text-warning mb-2"></i>
+                            <h6>Editar</h6>
+                            <p class="text-muted small">Modificar datos de la venta</p>
+                            <button class="btn btn-warning" disabled>
+                                <i class="fas fa-edit"></i> Editar (Próximamente)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-danger">
+                        <div class="card-body text-center">
+                            <i class="fas fa-ban fa-2x text-danger mb-2"></i>
+                            <h6>Anular</h6>
+                            <p class="text-muted small">Anular esta venta</p>
+                            <button class="btn btn-danger" disabled>
+                                <i class="fas fa-ban"></i> Anular (Próximamente)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(document).ready(function() {
+    // Auto-focus en botón volver para navegación con teclado
+    $('.btn-outline-secondary').focus();
+    
+    // Futura implementación: cargar detalles de servicios vía AJAX
+    // TODO: Implementar carga de VentaDetalles
+});
+</script>
+}
