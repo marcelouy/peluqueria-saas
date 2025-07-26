@@ -1,41 +1,38 @@
-﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Handlers/ObtenerClientePorIdHandler.cs
+﻿// ====================================================================
+// ObtenerClientesQueryHandler.cs - FIXED
+// ====================================================================
 using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
 using PeluqueriaSaaS.Application.Features.Clientes.Queries;
 using PeluqueriaSaaS.Domain.Interfaces;
 
-namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
+namespace PeluqueriaSaaS.Application.Features.Clientes.Queries
 {
-    public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQuery, ClienteDto?>
+    public class ObtenerClientesQueryHandler : IRequestHandler<ObtenerClientesQuery, IEnumerable<ClienteDto>>
     {
         private readonly IRepositoryManagerTemp _repositoryManager;
 
-        public ObtenerClientePorIdHandler(IRepositoryManagerTemp repositoryManager)
+        public ObtenerClientesQueryHandler(IRepositoryManagerTemp repositoryManager)
         {
             _repositoryManager = repositoryManager;
         }
 
-        public async Task<ClienteDto?> Handle(ObtenerClientePorIdQuery request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<ClienteDto>> Handle(ObtenerClientesQuery request, CancellationToken cancellationToken)
         {
-            var cliente = await _repositoryManager.GetClienteByIdAsync(request.Id);
-            if (cliente == null) return null;
-
-            return new ClienteDto
+            var clientes = await _repositoryManager.GetAllClientesAsync();
+            
+            return clientes.Select(cliente => new ClienteDto
             {
                 Id = cliente.Id,
                 Nombre = cliente.Nombre,
                 Apellido = cliente.Apellido,
-                Email = cliente.Email,
-                Telefono = cliente.Telefono,
+                Email = cliente.Email ?? "",           // ✅ FIXED: Direct string
+                Telefono = cliente.Telefono ?? "",     // ✅ FIXED: Direct string
                 FechaNacimiento = cliente.FechaNacimiento,
-                FechaRegistro = cliente.FechaRegistro,
-                Direccion = cliente.Direccion,
-                Ciudad = cliente.Ciudad,
-                CodigoPostal = cliente.CodigoPostal,
-                Notas = cliente.Notas,
-                EsActivo = cliente.EsActivo,
-                UltimaVisita = cliente.UltimaVisita
-            };
+                FechaRegistro = cliente.FechaCreacion,
+                Notas = cliente.Notas ?? "",
+                EsActivo = cliente.EsActivo
+            });
         }
     }
 }

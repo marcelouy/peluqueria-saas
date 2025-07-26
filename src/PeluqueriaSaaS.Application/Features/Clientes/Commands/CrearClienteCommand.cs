@@ -27,19 +27,17 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Commands
         [DataType(DataType.Date)]
         public DateTime? FechaNacimiento { get; set; }
         
-        // Campos adicionales
-        [StringLength(200)]
-        public string? Direccion { get; set; }
-        
-        [StringLength(100)]
-        public string? Ciudad { get; set; }
-        
-        [StringLength(10)]
-        public string? CodigoPostal { get; set; }
-        
         [StringLength(500)]
         public string? Notas { get; set; }
         
         public bool EsActivo { get; set; } = true;
+
+        // ✅ ELIMINADO: Direccion, Ciudad, CodigoPostal (NO existen en Entity Cliente)
+        // ✅ LIMPIEZA: Solo propiedades que Entity Cliente puede manejar
+        //              - Nombre, Apellido: direct properties
+        //              - Email, Telefono: convertidos a ValueObjects en Handler
+        //              - FechaNacimiento: direct property
+        //              - Notas: manejado por ActualizarNotas()
+        //              - EsActivo: manejado por Activar()/Desactivar()
     }
 }

@@ -9,14 +9,18 @@ namespace PeluqueriaSaaS.Application.DTOs
         public string Email { get; set; } = string.Empty;
         public string? Telefono { get; set; }
         public DateTime? FechaNacimiento { get; set; }
-        public DateTime FechaRegistro { get; set; }
-        
-        // Campos adicionales
-        public string? Direccion { get; set; }
-        public string? Ciudad { get; set; }
-        public string? CodigoPostal { get; set; }
+        public DateTime FechaRegistro { get; set; }    // ✅ Mapped from Entity.FechaCreacion
         public string? Notas { get; set; }
         public bool EsActivo { get; set; } = true;
-        public DateTime? UltimaVisita { get; set; }
+
+        // ✅ ELIMINADO: Direccion, Ciudad, CodigoPostal, UltimaVisita (NO existen en Entity Cliente)
+        // ✅ MAPPING CONFIRMADO:
+        //    - Id, Nombre, Apellido: direct mapping from Entity
+        //    - Email: mapped from Entity.Email?.Valor ?? ""
+        //    - Telefono: mapped from Entity.Telefono?.Numero ?? ""
+        //    - FechaNacimiento: direct mapping from Entity
+        //    - FechaRegistro: mapped from Entity.FechaCreacion (NOT FechaRegistro)
+        //    - Notas: direct mapping with NULL-safe
+        //    - EsActivo: direct mapping from Entity
     }
 }

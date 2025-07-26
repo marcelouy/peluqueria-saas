@@ -9,8 +9,9 @@ namespace PeluqueriaSaaS.Application.Mapping
         public MappingProfile()
         {
             CreateMap<Cliente, ClienteDto>()
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email != null ? src.Email.Valor : null))
-                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono != null ? src.Telefono.NumeroCompleto : null));
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email ?? ""))           // ✅ FIXED: Direct string mapping
+                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono ?? ""))     // ✅ FIXED: Direct string mapping
+                .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => src.FechaCreacion));
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Handlers/CrearClienteHandler.cs
+// ====================================================================
+// CrearClienteHandler.cs - FIXED
+// ====================================================================
 using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
 using PeluqueriaSaaS.Application.Features.Clientes.Commands;
@@ -18,20 +20,27 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
 
         public async Task<ClienteDto> Handle(CrearClienteCommand request, CancellationToken cancellationToken)
         {
-            var cliente = new ClienteBasico
+            var cliente = new Cliente(
+                request.Nombre,
+                request.Apellido,
+                request.Email,
+                request.Telefono,
+                request.FechaNacimiento
+            );
+
+            if (!string.IsNullOrEmpty(request.Notas))
             {
-                Nombre = request.Nombre,
-                Apellido = request.Apellido,
-                Email = request.Email,
-                Telefono = request.Telefono,
-                FechaNacimiento = request.FechaNacimiento,
-                FechaRegistro = DateTime.Now,
-                Direccion = request.Direccion,
-                Ciudad = request.Ciudad,
-                CodigoPostal = request.CodigoPostal,
-                Notas = request.Notas,
-                EsActivo = request.EsActivo
-            };
+                cliente.ActualizarNotas(request.Notas);
+            }
+
+            if (request.EsActivo)
+            {
+                cliente.Activar();
+            }
+            else
+            {
+                cliente.Desactivar();
+            }
 
             var clienteCreado = await _repositoryManager.AddClienteAsync(cliente);
 
@@ -40,16 +49,12 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
                 Id = clienteCreado.Id,
                 Nombre = clienteCreado.Nombre,
                 Apellido = clienteCreado.Apellido,
-                Email = clienteCreado.Email,
-                Telefono = clienteCreado.Telefono,
+                Email = clienteCreado.Email ?? "",           // ✅ FIXED: Direct string
+                Telefono = clienteCreado.Telefono ?? "",     // ✅ FIXED: Direct string
                 FechaNacimiento = clienteCreado.FechaNacimiento,
-                FechaRegistro = clienteCreado.FechaRegistro,
-                Direccion = clienteCreado.Direccion,
-                Ciudad = clienteCreado.Ciudad,
-                CodigoPostal = clienteCreado.CodigoPostal,
-                Notas = clienteCreado.Notas,
-                EsActivo = clienteCreado.EsActivo,
-                UltimaVisita = clienteCreado.UltimaVisita
+                FechaRegistro = clienteCreado.FechaCreacion,
+                Notas = clienteCreado.Notas ?? "",
+                EsActivo = clienteCreado.EsActivo
             };
         }
     }

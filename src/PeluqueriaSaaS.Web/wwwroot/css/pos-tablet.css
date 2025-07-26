@@ -1,0 +1,103 @@
+/* ================================================
+   TABLET OPTIMIZATION CSS - POS SERVICIOS
+   Optimizado para tablets puestos trabajo
+================================================ */
+
+/* TABLET GENERAL */
+@media (max-width: 1024px) {
+    .btn-tablet {
+        min-height: 48px !important;
+        padding: 12px !important;
+        font-size: 1rem !important;
+        touch-action: manipulation;
+    }
+    
+    .categoria-toggle {
+        min-height: 48px !important;
+        padding: 12px 16px !important;
+    }
+    
+    #buscadorServicios {
+        min-height: 48px !important;
+        font-size: 1.1rem !important;
+    }
+}
+
+/* CATEGORÍAS STYLING */
+.categoria-servicio {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    margin-bottom: 8px;
+}
+
+.categoria-toggle {
+    border: none !important;
+    background: transparent !important;
+}
+
+.categoria-toggle:hover {
+    background-color: #e9ecef !important;
+}
+
+.categoria-toggle:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* BOTONES SERVICIOS */
+.btn-agregar-servicio.btn-tablet {
+    transition: all 0.2s ease;
+    border-radius: 6px;
+}
+
+.btn-agregar-servicio.btn-tablet:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-agregar-servicio.btn-tablet:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* BUSCADOR */
+#buscadorServicios {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+#buscadorServicios:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* RESPONSIVE MOBILE */
+@media (max-width: 768px) {
+    .btn-tablet {
+        min-height: 52px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .categoria-toggle {
+        font-size: 1rem !important;
+    }
+    
+    #buscadorServicios {
+        font-size: 1rem !important;
+    }
+}
+
+/* ANIMACIONES */
+.collapse {
+    transition: height 0.3s ease;
+}
+
+.categoria-toggle .fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.categoria-toggle[aria-expanded="false"] .fa-chevron-down {
+    transform: rotate(-90deg);
+}

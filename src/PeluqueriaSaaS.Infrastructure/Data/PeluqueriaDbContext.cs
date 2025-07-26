@@ -12,7 +12,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<Empresa> Empresas { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
         public DbSet<Cliente> Clientes { get; set; }
-        public DbSet<ClienteBasico> ClientesBasicos { get; set; }
+        //public DbSet<ClienteBasico> ClientesBasicos { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<EmpleadoBasico> EmpleadosBasicos { get; set; }
         public DbSet<Servicio> Servicios { get; set; }

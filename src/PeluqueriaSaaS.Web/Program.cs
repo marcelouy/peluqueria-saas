@@ -12,6 +12,13 @@ using PeluqueriaSaaS.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅ Fuerza Kestrel puro (sin IIS) Sacar esta linea para produccion o preguntar a claudeIA
+builder.WebHost.UseKestrel(options =>
+{
+    options.ListenAnyIP(5043); // Escucha en todas las IPs para HTTP
+});
+
+
 // 1. Controllers y Views
 builder.Services.AddControllersWithViews();
 

@@ -5,6 +5,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pos.css" />
+    <link rel="stylesheet" href="~/css/pos-tablet.css" />
 }
 
 <!-- DEBUG TEMPORAL -->
@@ -80,30 +81,72 @@
                             </div>
                         </div>
 
-                        <!-- SERVICIOS DISPONIBLES -->
+                        <!-- SERVICIOS DISPONIBLES - TABLET CATEGORIZED -->
                         <div class="mb-4">
                             <h6 class="border-bottom pb-2">
                                 <i class="fas fa-cut"></i>
                                 Servicios Disponibles
                             </h6>
-                            <div class="row" id="serviciosDisponibles">
-                                @foreach (var servicio in Model.Servicios)
+                            
+                            <!-- BUSCADOR TABLET -->
+                            <div class="mb-3">
+                                <input type="text" 
+                                       id="buscadorServicios" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="🔍 Buscar servicios..." 
+                                       style="font-size: 1.1rem;">
+                            </div>
+                            
+                            <!-- CATEGORÍAS SERVICIOS -->
+                            <div id="categoriasServicios">
+                                @foreach (var categoria in Model.ServiciosAgrupados)
                                 {
-                                    <div class="col-md-6 col-lg-4 mb-2">
+                                    <div class="categoria-servicio mb-3" data-categoria="@categoria.Key.ToLower()">
+                                        <!-- HEADER CATEGORÍA -->
                                         <button type="button" 
-                                                class="btn btn-outline-primary w-100 btn-agregar-servicio" 
-                                                data-servicio-id="@servicio.ServicioId"
-                                                data-servicio-nombre="@servicio.Nombre"
-                                                data-servicio-precio="@servicio.Precio.ToString("F2")"
-                                                data-servicio-tipo="@servicio.TipoServicioNombre">
-                                            <div class="text-start">
-                                                <strong>@servicio.Nombre</strong><br>
-                                                <small class="text-muted">@servicio.TipoServicioNombre</small><br>
-                                                <span class="text-success">$@servicio.Precio.ToString("F2")</span>
-                                            </div>
+                                                class="btn btn-outline-secondary w-100 text-start categoria-toggle"
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#categoria-@categoria.Key.Replace(" ", "")"
+                                                style="padding: 12px; font-size: 1.1rem;">
+                                            <i class="fas fa-folder me-2"></i>
+                                            <strong>@categoria.Key</strong>
+                                            <span class="badge bg-primary ms-2">@categoria.Value.Count</span>
+                                            <i class="fas fa-chevron-down float-end"></i>
                                         </button>
+                                        
+                                        <!-- SERVICIOS DE LA CATEGORÍA -->
+                                        <div class="collapse show" id="categoria-@categoria.Key.Replace(" ", "")">
+                                            <div class="row mt-2">
+                                                @foreach (var servicio in categoria.Value)
+                                                {
+                                                    <div class="col-md-6 col-lg-4 mb-2 servicio-item" 
+                                                         data-nombre="@servicio.Nombre.ToLower()" 
+                                                         data-tipo="@servicio.TipoServicioNombre.ToLower()">
+                                                        <button type="button" 
+                                                                class="btn btn-outline-primary w-100 btn-agregar-servicio btn-tablet" 
+                                                                data-servicio-id="@servicio.ServicioId"
+                                                                data-servicio-nombre="@servicio.Nombre"
+                                                                data-servicio-precio="@servicio.Precio.ToString("F2")"
+                                                                data-servicio-tipo="@servicio.TipoServicioNombre">
+                                                            <div class="text-start">
+                                                                <strong>@servicio.Nombre</strong><br>
+                                                                <small class="text-muted">@servicio.TipoServicioNombre</small><br>
+                                                                <span class="text-success fs-6">$@servicio.Precio.ToString("F2")</span>
+                                                                <span class="text-muted ms-2">(@servicio.DuracionMinutos min)</span>
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
                                     </div>
                                 }
+                            </div>
+                            
+                            <!-- MENSAJE SIN RESULTADOS -->
+                            <div id="sinResultados" class="text-center py-4" style="display: none;">
+                                <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">No se encontraron servicios</p>
                             </div>
                         </div>
 
@@ -384,6 +427,49 @@ $(document).ready(function() {
             actualizarTotales();
             actualizarHiddenInputs();
         }
+    });
+
+    // BUSCADOR SERVICIOS
+    $('#buscadorServicios').on('input', function() {
+        const busqueda = $(this).val().toLowerCase();
+        let hayResultados = false;
+        
+        if (busqueda === '') {
+            // Mostrar todas las categorías y servicios
+            $('.categoria-servicio').show();
+            $('.servicio-item').show();
+            $('#sinResultados').hide();
+            return;
+        }
+        
+        $('.categoria-servicio').each(function() {
+            const categoria = $(this);
+            let categoriaVisible = false;
+            
+            categoria.find('.servicio-item').each(function() {
+                const servicio = $(this);
+                const nombre = servicio.data('nombre');
+                const tipo = servicio.data('tipo');
+                
+                if (nombre.includes(busqueda) || tipo.includes(busqueda)) {
+                    servicio.show();
+                    categoriaVisible = true;
+                    hayResultados = true;
+                } else {
+                    servicio.hide();
+                }
+            });
+            
+            if (categoriaVisible) {
+                categoria.show();
+                // Expandir categoría si tiene resultados
+                categoria.find('.collapse').addClass('show');
+            } else {
+                categoria.hide();
+            }
+        });
+        
+        $('#sinResultados').toggle(!hayResultados);
     });
 
     // Inicializar

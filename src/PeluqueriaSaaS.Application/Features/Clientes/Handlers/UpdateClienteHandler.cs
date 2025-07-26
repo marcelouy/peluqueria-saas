@@ -1,4 +1,6 @@
-﻿// src/PeluqueriaSaaS.Application/Features/Clientes/Handlers/UpdateClienteHandler.cs
+﻿// ====================================================================
+// UpdateClienteHandler.cs - FIXED
+// ====================================================================
 using MediatR;
 using PeluqueriaSaaS.Application.DTOs;
 using PeluqueriaSaaS.Application.Features.Clientes.Commands;
@@ -20,18 +22,27 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
             var cliente = await _repositoryManager.GetClienteByIdAsync(request.Id);
             if (cliente == null) return null;
 
-            // Actualizar propiedades
-            cliente.Nombre = request.Nombre;
-            cliente.Apellido = request.Apellido;
-            cliente.Email = request.Email;
-            cliente.Telefono = request.Telefono;
-            cliente.FechaNacimiento = request.FechaNacimiento;
-            cliente.Direccion = request.Direccion;
-            cliente.Ciudad = request.Ciudad;
-            cliente.CodigoPostal = request.CodigoPostal;
-            cliente.Notas = request.Notas;
-            cliente.EsActivo = request.EsActivo;
-            cliente.UltimaVisita = request.UltimaVisita;
+            cliente.ActualizarInformacion(
+                request.Nombre,
+                request.Apellido,
+                request.Email,
+                request.Telefono,
+                request.FechaNacimiento
+            );
+
+            if (!string.IsNullOrEmpty(request.Notas))
+            {
+                cliente.ActualizarNotas(request.Notas);
+            }
+
+            if (request.EsActivo)
+            {
+                cliente.Activar();
+            }
+            else
+            {
+                cliente.Desactivar();
+            }
 
             await _repositoryManager.UpdateClienteAsync(cliente);
 
@@ -40,16 +51,12 @@ namespace PeluqueriaSaaS.Application.Features.Clientes.Handlers
                 Id = cliente.Id,
                 Nombre = cliente.Nombre,
                 Apellido = cliente.Apellido,
-                Email = cliente.Email,
-                Telefono = cliente.Telefono,
+                Email = cliente.Email ?? "",           // ✅ FIXED: Direct string
+                Telefono = cliente.Telefono ?? "",     // ✅ FIXED: Direct string  
                 FechaNacimiento = cliente.FechaNacimiento,
-                FechaRegistro = cliente.FechaRegistro,
-                Direccion = cliente.Direccion,
-                Ciudad = cliente.Ciudad,
-                CodigoPostal = cliente.CodigoPostal,
-                Notas = cliente.Notas,
-                EsActivo = cliente.EsActivo,
-                UltimaVisita = cliente.UltimaVisita
+                FechaRegistro = cliente.FechaCreacion,
+                Notas = cliente.Notas ?? "",
+                EsActivo = cliente.EsActivo
             };
         }
     }

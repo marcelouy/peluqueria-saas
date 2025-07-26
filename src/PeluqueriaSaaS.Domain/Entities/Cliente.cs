@@ -7,8 +7,8 @@ namespace PeluqueriaSaaS.Domain.Entities
     {
         public string Nombre { get; private set; } = string.Empty;
         public string Apellido { get; private set; } = string.Empty;
-        public Email? Email { get; private set; }
-        public Telefono? Telefono { get; private set; }
+        public string? Email { get; private set; }
+        public string? Telefono { get; private set; }
         public DateTime? FechaNacimiento { get; private set; }
         public string? Notas { get; private set; }
         public bool EsActivo { get; private set; } = true;
@@ -25,10 +25,18 @@ namespace PeluqueriaSaaS.Domain.Entities
             Apellido = apellido;
             FechaNacimiento = fechaNacimiento;
             
-            if (!string.IsNullOrEmpty(email))
-                Email = new Email(email);
-            if (!string.IsNullOrEmpty(telefono))
-                Telefono = new Telefono(telefono);
+            // ✅ FIXED: Direct string assignment (NO ValueObjects)
+            Email = email;
+            Telefono = telefono;
+            
+            // ✅ FIXED: Use base class methods to set ALL inherited properties
+            SetTenant("default-tenant");      // TenantEntityBase method
+            MarcarCreacion("SYSTEM");         // EntityBase method - sets CreadoPor
+            MarcarActualizacion("SYSTEM");    // EntityBase method - sets ActualizadoPor + FechaActualizacion
+            
+            // ✅ Set Client-specific defaults
+            EsActivo = true;
+            // Note: Activo, FechaCreacion already set by EntityBase constructor
         }
 
         public string NombreCompleto => $"{Nombre} {Apellido}";
@@ -39,8 +47,9 @@ namespace PeluqueriaSaaS.Domain.Entities
             Apellido = apellido;
             FechaNacimiento = fechaNacimiento;
             
-            Email = !string.IsNullOrEmpty(email) ? new Email(email) : null;
-            Telefono = !string.IsNullOrEmpty(telefono) ? new Telefono(telefono) : null;
+            // ✅ FIXED: Direct string assignment (NO ValueObjects)
+            Email = email;
+            Telefono = telefono;
         }
 
         public void ActualizarNotas(string notas) => Notas = notas;

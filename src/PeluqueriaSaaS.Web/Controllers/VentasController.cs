@@ -18,18 +18,22 @@ namespace PeluqueriaSaaS.Web.Controllers
         private readonly IServicioRepository _servicioRepository;
         private readonly PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext _dbContext;
         private const string TENANT_ID = "default";
+        private readonly ITipoServicioRepository _tipoServicioRepository;
 
-        public VentasController(
+       public VentasController
+       (
             IVentaRepository ventaRepository,
             IEmpleadoRepository empleadoRepository,
             IMediator mediator,
             IServicioRepository servicioRepository,
+            ITipoServicioRepository tipoServicioRepository,  // ← AGREGAR
             PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext dbContext)
         {
             _ventaRepository = ventaRepository;
             _empleadoRepository = empleadoRepository;
             _mediator = mediator;
             _servicioRepository = servicioRepository;
+            _tipoServicioRepository = tipoServicioRepository;  // ← AGREGAR
             _dbContext = dbContext;
         }
 
@@ -38,10 +42,10 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 fecha ??= DateTime.Today;  // Default hoy si no especifica
-                
+
                 // ⚡ QUERY CON FILTRO FECHA
                 var ventas = await _dbContext.Ventas
-                    .Where(v => v.TenantId == TENANT_ID && v.EsActivo 
+                    .Where(v => v.TenantId == TENANT_ID && v.EsActivo
                              && v.FechaVenta.Date == fecha.Value.Date)  // ← FILTRO FECHA
                     .OrderByDescending(v => v.FechaVenta)
                     .Select(v => new VentaDto
@@ -60,20 +64,20 @@ namespace PeluqueriaSaaS.Web.Controllers
                 foreach (var venta in ventas)
                 {
                     var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
-                    
+
                     // ✅ FIX: Query específico solo columnas existentes
                     var cliente = await _dbContext.Clientes
                         .Where(c => c.Id == venta.ClienteId)
                         .Select(c => new { c.Nombre, c.Apellido })
                         .FirstOrDefaultAsync();
-                    
+
                     venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
                     venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
                 }
 
                 // ⚡ CALCULAR RESUMEN DEL DÍA
                 var ventasHoy = ventas; // Ya están filtradas por fecha!
-                
+
                 ViewBag.CantidadVentas = ventasHoy.Count;
                 ViewBag.TotalVentas = ventasHoy.Sum(v => v.Total);
                 ViewBag.FechaFiltro = fecha.Value;  // Para mostrar en calendar
@@ -99,7 +103,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 var model = new PosViewModel();
-                
+
                 // Cargar empleados
                 var empleados = await _empleadoRepository.GetAllAsync();
                 model.Empleados = empleados.Where(e => e.EsActivo).Select(e => new EmpleadoBasicoDto
@@ -113,7 +117,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     .Where(c => c.EsActivo)
                     .Select(c => new { c.Id, c.Nombre, c.Apellido })
                     .ToListAsync();
-                    
+
                 model.Clientes = clientes.Select(c => new ClienteBasicoDto
                 {
                     ClienteId = c.Id,
@@ -121,13 +125,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 }).ToList();
 
                 // Cargar servicios
-                var servicios = await _servicioRepository.GetAllAsync(TENANT_ID);
-                model.Servicios = servicios.Where(s => s.EsActivo).Select(s => new ServicioBasicoDto
-                {
-                    ServicioId = s.Id,
-                    Nombre = s.Nombre,
-                    Precio = s.Precio.Valor
-                }).ToList();
+                model.ServiciosAgrupados = await CargarServiciosAgrupados();
 
                 return View(model);
             }
@@ -151,7 +149,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"Detalles count: {model.VentaActual?.Detalles?.Count ?? 0}");
                 Console.WriteLine($"EmpleadoId: {model.VentaActual?.EmpleadoId}");
                 Console.WriteLine($"ClienteId: {model.VentaActual?.ClienteId}");
-                
+
                 // Debug ModelState errors
                 if (!ModelState.IsValid)
                 {
@@ -160,7 +158,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                         Console.WriteLine($"ModelState Error - Key: {error.Key}, Errors: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
                     }
                 }
-                
+
                 // Debug detalles específicos
                 if (model.VentaActual?.Detalles != null)
                 {
@@ -170,7 +168,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                         Console.WriteLine($"Detalle {i}: ServicioId={detalle.ServicioId}, Cantidad={detalle.Cantidad}, Precio={detalle.PrecioUnitario}");
                     }
                 }
-                
+
                 Console.WriteLine($"========================");
 
                 if (!ModelState.IsValid || !model.VentaActual.Detalles.Any())
@@ -203,25 +201,25 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"=== ANTES GUARDAR VENTA ===");
                 Console.WriteLine($"Venta Total: {venta.Total}");
                 Console.WriteLine($"Detalles count: {venta.VentaDetalles.Count}");
-                
+
                 await _ventaRepository.CreateAsync(venta);
-                
+
                 Console.WriteLine($"=== VENTA GUARDADA EXITOSAMENTE ===");
-                
+
                 TempData["Success"] = "Venta creada exitosamente";
-               return RedirectToAction(nameof(POS));
+                return RedirectToAction(nameof(POS));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"=== ERROR EN POST VENTA ===");
                 Console.WriteLine($"Exception: {ex.Message}");
                 Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                
+
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToAction(nameof(POS));
             }
         }
-        
+
         public async Task<IActionResult> Details(int id)
         {
             try
@@ -275,7 +273,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     .Where(c => c.Id == venta.ClienteId)
                     .Select(c => new { c.Nombre, c.Apellido })
                     .FirstOrDefaultAsync();
-                
+
                 venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
                 venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
 
@@ -368,6 +366,24 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Ventas = new List<VentaDto>()
                 });
             }
+        }
+        
+        private async Task<Dictionary<string, List<ServicioBasicoDto>>> CargarServiciosAgrupados()
+        {
+            var servicios = await _servicioRepository.GetAllAsync(TENANT_ID);
+            var tipos = await _tipoServicioRepository.GetAllAsync(TENANT_ID);
+            
+            return servicios
+                .Where(s => s.EsActivo)
+                .GroupBy(s => s.TipoServicio?.Nombre ?? "Sin Categoría")
+                .ToDictionary(g => g.Key, g => g.Select(s => new ServicioBasicoDto
+                {
+                    ServicioId = s.Id,
+                    Nombre = s.Nombre,
+                    Precio = s.Precio.Valor,
+                    TipoServicioNombre = g.Key,
+                    DuracionMinutos = s.DuracionMinutos
+                }).ToList());
         }
     }
 }

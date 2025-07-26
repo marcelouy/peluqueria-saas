@@ -168,6 +168,8 @@ namespace PeluqueriaSaaS.Application.DTOs
         public List<ClienteBasicoDto> Clientes { get; set; } = new List<ClienteBasicoDto>();
         public List<ServicioBasicoDto> Servicios { get; set; } = new List<ServicioBasicoDto>();
         
+        public Dictionary<string, List<ServicioBasicoDto>> ServiciosAgrupados { get; set; } = new();
+        
         // Cálculos
         public decimal SubTotalCalculado => VentaActual.Detalles.Sum(d => d.Subtotal);
         public decimal TotalCalculado => SubTotalCalculado - VentaActual.Descuento;

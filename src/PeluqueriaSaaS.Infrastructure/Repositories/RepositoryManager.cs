@@ -33,25 +33,25 @@ public class RepositoryManager : IRepositoryManagerTemp
         await _context.SaveChangesAsync();
     }
 
-    // Métodos para ClienteBasico
-    public async Task<IEnumerable<ClienteBasico>> GetAllClientesAsync()
+    // ✅ FIX: Métodos para Cliente (tabla actual con datos)
+    public async Task<IEnumerable<Cliente>> GetAllClientesAsync()
     {
-        return await _context.ClientesBasicos.ToListAsync();
+        return await _context.Clientes.Where(c => c.EsActivo).ToListAsync(); // ✅ Tabla correcta + filtro activos
     }
 
-    public async Task<ClienteBasico?> GetClienteByIdAsync(int id)
+    public async Task<Cliente?> GetClienteByIdAsync(int id)
     {
-        return await _context.ClientesBasicos.FindAsync(id);
+        return await _context.Clientes.FindAsync(id); // ✅ Tabla correcta
     }
 
-    public async Task<ClienteBasico> AddClienteAsync(ClienteBasico cliente)
+    public async Task<Cliente> AddClienteAsync(Cliente cliente)
     {
-        _context.ClientesBasicos.Add(cliente);
+        _context.Clientes.Add(cliente); // ✅ Tabla correcta
         await _context.SaveChangesAsync();
         return cliente;
     }
 
-    public async Task<ClienteBasico> UpdateClienteAsync(ClienteBasico cliente)
+    public async Task<Cliente> UpdateClienteAsync(Cliente cliente)
     {
         _context.Entry(cliente).State = EntityState.Modified;
         await _context.SaveChangesAsync();
@@ -60,35 +60,35 @@ public class RepositoryManager : IRepositoryManagerTemp
 
     public async Task<bool> DeleteClienteAsync(int id)
     {
-        var cliente = await _context.ClientesBasicos.FindAsync(id);
+        var cliente = await _context.Clientes.FindAsync(id); // ✅ Tabla correcta
         if (cliente != null)
         {
-            _context.ClientesBasicos.Remove(cliente);
+            _context.Clientes.Remove(cliente); // ✅ Tabla correcta
             await _context.SaveChangesAsync();
             return true;
         }
         return false;
     }
 
-    // Métodos para EmpleadoBasico
-    public async Task<IEnumerable<EmpleadoBasico>> GetAllEmpleadosAsync()
+    // ✅ FIX: Métodos para Empleado (entidad actual con datos)
+    public async Task<IEnumerable<Empleado>> GetAllEmpleadosAsync()
     {
-        return await _context.EmpleadosBasicos.ToListAsync();
+        return await _context.Empleados.Where(e => e.EsActivo).ToListAsync(); // ✅ Tabla correcta + filtro activos
     }
 
-    public async Task<EmpleadoBasico?> GetEmpleadoByIdAsync(int id)
+    public async Task<Empleado?> GetEmpleadoByIdAsync(int id)
     {
-        return await _context.EmpleadosBasicos.FindAsync(id);
+        return await _context.Empleados.FindAsync(id); // ✅ Tabla correcta
     }
 
-    public async Task<EmpleadoBasico> AddEmpleadoAsync(EmpleadoBasico empleado)
+    public async Task<Empleado> AddEmpleadoAsync(Empleado empleado)
     {
-        _context.EmpleadosBasicos.Add(empleado);
+        _context.Empleados.Add(empleado); // ✅ Tabla correcta
         await _context.SaveChangesAsync();
         return empleado;
     }
 
-    public async Task<EmpleadoBasico> UpdateEmpleadoAsync(EmpleadoBasico empleado)
+    public async Task<Empleado> UpdateEmpleadoAsync(Empleado empleado)
     {
         _context.Entry(empleado).State = EntityState.Modified;
         await _context.SaveChangesAsync();
@@ -97,10 +97,10 @@ public class RepositoryManager : IRepositoryManagerTemp
 
     public async Task<bool> DeleteEmpleadoAsync(int id)
     {
-        var empleado = await _context.EmpleadosBasicos.FindAsync(id);
+        var empleado = await _context.Empleados.FindAsync(id); // ✅ Tabla correcta
         if (empleado != null)
         {
-            _context.EmpleadosBasicos.Remove(empleado);
+            _context.Empleados.Remove(empleado); // ✅ Tabla correcta
             await _context.SaveChangesAsync();
             return true;
         }

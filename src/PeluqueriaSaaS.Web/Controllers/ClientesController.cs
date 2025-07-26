@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PeluqueriaSaaS.Application.Features.Clientes.Commands;
 using PeluqueriaSaaS.Application.Features.Clientes.Queries;
+using PeluqueriaSaaS.Application.DTOs;
 
 namespace PeluqueriaSaaS.Web.Controllers
 {
@@ -25,7 +26,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al cargar clientes: {ex.Message}";
-                return View(new List<PeluqueriaSaaS.Application.DTOs.ClienteDto>());
+                return View(new List<ClienteDto>());
             }
         }
 
@@ -100,12 +101,8 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Email = cliente.Email,
                     Telefono = cliente.Telefono,
                     FechaNacimiento = cliente.FechaNacimiento,
-                    Direccion = cliente.Direccion,
-                    Ciudad = cliente.Ciudad,
-                    CodigoPostal = cliente.CodigoPostal,
                     Notas = cliente.Notas,
-                    EsActivo = cliente.EsActivo,
-                    UltimaVisita = cliente.UltimaVisita
+                    EsActivo = cliente.EsActivo
                 };
                 
                 return View(command);
@@ -145,9 +142,6 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        
-
-        // GET: Clientes/Delete/5
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
@@ -171,7 +165,6 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // POST: Clientes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

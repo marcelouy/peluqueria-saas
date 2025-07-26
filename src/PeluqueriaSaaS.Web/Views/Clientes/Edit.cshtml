@@ -61,43 +61,20 @@
                             </div>
                         </div>
                         
-                        <!-- Dirección -->
-                        <h5 class="mb-3 mt-4"><i class="fas fa-map-marker-alt"></i> Dirección</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="Direccion" class="form-label">Dirección</label>
-                                    <input asp-for="Direccion" class="form-control" />
-                                    <span asp-validation-for="Direccion" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group mb-3">
-                                    <label asp-for="Ciudad" class="form-label">Ciudad</label>
-                                    <input asp-for="Ciudad" class="form-control" />
-                                    <span asp-validation-for="Ciudad" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group mb-3">
-                                    <label asp-for="CodigoPostal" class="form-label">CP</label>
-                                    <input asp-for="CodigoPostal" class="form-control" />
-                                    <span asp-validation-for="CodigoPostal" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- ✅ ELIMINADO: Sección completa "Dirección" con campos Direccion/Ciudad/CodigoPostal -->
+                        <!-- ✅ REASON: Estas propiedades NO existen en UpdateClienteCommand limpio ni Entity Cliente -->
                         
-                        <!-- Información Adicional -->
-                        <h5 class="mb-3 mt-4"><i class="fas fa-calendar"></i> Información Adicional</h5>
+                        <!-- Estado y Notas -->
+                        <h5 class="mb-3 mt-4"><i class="fas fa-toggle-on"></i> Estado y Notas</h5>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-9">
                                 <div class="form-group mb-3">
-                                    <label asp-for="UltimaVisita" class="form-label">Última Visita</label>
-                                    <input asp-for="UltimaVisita" class="form-control" type="date" />
-                                    <span asp-validation-for="UltimaVisita" class="text-danger"></span>
+                                    <label asp-for="Notas" class="form-label">Notas</label>
+                                    <textarea asp-for="Notas" class="form-control" rows="3" placeholder="Observaciones, preferencias, alergias, etc."></textarea>
+                                    <span asp-validation-for="Notas" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="form-check mt-4">
                                     <input asp-for="EsActivo" class="form-check-input" type="checkbox" />
                                     <label asp-for="EsActivo" class="form-check-label">Cliente Activo</label>
@@ -105,16 +82,8 @@
                             </div>
                         </div>
                         
-                        <!-- Notas -->
-                        <h5 class="mb-3 mt-4"><i class="fas fa-sticky-note"></i> Notas</h5>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group mb-3">
-                                    <textarea asp-for="Notas" class="form-control" rows="3" placeholder="Observaciones, preferencias, alergias, etc."></textarea>
-                                    <span asp-validation-for="Notas" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- ✅ ELIMINADO: Campo UltimaVisita que NO existe en UpdateClienteCommand limpio -->
+                        <!-- ✅ REASON: UltimaVisita property eliminada de Command + DTO + Entity Cliente -->
                         
                         <div class="form-group mt-4">
                             <button type="submit" class="btn btn-primary">

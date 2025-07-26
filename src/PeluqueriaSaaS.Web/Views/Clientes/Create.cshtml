@@ -147,37 +147,15 @@
                             </div>
                         </div>
                         
-                        <!-- Dirección -->
-                        <h5 class="mb-3 mt-4"><i class="fas fa-map-marker-alt"></i> Dirección</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="Direccion" class="form-label">Dirección</label>
-                                    <input asp-for="Direccion" class="form-control" placeholder="Ej: Av. 18 de Julio 1234" />
-                                    <span asp-validation-for="Direccion" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group mb-3">
-                                    <label asp-for="Ciudad" class="form-label">Ciudad</label>
-                                    <input asp-for="Ciudad" class="form-control" placeholder="Ej: Montevideo" />
-                                    <span asp-validation-for="Ciudad" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group mb-3">
-                                    <label asp-for="CodigoPostal" class="form-label">CP</label>
-                                    <input asp-for="CodigoPostal" class="form-control" placeholder="11200" />
-                                    <span asp-validation-for="CodigoPostal" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- ✅ ELIMINADO: Sección completa "Dirección" con campos Direccion/Ciudad/CodigoPostal -->
+                        <!-- ✅ REASON: Estas propiedades NO existen en CrearClienteCommand limpio ni Entity Cliente -->
                         
-                        <!-- Notas -->
-                        <h5 class="mb-3 mt-4"><i class="fas fa-sticky-note"></i> Notas</h5>
+                        <!-- Notas y Estado -->
+                        <h5 class="mb-3 mt-4"><i class="fas fa-sticky-note"></i> Información Adicional</h5>
                         <div class="row">
                             <div class="col-md-9">
                                 <div class="form-group mb-3">
+                                    <label asp-for="Notas" class="form-label">Notas</label>
                                     <textarea asp-for="Notas" class="form-control" rows="3" placeholder="Observaciones, preferencias, alergias, etc."></textarea>
                                     <span asp-validation-for="Notas" class="text-danger"></span>
                                 </div>

@@ -8,17 +8,17 @@ public interface IRepositoryManagerTemp
     IRepository<T> GetRepository<T>() where T : class;
     Task SaveAsync();
     
-    // Métodos específicos para ClienteBasico que usan los handlers
-    Task<IEnumerable<ClienteBasico>> GetAllClientesAsync();
-    Task<ClienteBasico?> GetClienteByIdAsync(int id);
-    Task<ClienteBasico> AddClienteAsync(ClienteBasico cliente);
-    Task<ClienteBasico> UpdateClienteAsync(ClienteBasico cliente);
+    // ✅ FIX: Métodos específicos para Cliente (entidad actual con datos)
+    Task<IEnumerable<Cliente>> GetAllClientesAsync();
+    Task<Cliente?> GetClienteByIdAsync(int id);
+    Task<Cliente> AddClienteAsync(Cliente cliente);
+    Task<Cliente> UpdateClienteAsync(Cliente cliente);
     Task<bool> DeleteClienteAsync(int id);
     
-    // Métodos específicos para EmpleadoBasico
-    Task<IEnumerable<EmpleadoBasico>> GetAllEmpleadosAsync();
-    Task<EmpleadoBasico?> GetEmpleadoByIdAsync(int id);
-    Task<EmpleadoBasico> AddEmpleadoAsync(EmpleadoBasico empleado);
-    Task<EmpleadoBasico> UpdateEmpleadoAsync(EmpleadoBasico empleado);
+    // ✅ FIX: Métodos específicos para Empleado (entidad actual con datos)
+    Task<IEnumerable<Empleado>> GetAllEmpleadosAsync();
+    Task<Empleado?> GetEmpleadoByIdAsync(int id);
+    Task<Empleado> AddEmpleadoAsync(Empleado empleado);
+    Task<Empleado> UpdateEmpleadoAsync(Empleado empleado);
     Task<bool> DeleteEmpleadoAsync(int id);
 }

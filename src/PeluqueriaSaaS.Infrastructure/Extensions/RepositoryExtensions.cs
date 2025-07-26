@@ -15,7 +15,7 @@ public static class RepositoryExtensions
     public static async Task<Cliente?> GetByEmailAsync(
         this IRepository<Cliente> repository, string email)
     {
-        var clientes = await repository.FindAsync(c => c.Email.Valor == email);
+        var clientes = await repository.FindAsync(c => c.Email == email);  // ✅ FIXED: Removed .Valor
         return clientes?.FirstOrDefault();
     }
 }
