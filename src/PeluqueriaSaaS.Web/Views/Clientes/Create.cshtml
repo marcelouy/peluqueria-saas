@@ -1,94 +1,24 @@
-﻿<style>
-.action-buttons {
-    display: flex !important;
-    gap: 8px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-wrap: wrap !important;
-}
-
-.btn-action {
-    min-width: 85px !important;
-    height: 36px !important;
-    font-size: 0.875rem !important;
-    font-weight: 500 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 8px !important;
-    border: none !important;
-    text-decoration: none !important;
-    transition: all 0.3s ease !important;
-    padding: 0 16px !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-    text-transform: none !important;
-}
-
-.btn-action:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
-    text-decoration: none !important;
-}
-
-.btn-view {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
-    color: white !important;
-}
-
-.btn-view:hover {
-    background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
-    color: white !important;
-}
-
-.btn-edit {
-    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%) !important;
-    color: white !important;
-}
-
-.btn-edit:hover {
-    background: linear-gradient(135deg, #e55a00 0%, #cc4900 100%) !important;
-    color: white !important;
-}
-
-.btn-delete {
-    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%) !important;
-    color: white !important;
-}
-
-.btn-delete:hover {
-    background: linear-gradient(135deg, #b02a37 0%, #8b1e2b 100%) !important;
-    color: white !important;
-}
-
-.btn-create {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
-    color: white !important;
-    min-width: 120px !important;
-    height: 40px !important;
-    font-weight: 600 !important;
-}
-
-.btn-create:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%) !important;
-    color: white !important;
-}
-
-.btn-back {
-    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%) !important;
-    color: white !important;
-    min-width: 90px !important;
-}
-
-.btn-back:hover {
-    background: linear-gradient(135deg, #545b62 0%, #383d41 100%) !important;
-    color: white !important;
-}
-</style>
-
-@model PeluqueriaSaaS.Application.Features.Clientes.Commands.CrearClienteCommand
+﻿@model PeluqueriaSaaS.Application.Features.Clientes.Commands.CrearClienteCommand
 
 @{
     ViewData["Title"] = "Crear Cliente";
+}
+
+<!-- SUCCESS/ERROR MESSAGES -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 }
 
 <div class="container">
@@ -122,8 +52,12 @@
                             <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label asp-for="FechaNacimiento" class="form-label">Fecha de Nacimiento</label>
-                                    <input asp-for="FechaNacimiento" class="form-control" type="date" />
+                                    <input asp-for="FechaNacimiento" 
+                                           class="form-control" 
+                                           type="date" 
+                                           id="fechaNacimiento" />
                                     <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
+                                    <small class="form-text text-muted">La fecha no puede ser futura</small>
                                 </div>
                             </div>
                         </div>
@@ -134,8 +68,15 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label asp-for="Email" class="form-label">Email *</label>
-                                    <input asp-for="Email" class="form-control" type="email" />
+                                    <input asp-for="Email" 
+                                           class="form-control" 
+                                           type="email" 
+                                           data-pattern="email-validation"
+                                           title="Ingrese un email válido incluyendo dominio completo"
+                                           placeholder="usuario@dominio.com"
+                                           required />
                                     <span asp-validation-for="Email" class="text-danger"></span>
+                                    <small class="form-text text-muted">Ejemplo: usuario@dominio.com, nombre@empresa.uy</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -146,9 +87,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- ✅ ELIMINADO: Sección completa "Dirección" con campos Direccion/Ciudad/CodigoPostal -->
-                        <!-- ✅ REASON: Estas propiedades NO existen en CrearClienteCommand limpio ni Entity Cliente -->
                         
                         <!-- Notas y Estado -->
                         <h5 class="mb-3 mt-4"><i class="fas fa-sticky-note"></i> Información Adicional</h5>
@@ -182,3 +120,7 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/cliente-validation.js"></script>
+}
