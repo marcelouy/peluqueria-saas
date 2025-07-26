@@ -62,7 +62,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             return View();
         }
 
-        // POST: Empleados/Create
+         // POST: Empleados/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EmpleadoCreateDto empleadoDto)
@@ -82,8 +82,14 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Telefono = empleadoDto.Telefono,
                     Cargo = empleadoDto.Cargo,
                     Salario = empleadoDto.Salario,
-                    EsActivo = empleadoDto.EsActivo,
-                    FechaContratacion = DateTime.Now
+                    FechaNacimiento = empleadoDto.FechaNacimiento,
+                    FechaContratacion = empleadoDto.FechaContratacion,
+                    Direccion = empleadoDto.Direccion,
+                    Ciudad = empleadoDto.Ciudad,
+                    CodigoPostal = empleadoDto.CodigoPostal,
+                    Horario = empleadoDto.Horario,
+                    Notas = empleadoDto.Notas ?? "",  // Evitar NULL como en Clientes
+                    EsActivo = empleadoDto.EsActivo
                 };
 
                 await _empleadoRepository.AddAsync(empleado);
@@ -96,7 +102,6 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return View(empleadoDto);
             }
         }
-
         // GET: Empleados/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {

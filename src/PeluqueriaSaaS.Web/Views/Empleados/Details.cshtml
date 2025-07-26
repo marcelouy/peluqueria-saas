@@ -1,67 +1,296 @@
-﻿<style>
-.btn-action { min-width: 85px !important; height: 36px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 8px !important; border: none !important; text-decoration: none !important; transition: all 0.3s ease !important; padding: 0 16px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; }
-.btn-action:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important; text-decoration: none !important; }
-.btn-edit { background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%) !important; color: white !important; }
-.btn-edit:hover { background: linear-gradient(135deg, #e55a00 0%, #cc4900 100%) !important; color: white !important; }
-.btn-delete { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%) !important; color: white !important; }
-.btn-delete:hover { background: linear-gradient(135deg, #b02a37 0%, #8b1e2b 100%) !important; color: white !important; }
-.btn-back { background: linear-gradient(135deg, #6c757d 0%, #545b62 100%) !important; color: white !important; }
-.btn-back:hover { background: linear-gradient(135deg, #545b62 0%, #383d41 100%) !important; color: white !important; }
-.action-buttons { display: flex !important; gap: 8px !important; justify-content: center !important; }
-</style>
-
 @model PeluqueriaSaaS.Domain.Entities.Empleado
 @{
     ViewData["Title"] = "Detalles del Empleado";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>👤 Detalles del Empleado</h3>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-3">Nombre Completo:</dt>
-                        <dd class="col-sm-9">@Model.NombreCompleto</dd>
-                        
-                        <dt class="col-sm-3">Email:</dt>
-                        <dd class="col-sm-9">@Model.Email</dd>
-                        
-                        <dt class="col-sm-3">Teléfono:</dt>
-                        <dd class="col-sm-9">@(Model.Telefono ?? "No especificado")</dd>
-                        
-                        <dt class="col-sm-3">Cargo:</dt>
-                        <dd class="col-sm-9">@(Model.Cargo ?? "No especificado")</dd>
-                        
-                        <dt class="col-sm-3">Salario:</dt>
-                        <dd class="col-sm-9">@(Model.Salario?.ToString("C") ?? "No especificado")</dd>
-                        
-                        <dt class="col-sm-3">Estado:</dt>
-                        <dd class="col-sm-9">
-                            @if (Model.EsActivo)
-                            {
-                                <span class="badge bg-success">✅ Activo</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">❌ Inactivo</span>
-                            }
-                        </dd>
-                        
-                        <dt class="col-sm-3">Fecha Contratación:</dt>
-                        <dd class="col-sm-9">@Model.FechaContratacion.ToString("dd/MM/yyyy")</dd>
-                    </dl>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">
+            <i class="fas fa-user me-2"></i>Detalles del Empleado
+        </h2>
+        <small class="text-muted">Información completa de @Model.NombreCompleto</small>
+    </div>
+    <div class="btn-group">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+            <i class="fas fa-edit me-2"></i>Editar
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información Personal -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i>Información Personal
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Nombre:</dt>
+                    <dd class="col-sm-8">@Model.Nombre</dd>
                     
-                    <div class="action-buttons mt-4">
-                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-action btn-edit">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-action btn-delete">Eliminar</a>
-                        <a asp-action="Index" class="btn btn-action btn-back">Volver</a>
-                    </div>
-                </div>
+                    <dt class="col-sm-4">Apellido:</dt>
+                    <dd class="col-sm-8">@Model.Apellido</dd>
+                    
+                    <dt class="col-sm-4">Nombre Completo:</dt>
+                    <dd class="col-sm-8"><strong>@Model.NombreCompleto</strong></dd>
+                    
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8">
+                        <a href="mailto:@Model.Email" class="text-decoration-none">
+                            <i class="fas fa-envelope me-1"></i>@Model.Email
+                        </a>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Teléfono:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Telefono))
+                        {
+                            <a href="tel:@Model.Telefono" class="text-decoration-none">
+                                <i class="fas fa-phone me-1"></i>@Model.Telefono
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificado</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-4">Fecha Nacimiento:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.FechaNacimiento.HasValue)
+                        {
+                            <span>@Model.FechaNacimiento.Value.ToString("dd/MM/yyyy")</span>
+                            <small class="text-muted">
+                                (@((DateTime.Now.Year - Model.FechaNacimiento.Value.Year)) años)
+                            </small>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificada</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información Laboral -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-briefcase me-2"></i>Información Laboral
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Cargo:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Cargo))
+                        {
+                            <span class="badge bg-primary fs-6">@Model.Cargo</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificado</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-4">Salario:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Salario.HasValue)
+                        {
+                            <strong class="text-success">@Model.Salario.Value.ToString("C", new System.Globalization.CultureInfo("es-UY"))</strong>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificado</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-4">Horario:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Horario))
+                        {
+                            <span>@Model.Horario</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificado</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-4">Fecha Contratación:</dt>
+                    <dd class="col-sm-8">
+                        <span>@Model.FechaContratacion.ToString("dd/MM/yyyy")</span>
+                        <small class="text-muted">
+                            (@((DateTime.Now - Model.FechaContratacion).Days) días)
+                        </small>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Estado:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.EsActivo)
+                        {
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle me-1"></i>Activo
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-6">
+                                <i class="fas fa-times-circle me-1"></i>Inactivo
+                            </span>
+                        }
+                    </dd>
+                </dl>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Información Adicional -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-map-marker-alt me-2"></i>Información Adicional
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Dirección:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Direccion))
+                        {
+                            <span>@Model.Direccion</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificada</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-4">Ciudad:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Ciudad))
+                        {
+                            <span>@Model.Ciudad</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificada</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-4">Código Postal:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.CodigoPostal))
+                        {
+                            <span>@Model.CodigoPostal</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No especificado</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Fecha Registro:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.FechaRegistro != default(DateTime))
+                        {
+                            <span>@Model.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No disponible</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(Model.Notas))
+        {
+            <div class="row mt-3">
+                <div class="col-12">
+                    <dt>Notas:</dt>
+                    <dd class="mt-2">
+                        <div class="bg-light p-3 rounded">
+                            @Model.Notas
+                        </div>
+                    </dd>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between">
+            <div class="btn-group">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Editar Empleado
+                </a>
+                <button type="button" class="btn btn-outline-danger" 
+                        onclick="confirmarEliminacion(@Model.Id)">
+                    <i class="fas fa-trash me-2"></i>Eliminar
+                </button>
+            </div>
+            <div class="btn-group">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a Lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">¿Estás seguro de que deseas eliminar a <strong>@Model.NombreCompleto</strong>?</p>
+                <small class="text-muted">Esta acción no se puede deshacer.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminar" asp-action="Delete" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    function confirmarEliminacion(id) {
+        var modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
+        modal.show();
+    }
+    </script>
+}
