@@ -1,6 +1,6 @@
 @*
     Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Edit.cshtml
-    Propósito: Formulario para editar servicio existente - BOTONES HERMOSOS
+    Propósito: Formulario para editar servicio existente - CON VALIDACION JAVASCRIPT
     Fecha: Julio 2025
 *@
 
@@ -100,6 +100,7 @@
                                 @maxlength = "100",
                                 @required = "required"
                             })
+                            <div id="nombre-feedback"></div>
                             @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "invalid-feedback" })
                         </div>
                     </div>
@@ -135,6 +136,7 @@
                                 })
                                 @Html.ValidationMessageFor(m => m.Precio, "", new { @class = "invalid-feedback" })
                             </div>
+                            <div id="precio-feedback"></div>
                         </div>
                     </div>
 
@@ -170,6 +172,7 @@
                                 <span class="input-group-text">min</span>
                                 @Html.ValidationMessageFor(m => m.DuracionMinutos, "", new { @class = "invalid-feedback" })
                             </div>
+                            <div id="duracion-feedback"></div>
                         </div>
                     </div>
 
@@ -198,6 +201,7 @@
                         @placeholder = "Describe detalladamente el servicio, técnicas utilizadas, productos incluidos, etc.",
                         @maxlength = "500"
                     })
+                    <div id="descripcion-feedback"></div>
                     @Html.ValidationMessageFor(m => m.Descripcion, "", new { @class = "invalid-feedback" })
                     <small class="form-text text-muted">
                         <i class="fas fa-info-circle me-1"></i>
@@ -349,11 +353,8 @@
 </form>
 
 @section Scripts {
+    <script src="~/js/servicios-validation.js"></script>
     <script>
-        // Configurar el formulario principal
-        const mainForm = document.querySelector('form:not([style*="display: none"])');
-        mainForm.id = 'form';
-
         // Valores originales para restaurar
         const valoresOriginales = {
             nombre: '@Html.Raw(Model.Nombre)',
@@ -365,64 +366,32 @@
             esActivo: @Model.EsActivo.ToString().ToLower()
         };
 
-        // Vista previa en tiempo real
-        function actualizarVistaPrevia() {
-            const nombre = document.getElementById('Nombre').value || 'Nombre del servicio';
-            const precio = document.getElementById('Precio').value || '0.00';
-            const moneda = document.getElementById('MonedaCodigo').value || 'UYU';
-            const duracion = document.getElementById('DuracionMinutos').value || '0';
-            const descripcion = document.getElementById('Descripcion').value || 'Sin descripción';
-            const tipoSelect = document.getElementById('TipoServicioId');
-            const tipo = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Tipo de servicio';
-
-            document.getElementById('preview-nombre').textContent = nombre;
-            document.getElementById('preview-tipo').textContent = tipo !== '-- Seleccione un tipo --' ? tipo : 'Tipo de servicio';
-            document.getElementById('preview-precio').textContent = `$${parseFloat(precio || 0).toFixed(2)} ${moneda}`;
-            document.getElementById('preview-duracion').textContent = formatearDuracion(parseInt(duracion || 0));
-            document.getElementById('preview-descripcion').textContent = descripcion;
-
-            // Actualizar texto del estado
+        // Actualizar texto del estado cuando cambia checkbox
+        document.addEventListener('DOMContentLoaded', function() {
             const estadoCheckbox = document.getElementById('EsActivo');
             const estadoTexto = document.querySelector('.estado-texto');
-            if (estadoTexto) {
-                estadoTexto.textContent = estadoCheckbox.checked ? 'Activo' : 'Inactivo';
-            }
-        }
-
-        // Formatear duración
-        function formatearDuracion(minutos) {
-            if (minutos === 0) return '0 minutos';
-            if (minutos < 60) return `${minutos} min`;
-            if (minutos === 60) return '1 hora';
-            if (minutos % 60 === 0) return `${minutos / 60} horas`;
             
-            const horas = Math.floor(minutos / 60);
-            const mins = minutos % 60;
-            return `${horas}h ${mins}min`;
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            const campos = ['Nombre', 'Precio', 'MonedaCodigo', 'DuracionMinutos', 'Descripcion', 'TipoServicioId', 'EsActivo'];
-            campos.forEach(campo => {
-                const elemento = document.getElementById(campo);
-                if (elemento) {
-                    elemento.addEventListener('input', actualizarVistaPrevia);
-                    elemento.addEventListener('change', actualizarVistaPrevia);
-                }
-            });
+            if (estadoCheckbox && estadoTexto) {
+                estadoCheckbox.addEventListener('change', function() {
+                    estadoTexto.textContent = this.checked ? 'Activo' : 'Inactivo';
+                });
+            }
             
             // Cargar tipo de servicio original
             const tipoSelect = document.getElementById('TipoServicioId');
-            const tipoOriginalText = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Sin tipo';
-            document.getElementById('original-tipo').textContent = tipoOriginalText;
-            
-            actualizarVistaPrevia();
+            if (tipoSelect && tipoSelect.selectedIndex >= 0) {
+                const tipoOriginalText = tipoSelect.options[tipoSelect.selectedIndex].text || 'Sin tipo';
+                const originalTipo = document.getElementById('original-tipo');
+                if (originalTipo) {
+                    originalTipo.textContent = tipoOriginalText;
+                }
+            }
         });
 
         // Función para aplicar cambios sin salir
         function aplicarCambios() {
-            if (document.getElementById('form').checkValidity()) {
+            const form = document.getElementById('form');
+            if (form && form.checkValidity()) {
                 // Mostrar indicador de carga
                 const btn = event.target;
                 const originalText = btn.innerHTML;
@@ -430,7 +399,7 @@
                 btn.disabled = true;
 
                 // Enviar formulario vía AJAX
-                const formData = new FormData(document.getElementById('form'));
+                const formData = new FormData(form);
                 
                 fetch(window.location.href, {
                     method: 'POST',
@@ -465,23 +434,34 @@
                         btn.disabled = false;
                     }, 3000);
                 });
-            } else {
-                document.getElementById('form').reportValidity();
+            } else if (form) {
+                form.reportValidity();
             }
         }
 
         // Función para restaurar valores originales
         function restaurarValores() {
             if (confirm('¿Estás seguro de que deseas restaurar todos los valores originales?')) {
-                document.getElementById('Nombre').value = valoresOriginales.nombre;
-                document.getElementById('Precio').value = valoresOriginales.precio;
-                document.getElementById('MonedaCodigo').value = valoresOriginales.moneda;
-                document.getElementById('DuracionMinutos').value = valoresOriginales.duracion;
-                document.getElementById('Descripcion').value = valoresOriginales.descripcion;
-                document.getElementById('TipoServicioId').value = valoresOriginales.tipoServicio;
-                document.getElementById('EsActivo').checked = valoresOriginales.esActivo;
+                const nombreInput = document.getElementById('Nombre');
+                const precioInput = document.getElementById('Precio');
+                const monedaSelect = document.getElementById('MonedaCodigo');
+                const duracionInput = document.getElementById('DuracionMinutos');
+                const descripcionInput = document.getElementById('Descripcion');
+                const tipoSelect = document.getElementById('TipoServicioId');
+                const activoCheckbox = document.getElementById('EsActivo');
                 
-                actualizarVistaPrevia();
+                if (nombreInput) nombreInput.value = valoresOriginales.nombre;
+                if (precioInput) precioInput.value = valoresOriginales.precio;
+                if (monedaSelect) monedaSelect.value = valoresOriginales.moneda;
+                if (duracionInput) duracionInput.value = valoresOriginales.duracion;
+                if (descripcionInput) descripcionInput.value = valoresOriginales.descripcion;
+                if (tipoSelect) tipoSelect.value = valoresOriginales.tipoServicio;
+                if (activoCheckbox) activoCheckbox.checked = valoresOriginales.esActivo;
+                
+                // Actualizar vista previa si existe la función
+                if (typeof actualizarVistaPrevia === 'function') {
+                    actualizarVistaPrevia();
+                }
             }
         }
 
@@ -490,35 +470,17 @@
             const accion = activar ? 'activar' : 'desactivar';
             if (confirm(`¿Estás seguro de que deseas ${accion} este servicio?`)) {
                 const form = document.getElementById('cambiarEstadoForm');
-                form.action = '@Url.Action("CambiarEstado")' + '/@Model.Id' + '?activar=' + activar;
-                form.submit();
+                if (form) {
+                    form.action = '@Url.Action("CambiarEstado")' + '/@Model.Id' + '?activar=' + activar;
+                    form.submit();
+                }
             }
         }
 
         // Función para duplicar servicio
         function duplicarServicio() {
             if (confirm('¿Deseas crear un nuevo servicio basado en este?')) {
-                // Crear formulario temporal para enviar a Create con datos pre-llenados
-                const form = document.createElement('form');
-                form.method = 'GET';
-                form.action = '@Url.Action("Create")';
-                
-                const campos = ['Nombre', 'Precio', 'MonedaCodigo', 'DuracionMinutos', 'Descripcion', 'TipoServicioId'];
-                campos.forEach(campo => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = campo;
-                    input.value = document.getElementById(campo).value;
-                    form.appendChild(input);
-                });
-                
-                // Modificar nombre para indicar que es una copia
-                const nombreInput = form.querySelector('[name="Nombre"]');
-                nombreInput.value = `Copia de ${nombreInput.value}`;
-                
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
+                window.location.href = '@Url.Action("Create")' + '?duplicarDesde=@Model.Id';
             }
         }
 

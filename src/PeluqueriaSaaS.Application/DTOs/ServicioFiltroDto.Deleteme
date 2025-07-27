@@ -1,0 +1,32 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace PeluqueriaSaaS.Application.DTOs
+{
+    public class ServicioFiltroDto
+    {
+        [Display(Name = "Nombre del Servicio")]
+        public string? Nombre { get; set; }
+
+        [Display(Name = "Tipo de Servicio")]
+        public int? TipoServicioId { get; set; }
+
+        [Display(Name = "Precio Mínimo")]
+        [Range(0, double.MaxValue, ErrorMessage = "El precio mínimo debe ser mayor o igual a 0")]
+        public decimal? PrecioMin { get; set; }
+
+        [Display(Name = "Precio Máximo")]
+        [Range(0, double.MaxValue, ErrorMessage = "El precio máximo debe ser mayor o igual a 0")]
+        public decimal? PrecioMax { get; set; }
+
+        [Display(Name = "Solo Activos")]
+        public bool SoloActivos { get; set; }
+
+        // Propiedad para verificar si hay filtros aplicados
+        public bool TieneFiltros => 
+            !string.IsNullOrWhiteSpace(Nombre) || 
+            TipoServicioId.HasValue || 
+            PrecioMin.HasValue || 
+            PrecioMax.HasValue || 
+            SoloActivos;
+    }
+}

@@ -1,405 +1,314 @@
-@*
-    Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Index.cshtml
-    PropÃ³sito: Vista principal de servicios con filtros - BOTONES HERMOSOS
-    Fecha: Julio 2025
-*@
+@model IEnumerable<PeluqueriaSaaS.Application.DTOs.ServicioDto>
 
-@model IEnumerable<PeluqueriaSaaS.Application.DTOs.ServicioListDto>
 @{
     ViewData["Title"] = "Gestión de Servicios";
-    var filtroActual = ViewBag.FiltroActual as PeluqueriaSaaS.Application.DTOs.ServicioFiltroDto;
-    var tiposServicio = ViewBag.TiposServicio as SelectList;
 }
 
-<!-- Header de la pÃ¡gina -->
-<div class="page-header">
-    <div class="container">
-        <h1 class="page-title">
-            <i class="fas fa-scissors me-3"></i>
-            Gestión de Servicios
-        </h1>
-        <p class="page-subtitle">
-            Administra los servicios de tu peluquería de forma profesional
-        </p>
-    </div>
-</div>
-
-<div class="container">
-    <!-- Mensajes de notificaciÃ³n -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success fade-in">
-            <i class="fas fa-check-circle me-2"></i>
-            @TempData["Success"]
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 page-header">
+        <div>
+            <h2><i class="fas fa-concierge-bell text-primary"></i> Gestión de Servicios</h2>
+            <p class="text-muted mb-0">Administra los servicios de tu peluquería</p>
         </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger fade-in">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            @TempData["Error"]
-        </div>
-    }
-
-    <!-- Toolbar principal -->
-    <div class="btn-toolbar fade-in">
-        <div class="d-flex gap-2">
-            <!-- BotÃ³n Crear Nuevo Servicio - VERDE HERMOSO -->
-            <a href="@Url.Action("Create")" class="btn btn-create btn-icon">
-                <i class="fas fa-plus"></i>
-                Nuevo Servicio
+        <div>
+            <a href="/Servicios/Create" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nuevo Servicio
             </a>
-
-            <!-- BotÃ³n EstadÃ­sticas -->
-            <button type="button" class="btn btn-secondary btn-icon" onclick="mostrarEstadisticas()">
-                <i class="fas fa-chart-bar"></i>
-                EstadÃ­sticas
-            </button>
-        </div>
-
-        <!-- Contador de servicios -->
-        <div class="d-flex align-items-center">
-            <span class="badge badge-info">
-                Total: @Model.Count() servicios
-            </span>
         </div>
     </div>
 
-    <!-- Panel de filtros -->
-    <div class="card fade-in">
+    <!-- Filtros de Búsqueda -->
+    <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-filter me-2"></i>
-                Filtros de Búsqueda
-            </h5>
+            <h6 class="card-title mb-0">
+                <i class="fas fa-filter text-primary"></i> Filtros de Búsqueda
+                @if (ViewBag.TieneFiltros)
+                {
+                    <span class="badge badge-info ml-2">Filtros activos</span>
+                }
+            </h6>
         </div>
         <div class="card-body">
-            @using (Html.BeginForm("Index", "Servicios", FormMethod.Get))
-            {
+            <form id="filtros-form" method="get" action="/Servicios">
                 <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label class="form-label">Nombre del Servicio</label>
-                            @Html.TextBoxFor(m => filtroActual.Nombre, new { @class = "form-control", @placeholder = "Buscar por nombre..." })
-                        </div>
+                    <!-- Filtro Nombre -->
+                    <div class="col-md-3 mb-3">
+                        <label for="nombre" class="form-label">
+                            <i class="fas fa-search text-muted"></i> Buscar por nombre
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="nombre" 
+                               name="nombre" 
+                               value="@ViewBag.FiltroNombre" 
+                               placeholder="Nombre o descripción..."
+                               autocomplete="off">
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label class="form-label">Tipo de Servicio</label>
-                            @Html.DropDownListFor(m => filtroActual.TipoServicioId, tiposServicio, "-- Todos los tipos --", new { @class = "form-control" })
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label class="form-label">Precio Mín.</label>
-                            @Html.TextBoxFor(m => filtroActual.PrecioMin, new { @class = "form-control", @type = "number", @step = "0.01", @placeholder = "0.00" })
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label class="form-label">Precio Máx.</label>
-                            @Html.TextBoxFor(m => filtroActual.PrecioMax, new { @class = "form-control", @type = "number", @step = "0.01", @placeholder = "9999.99" })
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <div class="d-flex align-items-center" style="height: 100%;">
-                                <div class="form-check">
-                                    @Html.CheckBoxFor(m => filtroActual.SoloActivos, new { @class = "form-check-input" })
-                                    <label class="form-check-label">Solo Activos</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="btn-group mt-3">
-                    <!-- BotÃ³n Buscar - AZUL HERMOSO -->
-                    <button type="submit" class="btn btn-primary btn-icon">
-                        <i class="fas fa-search"></i>
-                        Buscar
-                    </button>
-                    <!-- BotÃ³n Limpiar -->
-                    <a href="@Url.Action("Index")" class="btn btn-secondary btn-icon">
-                        <i class="fas fa-times"></i>
-                        Limpiar
-                    </a>
-                </div>
-            }
-        </div>
-    </div>
 
-    <!-- Tabla de servicios -->
-    <div class="table-container fade-in">
-        @if (Model.Any())
-        {
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-tag me-1"></i>Nombre</th>
-                        <th><i class="fas fa-list me-1"></i>Tipo</th>
-                        <th><i class="fas fa-dollar-sign me-1"></i>Precio</th>
-                        <th><i class="fas fa-clock me-1"></i>Duración</th>
-                        <th><i class="fas fa-toggle-on me-1"></i>Estado</th>
-                        <th class="text-center"><i class="fas fa-cogs me-1"></i>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var servicio in Model)
-                    {
-                        <tr>
-                            <td>
-                                <strong>@servicio.Nombre</strong>
-                            </td>
-                            <td>
-                                <span class="badge badge-info">
-                                    @servicio.TipoServicioNombre
-                                </span>
-                            </td>
-                            <td>
-                                <strong class="text-success">@servicio.PrecioFormateado</strong>
-                            </td>
-                            <td>
-                                @servicio.DuracionFormateada
-                            </td>
-                            <td>
-                                <span class="badge @servicio.EstadoCssClass">
-                                    @(servicio.EsActivo ? "Activo" : "Inactivo")
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group justify-content-center">
-                                    <!-- BotÃ³n Ver Detalles - AZUL HERMOSO -->
-                                    <a href="@Url.Action("Details", new { id = servicio.Id })" 
-                                       class="btn btn-view btn-sm btn-icon" 
-                                       title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-
-                                    <!-- BotÃ³n Editar - NARANJA HERMOSO -->
-                                    <a href="@Url.Action("Edit", new { id = servicio.Id })" 
-                                       class="btn btn-edit btn-sm btn-icon" 
-                                       title="Editar servicio">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-
-                                    <!-- BotÃ³n Cambiar Estado -->
-                                    @if (servicio.EsActivo)
+                    <!-- Filtro Tipo Servicio -->
+                    <div class="col-md-3 mb-3">
+                        <label for="tipoServicioId" class="form-label">
+                            <i class="fas fa-tags text-muted"></i> Tipo de Servicio
+                        </label>
+                        <select class="form-control" id="tipoServicioId" name="tipoServicioId">
+                            @if (ViewBag.TiposServicio != null)
+                            {
+                                @foreach (var tipo in (List<SelectListItem>)ViewBag.TiposServicio)
+                                {
+                                    if (tipo.Selected)
                                     {
-                                        <button type="button" 
-                                                class="btn btn-warning btn-sm btn-icon" 
-                                                onclick="cambiarEstado('@servicio.Id', false, '@servicio.Nombre')" 
-                                                title="Desactivar servicio">
-                                            <i class="fas fa-pause"></i>
-                                        </button>
+                                        <option value="@tipo.Value" selected>@tipo.Text</option>
                                     }
                                     else
                                     {
-                                        <button type="button" 
-                                                class="btn btn-success btn-sm btn-icon" 
-                                                onclick="cambiarEstado('@servicio.Id', true, '@servicio.Nombre')" 
-                                                title="Activar servicio">
-                                            <i class="fas fa-play"></i>
-                                        </button>
+                                        <option value="@tipo.Value">@tipo.Text</option>
                                     }
+                                }
+                            }
+                        </select>
+                    </div>
 
-                                    <!-- BotÃ³n Eliminar - ROJO HERMOSO -->
-                                    <a href="@Url.Action("Delete", new { id = servicio.Id })" 
-                                       class="btn btn-delete btn-sm btn-icon" 
-                                       title="Eliminar servicio">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-        else
-        {
-            <div class="card-body text-center">
-                <div class="py-5">
-                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                    <h4 class="text-muted">No se encontraron servicios</h4>
-                    <p class="text-muted">
-                        @if (filtroActual?.TieneFiltros == true)
-                        {
-                            <span>No hay servicios que coincidan con los filtros aplicados.</span>
-                            <br>
-                            <a href="@Url.Action("Index")" class="btn btn-secondary btn-sm mt-2">
-                                <i class="fas fa-times me-1"></i>
-                                Limpiar filtros
-                            </a>
-                        }
-                        else
-                        {
-                            <span>AÃºn no has creado ningÃºn servicio.</span>
-                            <br>
-                            <a href="@Url.Action("Create")" class="btn btn-create btn-sm mt-2">
-                                <i class="fas fa-plus me-1"></i>
-                                Crear primer servicio
-                            </a>
-                        }
-                    </p>
-                </div>
-            </div>
-        }
-    </div>
-</div>
+                    <!-- Filtro Precio Mínimo -->
+                    <div class="col-md-2 mb-3">
+                        <label for="precioMin" class="form-label">
+                            <i class="fas fa-dollar-sign text-muted"></i> Precio Min.
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="precioMin" 
+                               name="precioMin" 
+                               value="@ViewBag.FiltroPrecioMin" 
+                               placeholder="0"
+                               min="0"
+                               step="0.01">
+                    </div>
 
-<!-- Modal para mostrar estadÃ­sticas -->
-<div class="modal fade" id="estadisticasModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    EstadÃ­sticas de Servicios
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="estadisticasContent">
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
+                    <!-- Filtro Precio Máximo -->
+                    <div class="col-md-2 mb-3">
+                        <label for="precioMax" class="form-label">
+                            <i class="fas fa-dollar-sign text-muted"></i> Precio Max.
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="precioMax" 
+                               name="precioMax" 
+                               value="@ViewBag.FiltroPrecioMax" 
+                               placeholder="999999"
+                               min="0"
+                               step="0.01">
+                    </div>
+
+                    <!-- Filtro Solo Activos -->
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label d-block">
+                            <i class="fas fa-check-circle text-muted"></i> Estado
+                        </label>
+                        <div class="form-check">
+                            @if (ViewBag.FiltroSoloActivos != null && (bool)ViewBag.FiltroSoloActivos)
+                            {
+                                <input type="checkbox" 
+                                       class="form-check-input" 
+                                       id="soloActivos" 
+                                       name="soloActivos" 
+                                       value="true"
+                                       checked>
+                            }
+                            else
+                            {
+                                <input type="checkbox" 
+                                       class="form-check-input" 
+                                       id="soloActivos" 
+                                       name="soloActivos" 
+                                       value="true">
+                            }
+                            <label class="form-check-label" for="soloActivos">
+                                Solo Activos
+                            </label>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Botones de Acción -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                                <button type="button" id="clear-filters-btn" class="btn btn-outline-secondary ml-2">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </button>
+                            </div>
+                            <div class="text-muted">
+                                <small>
+                                    <i class="fas fa-info-circle"></i>
+                                    Mostrando @ViewBag.TotalServicios resultado(s)
+                                    (@ViewBag.ServiciosActivos activos, @ViewBag.ServiciosInactivos inactivos)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Acciones de Tabla -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <button type="button" id="stats-button" class="btn btn-info">
+                <i class="fas fa-chart-bar"></i> Estadísticas
+            </button>
+        </div>
+        <div class="text-muted">
+            @if (ViewBag.TieneFiltros)
+            {
+                <i class="fas fa-filter text-primary"></i>
+                <small>Filtros aplicados - <a href="/Servicios" class="text-primary">Ver todos</a></small>
+            }
+        </div>
+    </div>
+
+    <!-- Tabla de Servicios -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th><i class="fas fa-tag"></i> Nombre</th>
+                    <th><i class="fas fa-align-left"></i> Descripción</th>
+                    <th><i class="fas fa-dollar-sign"></i> Precio</th>
+                    <th><i class="fas fa-clock"></i> Duración</th>
+                    <th><i class="fas fa-tags"></i> Tipo</th>
+                    <th><i class="fas fa-toggle-on"></i> Estado</th>
+                    <th><i class="fas fa-cogs"></i> Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var servicio in Model)
+                {
+                    <tr id="servicio-@servicio.Id" class="@(!servicio.EsActivo ? "table-secondary" : "")">
+                        <td>
+                            <strong>@servicio.Nombre</strong>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(servicio.Descripcion))
+                            {
+                                <small class="text-muted">@servicio.Descripcion</small>
+                            }
+                            else
+                            {
+                                <small class="text-muted font-italic">Sin descripción</small>
+                            }
+                        </td>
+                        <td class="precio-cell">
+                            <strong class="text-success">@servicio.PrecioFormateado</strong>
+                        </td>
+                        <td>
+                            <span class="badge badge-light">@servicio.DuracionFormateada</span>
+                        </td>
+                        <td class="tipo-servicio-cell">
+                            <span class="badge badge-info">@servicio.TipoServicioNombre</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-pill @servicio.EstadoCssClass estado-badge">
+                                @servicio.EstadoTexto
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <!-- Botón Ver -->
+                                <a href="/Servicios/Details/@servicio.Id" 
+                                   class="btn btn-sm btn-outline-info" 
+                                   title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                <!-- Botón Editar -->
+                                <a href="/Servicios/Edit/@servicio.Id" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <!-- Botón Cambiar Estado AJAX -->
+                                <button type="button" 
+                                        class="btn btn-sm @(servicio.EsActivo ? "btn-warning" : "btn-success") toggle-estado-btn"
+                                        data-servicio-id="@servicio.Id"
+                                        data-estado-actual="@servicio.EsActivo.ToString().ToLower()"
+                                        title="@(servicio.EsActivo ? "Desactivar" : "Activar") servicio">
+                                    <i class="fas @(servicio.EsActivo ? "fa-ban" : "fa-check")"></i>
+                                    @(servicio.EsActivo ? "Desactivar" : "Activar")
+                                </button>
+                                
+                                <!-- Botón Eliminar -->
+                                <a href="/Servicios/Delete/@servicio.Id" 
+                                   class="btn btn-sm btn-outline-danger" 
+                                   title="Eliminar"
+                                   onclick="return confirm('¿Está seguro de que desea eliminar este servicio?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No se encontraron servicios</h5>
+            @if (ViewBag.TieneFiltros)
+            {
+                <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                <a href="/Servicios" class="btn btn-outline-primary">
+                    <i class="fas fa-times"></i> Limpiar Filtros
+                </a>
+            }
+            else
+            {
+                <p class="text-muted">Comienza creando tu primer servicio</p>
+                <a href="/Servicios/Create" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Crear Primer Servicio
+                </a>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal Estadísticas -->
+<div class="modal fade" id="statisticsModal" tabindex="-1" role="dialog" aria-labelledby="statisticsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statisticsModalLabel">
+                    <i class="fas fa-chart-bar text-primary"></i> Estadísticas de Servicios
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenido será llenado por JavaScript -->
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Calculando estadísticas...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Formulario oculto para cambiar estado -->
-<form id="cambiarEstadoForm" method="post" style="display: none;">
-    @Html.AntiForgeryToken()
-</form>
+<!-- Token Antiforgery para AJAX -->
+@Html.AntiForgeryToken()
 
 @section Scripts {
-    <script>
-        // Función para cambiar estado de servicio con AJAX moderno
-function cambiarEstado(servicioId, activar, nombreServicio) {
-    const accion = activar ? 'activar' : 'desactivar';
-    const mensaje = `¿Estás seguro de que deseas ${accion} el servicio "${nombreServicio}"?`;
-    
-    if (confirm(mensaje)) {
-        // Obtener el token antiforgery
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        
-        // Hacer petición AJAX con fetch moderno
-        fetch('@Url.Action("CambiarEstado")' + '/' + servicioId, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'RequestVerificationToken': token
-            },
-            body: 'activar=' + activar + '&__RequestVerificationToken=' + token
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Buscar el botón que hizo click por servicioId
-                const botones = document.querySelectorAll('button[onclick*="' + servicioId + '"]');
-                const botonActual = Array.from(botones).find(btn => btn.onclick.toString().includes('cambiarEstado'));
-                
-                if (botonActual) {
-                    // Encontrar la fila (tr) que contiene este botón
-                    const fila = botonActual.closest('tr');
-                    
-                    // Actualizar badge de estado en la columna Estado
-                    const badge = fila.querySelector('td:nth-child(5) .badge');
-                    if (badge) {
-                        if (data.nuevoEstado) {
-                            badge.textContent = 'Activo';
-                            badge.className = 'badge badge-success';
-                        } else {
-                            badge.textContent = 'Inactivo';
-                            badge.className = 'badge badge-danger';
-                        }
-                    }
-                    
-                    // Actualizar el botón actual
-                    if (data.nuevoEstado) {
-                        // Ahora está ACTIVO -> mostrar botón DESACTIVAR
-                        botonActual.className = 'btn btn-warning btn-sm btn-icon';
-                        botonActual.innerHTML = '<i class="fas fa-pause"></i>';
-                        botonActual.title = 'Desactivar servicio';
-                        botonActual.onclick = function() { cambiarEstado(servicioId, false, nombreServicio); };
-                    } else {
-                        // Ahora está INACTIVO -> mostrar botón ACTIVAR  
-                        botonActual.className = 'btn btn-success btn-sm btn-icon';
-                        botonActual.innerHTML = '<i class="fas fa-play"></i>';
-                        botonActual.title = 'Activar servicio';
-                        botonActual.onclick = function() { cambiarEstado(servicioId, true, nombreServicio); };
-                    }
-                }
-                
-                // Mostrar mensaje de éxito
-                alert('Servicio "' + nombreServicio + '" ' + (data.nuevoEstado ? 'activado' : 'desactivado') + ' correctamente.');
-            } else {
-                alert('Error al cambiar el estado del servicio.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error de conexión al cambiar el estado.');
-        });
-    }
-}
-
-        // FunciÃ³n para mostrar estadÃ­sticas
-        async function mostrarEstadisticas() {
-            const modal = new bootstrap.Modal(document.getElementById('estadisticasModal'));
-            modal.show();
-
-            try {
-                const response = await fetch('@Url.Action("Estadisticas")');
-                const data = await response.json();
-                
-                document.getElementById('estadisticasContent').innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <h4 class="text-primary">${data.totalServicios}</h4>
-                                    <p>Total Servicios</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <h4 class="text-success">${data.serviciosActivos}</h4>
-                                    <p>Servicios Activos</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <h4 class="text-warning">$${data.precioPromedio}</h4>
-                                    <p>Precio Promedio</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <h4 class="text-info">${data.duracionPromedio} min</h4>
-                                    <p>DuraciÃ³n Promedio</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                document.getElementById('estadisticasContent').innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Error al cargar estadÃ­sticas
-                    </div>
-                `;
-            }
-        }
-    </script>
+    <script src="~/js/servicios-index.js"></script>
 }

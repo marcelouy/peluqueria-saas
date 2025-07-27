@@ -1,6 +1,6 @@
 @*
     Archivo: src/PeluqueriaSaaS.Web/Views/Servicios/Create.cshtml
-    Propósito: Formulario para crear nuevo servicio - BOTONES HERMOSOS
+    Propósito: Formulario para crear nuevo servicio - CON VALIDACION JAVASCRIPT
     Fecha: Julio 2025
 *@
 
@@ -78,6 +78,7 @@
                                 @maxlength = "100",
                                 @required = "required"
                             })
+                            <div id="nombre-feedback"></div>
                             @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "invalid-feedback" })
                         </div>
                     </div>
@@ -114,6 +115,7 @@
                                 })
                                 @Html.ValidationMessageFor(m => m.Precio, "", new { @class = "invalid-feedback" })
                             </div>
+                            <div id="precio-feedback"></div>
                         </div>
                     </div>
 
@@ -150,6 +152,7 @@
                                 <span class="input-group-text">min</span>
                                 @Html.ValidationMessageFor(m => m.DuracionMinutos, "", new { @class = "invalid-feedback" })
                             </div>
+                            <div id="duracion-feedback"></div>
                             <small class="form-text text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
                                 Duración estimada en minutos (1-1440)
@@ -167,6 +170,7 @@
                         @placeholder = "Describe detalladamente el servicio, técnicas utilizadas, productos incluidos, etc.",
                         @maxlength = "500"
                     })
+                    <div id="descripcion-feedback"></div>
                     @Html.ValidationMessageFor(m => m.Descripcion, "", new { @class = "invalid-feedback" })
                     <small class="form-text text-muted">
                         <i class="fas fa-info-circle me-1"></i>
@@ -271,126 +275,5 @@
 </form>
 
 @section Scripts {
-    <script>
-        // Configurar el formulario principal
-        const mainForm = document.querySelector('form:not([style*="display: none"])');
-        mainForm.id = 'form';
-
-        // Vista previa en tiempo real
-        function actualizarVistaPrevia() {
-            const nombre = document.getElementById('Nombre').value || 'Nombre del servicio';
-            const precio = document.getElementById('Precio').value || '0.00';
-            const moneda = document.getElementById('MonedaCodigo').value || 'UYU';
-            const duracion = document.getElementById('DuracionMinutos').value || '0';
-            const descripcion = document.getElementById('Descripcion').value || 'Descripción del servicio aparecerá aquí...';
-            const tipoSelect = document.getElementById('TipoServicioId');
-            const tipo = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Tipo de servicio';
-
-            document.getElementById('preview-nombre').textContent = nombre;
-            document.getElementById('preview-tipo').textContent = tipo !== '-- Seleccione un tipo --' ? tipo : 'Tipo de servicio';
-            document.getElementById('preview-precio').textContent = `$${parseFloat(precio || 0).toFixed(2)} ${moneda}`;
-            document.getElementById('preview-duracion').textContent = formatearDuracion(parseInt(duracion || 0));
-            document.getElementById('preview-descripcion').textContent = descripcion;
-        }
-
-        // Formatear duración
-        function formatearDuracion(minutos) {
-            if (minutos === 0) return '0 minutos';
-            if (minutos < 60) return `${minutos} min`;
-            if (minutos === 60) return '1 hora';
-            if (minutos % 60 === 0) return `${minutos / 60} horas`;
-            
-            const horas = Math.floor(minutos / 60);
-            const mins = minutos % 60;
-            return `${horas}h ${mins}min`;
-        }
-
-        // Event listeners para vista previa
-        document.addEventListener('DOMContentLoaded', function() {
-            const campos = ['Nombre', 'Precio', 'MonedaCodigo', 'DuracionMinutos', 'Descripcion', 'TipoServicioId'];
-            campos.forEach(campo => {
-                const elemento = document.getElementById(campo);
-                if (elemento) {
-                    elemento.addEventListener('input', actualizarVistaPrevia);
-                    elemento.addEventListener('change', actualizarVistaPrevia);
-                }
-            });
-            
-            // Actualizar vista previa inicial
-            actualizarVistaPrevia();
-        });
-
-        // Función para guardar y crear otro
-        function guardarYCrearOtro() {
-            if (document.getElementById('form').checkValidity()) {
-                // Copiar datos del formulario principal al formulario oculto
-                const formData = new FormData(document.getElementById('form'));
-                const hiddenForm = document.getElementById('crearOtroForm');
-                
-                // Limpiar formulario oculto
-                hiddenForm.querySelectorAll('input:not([name="crearOtro"]):not([name="__RequestVerificationToken"])').forEach(input => input.remove());
-                
-                // Copiar datos
-                for (let [key, value] of formData.entries()) {
-                    if (key !== '__RequestVerificationToken') {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = key;
-                        input.value = value;
-                        hiddenForm.appendChild(input);
-                    }
-                }
-                
-                hiddenForm.submit();
-            } else {
-                document.getElementById('form').reportValidity();
-            }
-        }
-
-        // Función para limpiar formulario
-        function limpiarFormulario() {
-            if (confirm('¿Estás seguro de que deseas limpiar todos los campos?')) {
-                document.getElementById('form').reset();
-                actualizarVistaPrevia();
-            }
-        }
-
-        // Validación en tiempo real
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('form');
-            form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            });
-        });
-
-        // Auto-completar sugerencias para nombres comunes
-        const nombresComunes = [
-            'Corte de cabello clásico',
-            'Corte de cabello moderno',
-            'Peinado para evento',
-            'Coloración completa',
-            'Mechas',
-            'Tratamiento hidratante',
-            'Alisado permanente',
-            'Ondas al agua',
-            'Recorte de barba',
-            'Afeitado clásico'
-        ];
-
-        // Agregar datalist para autocompletado
-        const nombreInput = document.getElementById('Nombre');
-        const datalist = document.createElement('datalist');
-        datalist.id = 'nombres-sugeridos';
-        nombresComunes.forEach(nombre => {
-            const option = document.createElement('option');
-            option.value = nombre;
-            datalist.appendChild(option);
-        });
-        document.body.appendChild(datalist);
-        nombreInput.setAttribute('list', 'nombres-sugeridos');
-    </script>
+    <script src="~/js/servicios-validation.js"></script>
 }

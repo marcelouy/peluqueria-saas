@@ -22,121 +22,126 @@ namespace PeluqueriaSaaS.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(
-            string? nombre = null,
-            int? tipoServicioId = null, 
-            decimal? precioMin = null,
-            decimal? precioMax = null,
-            bool soloActivos = false)
+public async Task<IActionResult> Index(
+    string? nombre = null,
+    int? tipoServicioId = null, 
+    decimal? precioMin = null,
+    decimal? precioMax = null,
+    bool soloActivos = false)
+{
+    try
+    {
+        Console.WriteLine($"🔍 ServiciosController.Index - Filtros aplicados:");
+        Console.WriteLine($"   - Nombre: {nombre ?? "null"}");
+        Console.WriteLine($"   - TipoServicioId: {tipoServicioId?.ToString() ?? "null"}");
+        Console.WriteLine($"   - PrecioMin: {precioMin?.ToString() ?? "null"}");
+        Console.WriteLine($"   - PrecioMax: {precioMax?.ToString() ?? "null"}");
+        Console.WriteLine($"   - SoloActivos: {soloActivos}");
+
+        // Obtener todos los servicios con tipos de servicio incluidos
+        var query = _repositoryManager.ServiciosRepository
+            .GetAllAsync(includeProperties: "TipoServicio");
+        
+        var servicios = await query;
+        
+        Console.WriteLine($"📊 Total servicios antes de filtros: {servicios.Count()}");
+
+        // Aplicar filtros
+        var serviciosFiltrados = servicios.AsQueryable();
+
+        // Filtro por nombre (busca en nombre y descripción)
+        if (!string.IsNullOrWhiteSpace(nombre))
         {
-            try
-            {
-                Console.WriteLine($"🔍 ServiciosController.Index - Filtros aplicados:");
-                Console.WriteLine($"   - Nombre: {nombre ?? "null"}");
-                Console.WriteLine($"   - TipoServicioId: {tipoServicioId?.ToString() ?? "null"}");
-                Console.WriteLine($"   - PrecioMin: {precioMin?.ToString() ?? "null"}");
-                Console.WriteLine($"   - PrecioMax: {precioMax?.ToString() ?? "null"}");
-                Console.WriteLine($"   - SoloActivos: {soloActivos}");
-
-                // ✅ CORREGIDO: Usar _servicioRepository directamente (no _repositoryManager)
-                var servicios = await _servicioRepository.GetAllAsync(_tenantId);
-                
-                Console.WriteLine($"📊 Total servicios antes de filtros: {servicios.Count()}");
-
-                // Aplicar filtros usando LINQ
-                var serviciosFiltrados = servicios.AsQueryable();
-
-                // Filtro por nombre (busca en nombre y descripción)
-                if (!string.IsNullOrWhiteSpace(nombre))
-                {
-                    var nombreLower = nombre.ToLower().Trim();
-                    serviciosFiltrados = serviciosFiltrados.Where(s => 
-                        s.Nombre.ToLower().Contains(nombreLower) ||
-                        (!string.IsNullOrEmpty(s.Descripcion) && s.Descripcion.ToLower().Contains(nombreLower))
-                    );
-                    Console.WriteLine($"🔍 Filtro nombre '{nombre}' aplicado");
-                }
-
-                // Filtro por tipo de servicio
-                if (tipoServicioId.HasValue)
-                {
-                    serviciosFiltrados = serviciosFiltrados.Where(s => s.TipoServicioId == tipoServicioId.Value);
-                    Console.WriteLine($"🏷️ Filtro tipo servicio ID {tipoServicioId} aplicado");
-                }
-
-                // Filtro por precio mínimo
-                if (precioMin.HasValue)
-                {
-                    serviciosFiltrados = serviciosFiltrados.Where(s => s.Precio.Valor >= precioMin.Value);
-                    Console.WriteLine($"💰 Filtro precio mínimo ${precioMin} aplicado");
-                }
-
-                // Filtro por precio máximo
-                if (precioMax.HasValue)
-                {
-                    serviciosFiltrados = serviciosFiltrados.Where(s => s.Precio.Valor <= precioMax.Value);
-                    Console.WriteLine($"💰 Filtro precio máximo ${precioMax} aplicado");
-                }
-
-                // Filtro solo activos
-                if (soloActivos)
-                {
-                    serviciosFiltrados = serviciosFiltrados.Where(s => s.EsActivo);
-                    Console.WriteLine($"✅ Filtro solo activos aplicado");
-                }
-
-                var serviciosFinales = serviciosFiltrados.ToList();
-                Console.WriteLine($"📊 Total servicios después de filtros: {serviciosFinales.Count}");
-
-                // Convertir a DTOs para la vista
-                var serviciosDto = serviciosFinales.Select(ServicioDto.FromEntity).ToList();
-
-                // ✅ CORREGIDO: Usar _tipoServicioRepository directamente
-                var tiposServicio = await _tipoServicioRepository.GetAllAsync(_tenantId);
-                var tiposServicioSelectList = tiposServicio.Select(t => new SelectListItem
-                {
-                    Value = t.Id.ToString(),
-                    Text = t.Nombre,
-                    Selected = t.Id == tipoServicioId
-                }).ToList();
-
-                // Agregar opción "Todos" al inicio
-                tiposServicioSelectList.Insert(0, new SelectListItem
-                {
-                    Value = "",
-                    Text = "Todos los tipos",
-                    Selected = !tipoServicioId.HasValue
-                });
-
-                // Mantener valores de filtros en ViewBag para el formulario
-                ViewBag.FiltroNombre = nombre;
-                ViewBag.FiltroTipoServicioId = tipoServicioId;
-                ViewBag.FiltroPrecioMin = precioMin;
-                ViewBag.FiltroPrecioMax = precioMax;
-                ViewBag.FiltroSoloActivos = soloActivos;
-                ViewBag.TiposServicio = tiposServicioSelectList;
-
-                // Información adicional para la vista
-                ViewBag.TotalServicios = serviciosDto.Count;
-                ViewBag.ServiciosActivos = serviciosDto.Count(s => s.EsActivo);
-                ViewBag.ServiciosInactivos = serviciosDto.Count(s => !s.EsActivo);
-                ViewBag.TieneFiltros = !string.IsNullOrWhiteSpace(nombre) || 
-                                     tipoServicioId.HasValue || 
-                                     precioMin.HasValue || 
-                                     precioMax.HasValue || 
-                                     soloActivos;
-
-                Console.WriteLine($"✅ ServiciosController.Index completado - {serviciosDto.Count} servicios a mostrar");
-
-                return View(serviciosDto);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error en ServiciosController.Index: {ex.Message}");
-                TempData["Error"] = "Error al cargar los servicios. Por favor, intenta nuevamente.";
-                return View(new List<ServicioDto>());
-            }
+            var nombreLower = nombre.ToLower().Trim();
+            serviciosFiltrados = serviciosFiltrados.Where(s => 
+                s.Nombre.ToLower().Contains(nombreLower) ||
+                (!string.IsNullOrEmpty(s.Descripcion) && s.Descripcion.ToLower().Contains(nombreLower))
+            );
+            Console.WriteLine($"🔍 Filtro nombre '{nombre}' aplicado");
         }
+
+        // Filtro por tipo de servicio
+        if (tipoServicioId.HasValue)
+        {
+            serviciosFiltrados = serviciosFiltrados.Where(s => s.TipoServicioId == tipoServicioId.Value);
+            Console.WriteLine($"🏷️ Filtro tipo servicio ID {tipoServicioId} aplicado");
+        }
+
+        // Filtro por precio mínimo
+        if (precioMin.HasValue)
+        {
+            serviciosFiltrados = serviciosFiltrados.Where(s => s.Precio.Valor >= precioMin.Value);
+            Console.WriteLine($"💰 Filtro precio mínimo ${precioMin} aplicado");
+        }
+
+        // Filtro por precio máximo
+        if (precioMax.HasValue)
+        {
+            serviciosFiltrados = serviciosFiltrados.Where(s => s.Precio.Valor <= precioMax.Value);
+            Console.WriteLine($"💰 Filtro precio máximo ${precioMax} aplicado");
+        }
+
+        // Filtro solo activos
+        if (soloActivos)
+        {
+            serviciosFiltrados = serviciosFiltrados.Where(s => s.EsActivo);
+            Console.WriteLine($"✅ Filtro solo activos aplicado");
+        }
+
+        var serviciosFinales = serviciosFiltrados.ToList();
+        Console.WriteLine($"📊 Total servicios después de filtros: {serviciosFinales.Count}");
+
+        // Convertir a DTOs para la vista
+        var serviciosDto = serviciosFinales.Select(ServicioDto.FromEntity).ToList();
+
+        // Obtener tipos de servicio para el dropdown
+        var tiposServicio = await _repositoryManager.TiposServicioRepository.GetAllAsync();
+        var tiposServicioSelectList = tiposServicio.Select(t => new SelectListItem
+        {
+            Value = t.Id.ToString(),
+            Text = t.Nombre,
+            Selected = t.Id == tipoServicioId
+        }).ToList();
+
+        // Agregar opción "Todos" al inicio
+        tiposServicioSelectList.Insert(0, new SelectListItem
+        {
+            Value = "",
+            Text = "Todos los tipos",
+            Selected = !tipoServicioId.HasValue
+        });
+
+        // Mantener valores de filtros en ViewBag para el formulario
+        ViewBag.FiltroNombre = nombre;
+        ViewBag.FiltroTipoServicioId = tipoServicioId;
+        ViewBag.FiltroPrecioMin = precioMin;
+        ViewBag.FiltroPrecioMax = precioMax;
+        ViewBag.FiltroSoloActivos = soloActivos;
+        ViewBag.TiposServicio = tiposServicioSelectList;
+
+        // Información adicional para la vista
+        ViewBag.TotalServicios = serviciosDto.Count;
+        ViewBag.ServiciosActivos = serviciosDto.Count(s => s.EsActivo);
+        ViewBag.ServiciosInactivos = serviciosDto.Count(s => !s.EsActivo);
+        ViewBag.TieneFiltros = !string.IsNullOrWhiteSpace(nombre) || 
+                             tipoServicioId.HasValue || 
+                             precioMin.HasValue || 
+                             precioMax.HasValue || 
+                             soloActivos;
+
+        Console.WriteLine($"✅ ServiciosController.Index completado - {serviciosDto.Count} servicios a mostrar");
+
+        return View(serviciosDto);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error en ServiciosController.Index: {ex.Message}");
+        TempData["Error"] = "Error al cargar los servicios. Por favor, intenta nuevamente.";
+        return View(new List<ServicioDto>());
+    }
+}
+
+
 
         // GET: Servicios/Details/5
         public async Task<IActionResult> Details(int id)
@@ -293,49 +298,27 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // ✅ AJAX: Cambiar estado CORREGIDO - Compatible con JavaScript
+        // AJAX: Cambiar estado activo
         [HttpPost]
-        public async Task<IActionResult> CambiarEstado([FromBody] CambiarEstadoRequest request)
+        public async Task<IActionResult> CambiarEstado(int id)
         {
             try
             {
-                Console.WriteLine($"🔄 CambiarEstado - ServicioId: {request.ServicioId}, NuevoEstado: {request.NuevoEstado}");
-
-                // Obtener el servicio
-                var servicio = await _servicioRepository.GetByIdAsync(request.ServicioId, _tenantId);
+                var servicio = await _servicioRepository.GetByIdAsync(id, _tenantId);
                 if (servicio == null)
-                {
-                    Console.WriteLine($"❌ Servicio {request.ServicioId} no encontrado");
-                    return Json(new { success = false, message = "Servicio no encontrado" });
-                }
+                    return NotFound();
 
-                // Cambiar estado
-                if (request.NuevoEstado)
-                {
-                    servicio.Activar();
-                    Console.WriteLine($"✅ Servicio {request.ServicioId} activado");
-                }
-                else
-                {
+                if (servicio.EsActivo)
                     servicio.Desactivar();
-                    Console.WriteLine($"🚫 Servicio {request.ServicioId} desactivado");
-                }
+                else
+                    servicio.Activar();
 
-                // Guardar cambios
                 await _servicioRepository.UpdateAsync(servicio);
-
-                Console.WriteLine($"💾 Cambio de estado guardado en BD");
-
-                return Json(new { 
-                    success = true, 
-                    message = $"Servicio {(request.NuevoEstado ? "activado" : "desactivado")} correctamente",
-                    nuevoEstado = request.NuevoEstado
-                });
+                return Json(new { success = true, nuevoEstado = servicio.EsActivo });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error en CambiarEstado: {ex.Message}");
-                return Json(new { success = false, message = "Error al cambiar el estado del servicio" });
+                return Json(new { success = false, error = ex.Message });
             }
         }
 
@@ -366,6 +349,8 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return Json(new { error = ex.Message });
             }
         }
+
+        
 
         // AJAX: Buscar servicios
         [HttpGet]
@@ -419,12 +404,5 @@ namespace PeluqueriaSaaS.Web.Controllers
             ViewBag.TipoServicioId = new SelectList(tipos, "Id", "Nombre");
             ViewBag.TiposServicio = new SelectList(tipos, "Id", "Nombre");
         }
-    }
-
-    // ✅ CLASE REQUEST PARA AJAX
-    public class CambiarEstadoRequest
-    {
-        public int ServicioId { get; set; }
-        public bool NuevoEstado { get; set; }
     }
 }
