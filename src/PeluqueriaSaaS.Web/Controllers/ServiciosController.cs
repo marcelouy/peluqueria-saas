@@ -4,6 +4,7 @@ using PeluqueriaSaaS.Application.DTOs;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Domain.ValueObjects;
 using PeluqueriaSaaS.Domain.Entities;
+using ClosedXML.Excel;
 using System.Reflection;
 
 namespace PeluqueriaSaaS.Web.Controllers
@@ -366,6 +367,138 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return Json(new { error = ex.Message });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportarServiciosExcel(
+            string? nombre = null,
+            int? tipoServicioId = null, 
+            decimal? precioMin = null,
+            decimal? precioMax = null,
+            bool soloActivos = false)
+        {
+            try
+            {
+                Console.WriteLine($"📊 ExportarServiciosExcel - Iniciando export con filtros");
+                Console.WriteLine($"   - Filtros: nombre={nombre}, tipo={tipoServicioId}, precioMin={precioMin}, precioMax={precioMax}, soloActivos={soloActivos}");
+
+                // Obtener servicios con misma lógica que Index (reutilizar código)
+                var servicios = await _servicioRepository.GetAllAsync(_tenantId);
+                
+                // Aplicar mismos filtros que Index
+                var serviciosFiltrados = servicios.AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(nombre))
+                {
+                    var nombreLower = nombre.ToLower().Trim();
+                    serviciosFiltrados = serviciosFiltrados.Where(s => 
+                        s.Nombre.ToLower().Contains(nombreLower) ||
+                        (!string.IsNullOrEmpty(s.Descripcion) && s.Descripcion.ToLower().Contains(nombreLower))
+                    );
+                }
+
+                if (tipoServicioId.HasValue)
+                {
+                    serviciosFiltrados = serviciosFiltrados.Where(s => s.TipoServicioId == tipoServicioId.Value);
+                }
+
+                if (precioMin.HasValue)
+                {
+                    serviciosFiltrados = serviciosFiltrados.Where(s => s.Precio.Valor >= precioMin.Value);
+                }
+
+                if (precioMax.HasValue)
+                {
+                    serviciosFiltrados = serviciosFiltrados.Where(s => s.Precio.Valor <= precioMax.Value);
+                }
+
+                if (soloActivos)
+                {
+                    serviciosFiltrados = serviciosFiltrados.Where(s => s.EsActivo);
+                }
+
+                var serviciosParaExport = serviciosFiltrados.ToList();
+                Console.WriteLine($"📊 Total servicios para export: {serviciosParaExport.Count}");
+
+                // Crear Excel usando ClosedXML
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Servicios");
+
+                // Configurar encabezados
+                worksheet.Cell(1, 1).Value = "ID";
+                worksheet.Cell(1, 2).Value = "Nombre";
+                worksheet.Cell(1, 3).Value = "Descripción";
+                worksheet.Cell(1, 4).Value = "Precio";
+                worksheet.Cell(1, 5).Value = "Moneda";
+                worksheet.Cell(1, 6).Value = "Duración (min)";
+                worksheet.Cell(1, 7).Value = "Tipo Servicio";
+                worksheet.Cell(1, 8).Value = "Estado";
+                worksheet.Cell(1, 9).Value = "Fecha Creación";
+                worksheet.Cell(1, 10).Value = "Fecha Actualización";
+
+                // Estilo encabezados
+                var headerRange = worksheet.Range(1, 1, 1, 10);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+                headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                // Llenar datos
+                int row = 2;
+                foreach (var servicio in serviciosParaExport)
+                {
+                    worksheet.Cell(row, 1).Value = servicio.Id;
+                    worksheet.Cell(row, 2).Value = servicio.Nombre;
+                    worksheet.Cell(row, 3).Value = servicio.Descripcion ?? "";
+                    worksheet.Cell(row, 4).Value = servicio.Precio.Valor;
+                    worksheet.Cell(row, 5).Value = servicio.Precio.Moneda;
+                    worksheet.Cell(row, 6).Value = servicio.DuracionMinutos;
+                    worksheet.Cell(row, 7).Value = servicio.TipoServicio?.Nombre ?? "Sin categoría";
+                    worksheet.Cell(row, 8).Value = servicio.EsActivo ? "Activo" : "Inactivo";
+                    worksheet.Cell(row, 9).Value = servicio.FechaCreacion;
+                    worksheet.Cell(row, 10).Value = servicio.FechaActualizacion?.ToString() ?? "";
+                    row++;
+                }
+
+                // Ajustar ancho columnas automáticamente
+                worksheet.Columns().AdjustToContents();
+
+                // Agregar filtros automáticos
+                worksheet.RangeUsed().SetAutoFilter();
+
+                // Crear nombre archivo con timestamp
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var filtrosTexto = "";
+                
+                if (!string.IsNullOrWhiteSpace(nombre) || tipoServicioId.HasValue || precioMin.HasValue || precioMax.HasValue || soloActivos)
+                {
+                    filtrosTexto = "_filtrado";
+                }
+
+                var fileName = $"servicios_export_{timestamp}{filtrosTexto}.xlsx";
+
+                // Crear stream y devolver archivo
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                stream.Position = 0;
+
+                Console.WriteLine($"✅ Excel generado exitosamente: {fileName}");
+
+                return File(
+                    stream.ToArray(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error generando Excel: {ex.Message}");
+                TempData["Error"] = "Error al generar el archivo Excel. Intenta nuevamente.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // NOTA: Agregar using para ClosedXML al inicio del archivo:
+        // 
+
 
         // AJAX: Buscar servicios
         [HttpGet]

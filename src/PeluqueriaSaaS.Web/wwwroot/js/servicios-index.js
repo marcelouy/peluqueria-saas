@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFilters();
     initializeStateToggle();
     initializeStatistics();
+    initializeExport();
     
     console.log('✅ servicios-index.js: Todas las funcionalidades inicializadas');
 });
@@ -173,6 +174,84 @@ function initializeStatistics() {
         
         console.log('✅ Botón estadísticas configurado');
     }
+}
+
+// ============================================================================
+// EXPORT EXCEL FUNCTIONALITY
+// ============================================================================
+
+function initializeExport() {
+    console.log('📊 Inicializando export Excel');
+    
+    const exportButton = document.getElementById('export-excel-btn');
+    
+    if (exportButton) {
+        exportButton.addEventListener('click', function() {
+            console.log('📊 Iniciando export Excel con filtros actuales');
+            exportToExcel();
+        });
+        
+        console.log('✅ Botón export Excel configurado');
+    }
+}
+
+function exportToExcel() {
+    try {
+        // Obtener valores actuales de filtros
+        const filtros = getCurrentFilters();
+        
+        console.log('📊 Exportando con filtros:', filtros);
+        
+        // Mostrar loading en botón
+        const exportButton = document.getElementById('export-excel-btn');
+        const originalText = exportButton.innerHTML;
+        exportButton.disabled = true;
+        exportButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        
+        // Construir URL con parámetros
+        const params = new URLSearchParams();
+        
+        if (filtros.nombre) params.append('nombre', filtros.nombre);
+        if (filtros.tipoServicioId) params.append('tipoServicioId', filtros.tipoServicioId);
+        if (filtros.precioMin) params.append('precioMin', filtros.precioMin);
+        if (filtros.precioMax) params.append('precioMax', filtros.precioMax);
+        if (filtros.soloActivos) params.append('soloActivos', 'true');
+        
+        const exportUrl = `/Servicios/ExportarServiciosExcel?${params.toString()}`;
+        
+        console.log('📊 URL export:', exportUrl);
+        
+        // Descargar archivo
+        window.location.href = exportUrl;
+        
+        // Mostrar mensaje éxito
+        showFeedback('success', 'Excel generado correctamente. La descarga comenzará automáticamente.');
+        
+        // Restaurar botón después de delay
+        setTimeout(() => {
+            exportButton.disabled = false;
+            exportButton.innerHTML = originalText;
+        }, 3000);
+        
+    } catch (error) {
+        console.error('❌ Error exportando Excel:', error);
+        showFeedback('error', 'Error al generar el archivo Excel. Intenta nuevamente.');
+        
+        // Restaurar botón
+        const exportButton = document.getElementById('export-excel-btn');
+        exportButton.disabled = false;
+        exportButton.innerHTML = '<i class="fas fa-file-excel"></i> Exportar Excel';
+    }
+}
+
+function getCurrentFilters() {
+    return {
+        nombre: document.getElementById('nombre')?.value || null,
+        tipoServicioId: document.getElementById('tipoServicioId')?.value || null,
+        precioMin: document.getElementById('precioMin')?.value || null,
+        precioMax: document.getElementById('precioMax')?.value || null,
+        soloActivos: document.getElementById('soloActivos')?.checked || false
+    };
 }
 
 function updateStatisticsModal() {
