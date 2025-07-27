@@ -1,36 +1,242 @@
 ﻿@{
-    ViewData["Title"] = "PeluqueriaSaaS - Inicio";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="container mt-4">
-    <div class="jumbotron bg-primary text-white p-5 rounded">
-        <h1 class="display-4">🎉 ¡PeluqueriaSaaS Funcionando!</h1>
-        <p class="lead">Sistema de gestión para peluquerías</p>
-        <hr class="my-4">
-        <div class="row">
-            <div class="col-md-6">
-                <h3>📋 Módulos Disponibles:</h3>
-                <div class="list-group mt-3">
-                    <a href="/Empleados" class="list-group-item list-group-item-action">
-                        👥 Gestión de Empleados
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action disabled">
-                        👤 Gestión de Clientes (En desarrollo)
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action disabled">
-                        ✂️ Servicios (En desarrollo)
-                    </a>
+<div class="container-fluid">
+    <!-- Header Dashboard -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard</h2>
+            <p class="text-muted mb-0">Panel de control y métricas principales</p>
+        </div>
+        <div>
+            <span class="text-muted">
+                <i class="fas fa-calendar"></i> 
+                @DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("es-UY"))
+            </span>
+        </div>
+    </div>
+
+    <!-- KPIs Cards Row 1 -->
+    <div class="row mb-4">
+        <!-- Ventas Hoy -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Ventas Hoy
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @ViewBag.VentasHoy
+                            </div>
+                            <div class="text-xs text-success">
+                                $@ViewBag.IngresoHoy?.ToString("N0")
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cash-register fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <h3>🚀 Estado del Sistema:</h3>
-                <ul class="list-unstyled mt-3">
-                    <li>✅ Servidor ejecutándose</li>
-                    <li>✅ Base de datos conectada</li>
-                    <li>✅ MediatR configurado</li>
-                    <li>✅ Dependencias resueltas</li>
-                </ul>
+        </div>
+
+        <!-- Ventas Mes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Ventas Este Mes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @ViewBag.VentasMes
+                            </div>
+                            <div class="text-xs text-success">
+                                $@ViewBag.IngresoMes?.ToString("N0")
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Servicios Activos -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Servicios Activos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @ViewBag.ServiciosActivos
+                            </div>
+                            <div class="text-xs text-muted">
+                                de @ViewBag.TotalServicios total
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-concierge-bell fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clientes Activos -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Clientes Activos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @ViewBag.ClientesActivos
+                            </div>
+                            <div class="text-xs text-muted">
+                                de @ViewBag.TotalClientes total
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Ventas Últimos 30 Días -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line"></i> Ventas Últimos 30 Días
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <button class="btn btn-sm btn-outline-primary" id="refresh-ventas-btn">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="ventasChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Servicios -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-star"></i> Top Servicios
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="serviciosChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row mb-4">
+        <!-- Distribución Servicios por Tipo -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar"></i> Servicios por Categoría
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="tiposChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt"></i> Acciones Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <a href="/Ventas/Create" class="btn btn-success btn-block">
+                                <i class="fas fa-plus"></i><br>
+                                Nueva Venta
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="/Servicios" class="btn btn-primary btn-block">
+                                <i class="fas fa-concierge-bell"></i><br>
+                                Gestionar Servicios
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="/Clientes" class="btn btn-info btn-block">
+                                <i class="fas fa-users"></i><br>
+                                Gestionar Clientes
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="/Empleados" class="btn btn-warning btn-block">
+                                <i class="fas fa-user-tie"></i><br>
+                                Gestionar Empleados
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Estadísticas adicionales -->
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="text-xs font-weight-bold text-uppercase text-muted mb-1">
+                                Promedio Venta
+                            </div>
+                            <div class="h6 mb-0 font-weight-bold text-success">
+                                $@ViewBag.PromedioVenta?.ToString("N0")
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-xs font-weight-bold text-uppercase text-muted mb-1">
+                                Promedio Servicio
+                            </div>
+                            <div class="h6 mb-0 font-weight-bold text-info">
+                                $@ViewBag.PromedioServicioPrecio?.ToString("N0")
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="~/js/dashboard.js"></script>
+}

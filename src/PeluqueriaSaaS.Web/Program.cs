@@ -41,6 +41,8 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 // ⭐ 6. NUEVAS DEPENDENCIAS PARA SERVICIOS (SOLO ESTAS 2 LÍNEAS AÑADIDAS)
 builder.Services.AddScoped<IServicioRepository, ServicioRepository>();
 builder.Services.AddScoped<ITipoServicioRepository, TipoServicioRepository>();
+builder.Services.AddScoped<IVentaRepository, VentaRepository>();
+builder.Services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
 
 //🆕 NUEVO - REGISTRO VENTA REPOSITORY:
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
