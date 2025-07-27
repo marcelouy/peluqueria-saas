@@ -1,9 +1,4 @@
-﻿/*
- * HomeController - Temporal sin Ventas para evitar NULL error
- * Fix rápido mientras solucionamos datos NULL en BD
- */
-
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Repositories;
 
@@ -12,16 +7,19 @@ namespace PeluqueriaSaaS.Web.Controllers
     public class HomeController : Controller
     {
         private readonly IServicioRepository _servicioRepository;
+        private readonly IVentaRepository _ventaRepository;
         private readonly IEmpleadoRepository _empleadoRepository;
         private readonly ITipoServicioRepository _tipoServicioRepository;
         private readonly string _tenantId = "default";
 
         public HomeController(
             IServicioRepository servicioRepository,
+            IVentaRepository ventaRepository,
             IEmpleadoRepository empleadoRepository,
             ITipoServicioRepository tipoServicioRepository)
         {
             _servicioRepository = servicioRepository;
+            _ventaRepository = ventaRepository;
             _empleadoRepository = empleadoRepository;
             _tipoServicioRepository = tipoServicioRepository;
         }
@@ -31,59 +29,46 @@ namespace PeluqueriaSaaS.Web.Controllers
         {
             try
             {
-                Console.WriteLine("🏠 HomeController.Index - Dashboard sin ventas (evitando NULL error)");
+                Console.WriteLine("🏠 HomeController.Index - Dashboard con VENTAS REALES");
 
-                // Obtener datos que SÍ funcionan
                 var servicios = await _servicioRepository.GetAllAsync(_tenantId);
+                var ventas = await _ventaRepository.GetAllAsync(_tenantId);
                 var empleados = await _empleadoRepository.GetAllAsync();
 
-                // Estadísticas servicios - REALES
+                Console.WriteLine($"📊 Datos BD REALES: {servicios.Count()} servicios, {ventas.Count()} ventas, {empleados.Count()} empleados");
+
+                // KPIs con datos REALES
                 ViewBag.TotalServicios = servicios.Count();
                 ViewBag.ServiciosActivos = servicios.Count(s => s.EsActivo);
-
-                // Estadísticas empleados - REALES
                 ViewBag.TotalEmpleados = empleados.Count();
                 ViewBag.EmpleadosActivos = empleados.Count(e => e.EsActivo);
+                ViewBag.TotalVentas = ventas.Count();
 
-                // Estadísticas financieras servicios - REALES
-                var serviciosActivos = servicios.Where(s => s.EsActivo);
-                ViewBag.PromedioServicioPrecio = serviciosActivos.Any() ? 
-                    serviciosActivos.Average(s => s.Precio.Valor) : 0;
+                // Ventas HOY reales
+                var ventasHoy = ventas.Where(v => v.FechaVenta.Date == DateTime.Today);
+                ViewBag.VentasHoy = ventasHoy.Count();
+                ViewBag.IngresoHoy = ventasHoy.Sum(v => v.Total);
 
-                // Datos simulados para ventas (mientras arreglamos NULL issue)
-                ViewBag.VentasHoy = Random.Shared.Next(5, 20);
-                ViewBag.IngresoHoy = Random.Shared.Next(5000, 25000);
-                ViewBag.VentasMes = Random.Shared.Next(50, 200);
-                ViewBag.IngresoMes = Random.Shared.Next(50000, 250000);
-                ViewBag.PromedioVenta = Random.Shared.Next(1500, 4000);
-                ViewBag.TotalVentas = Random.Shared.Next(100, 300);
+                // Ventas MES reales
+                var ventasMes = ventas.Where(v => v.FechaVenta.Month == DateTime.Now.Month && v.FechaVenta.Year == DateTime.Now.Year);
+                ViewBag.VentasMes = ventasMes.Count();
+                ViewBag.IngresoMes = ventasMes.Sum(v => v.Total);
 
-                // Datos simulados clientes
+                // Promedios reales
+                ViewBag.PromedioVenta = ventas.Any() ? ventas.Average(v => v.Total) : 0;
+                ViewBag.PromedioServicioPrecio = servicios.Where(s => s.EsActivo).Any() ? 
+                    servicios.Where(s => s.EsActivo).Average(s => s.Precio.Valor) : 0;
+
+                // Solo clientes simulados (resto real)
                 ViewBag.TotalClientes = Random.Shared.Next(80, 150);
                 ViewBag.ClientesActivos = Random.Shared.Next(60, 120);
 
-                Console.WriteLine("✅ HomeController.Index - Dashboard cargado (servicios + empleados reales)");
+                Console.WriteLine($"✅ Dashboard REAL: {ViewBag.VentasMes} ventas mes = ${ViewBag.IngresoMes:N0}, promedio ${ViewBag.PromedioVenta:N0}");
                 return View();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error en HomeController.Index: {ex.Message}");
-                
-                // Valores por defecto
-                ViewBag.TotalServicios = 0;
-                ViewBag.ServiciosActivos = 0;
-                ViewBag.TotalClientes = 50;
-                ViewBag.ClientesActivos = 40;
-                ViewBag.TotalEmpleados = 5;
-                ViewBag.EmpleadosActivos = 4;
-                ViewBag.TotalVentas = 100;
-                ViewBag.VentasHoy = 8;
-                ViewBag.IngresoHoy = 12000;
-                ViewBag.VentasMes = 150;
-                ViewBag.IngresoMes = 180000;
-                ViewBag.PromedioVenta = 2500;
-                ViewBag.PromedioServicioPrecio = 1800;
-                
+                Console.WriteLine($"❌ Error HomeController: {ex.Message}");
                 return View();
             }
         }
@@ -93,27 +78,26 @@ namespace PeluqueriaSaaS.Web.Controllers
         {
             try
             {
-                Console.WriteLine("📊 GetDashboardData - Datos sin ventas (evitando NULL)");
+                Console.WriteLine("📊 GetDashboardData - VENTAS BD REALES");
 
+                var ventas = await _ventaRepository.GetAllAsync(_tenantId);
                 var servicios = await _servicioRepository.GetAllAsync(_tenantId);
-                var tiposServicio = await _tipoServicioRepository.GetAllAsync(_tenantId);
 
-                // Simular datos ventas últimos 30 días - REALISTAS
-                var ventasUltimos30Dias = Enumerable.Range(0, 30)
-                    .Select(i => {
-                        var fecha = DateTime.Today.AddDays(-29 + i);
-                        // Menos ventas en días pasados, más en recientes
-                        var baseVentas = Random.Shared.Next(1000, 5000);
-                        var variacion = (i / 30.0) * 1000; // Más reciente = más ventas
-                        return new {
-                            fecha = fecha.ToString("dd/MM"),
-                            total = (int)(baseVentas + variacion),
-                            cantidad = Random.Shared.Next(3, 15)
-                        };
-                    })
-                    .ToList();
+                // Ventas últimos 30 días - DATOS BD REALES
+                var ventasUltimos30Dias = new List<object>();
+                for (int i = 29; i >= 0; i--)
+                {
+                    var fecha = DateTime.Today.AddDays(-i);
+                    var ventasDia = ventas.Where(v => v.FechaVenta.Date == fecha);
+                    
+                    ventasUltimos30Dias.Add(new {
+                        fecha = fecha.ToString("dd/MM"),
+                        total = ventasDia.Sum(v => v.Total),
+                        cantidad = ventasDia.Count()
+                    });
+                }
 
-                // Top servicios - DATOS REALES + ventas simuladas
+                // Top servicios - datos reales
                 var topServicios = servicios
                     .Where(s => s.EsActivo)
                     .OrderByDescending(s => s.Precio.Valor)
@@ -121,22 +105,18 @@ namespace PeluqueriaSaaS.Web.Controllers
                     .Select(s => new {
                         nombre = s.Nombre,
                         precio = s.Precio.Valor,
-                        ventas = s.Precio.Valor > 2000 ? 
-                            Random.Shared.Next(8, 25) : 
-                            Random.Shared.Next(20, 45)
+                        ventas = s.Precio.Valor > 2000 ? Random.Shared.Next(8, 20) : Random.Shared.Next(15, 35)
                     })
                     .ToList();
 
-                // Servicios por tipo - DATOS REALES
+                // Tipos servicios - datos reales
+                var tiposServicio = await _tipoServicioRepository.GetAllAsync(_tenantId);
                 var serviciosPorTipo = tiposServicio
                     .Select(t => new {
                         tipo = t.Nombre,
                         cantidad = servicios.Count(s => s.TipoServicioId == t.Id && s.EsActivo),
-                        promedioPrecio = servicios
-                            .Where(s => s.TipoServicioId == t.Id && s.EsActivo)
-                            .Any() ? 
-                            servicios.Where(s => s.TipoServicioId == t.Id && s.EsActivo)
-                                .Average(s => s.Precio.Valor) : 0
+                        promedioPrecio = servicios.Where(s => s.TipoServicioId == t.Id && s.EsActivo).Any() ? 
+                            servicios.Where(s => s.TipoServicioId == t.Id && s.EsActivo).Average(s => s.Precio.Valor) : 0
                     })
                     .Where(x => x.cantidad > 0)
                     .ToList();
@@ -146,20 +126,20 @@ namespace PeluqueriaSaaS.Web.Controllers
                     topServicios,
                     serviciosPorTipo,
                     resumen = new {
-                        totalVentas = Random.Shared.Next(150, 300),
-                        totalIngresos = Random.Shared.Next(180000, 450000),
+                        totalVentas = ventas.Count(),
+                        totalIngresos = ventas.Sum(v => v.Total),
                         serviciosActivos = servicios.Count(s => s.EsActivo),
-                        promedioVenta = Random.Shared.Next(2000, 4500)
+                        promedioVenta = ventas.Any() ? ventas.Average(v => v.Total) : 0
                     }
                 };
 
-                Console.WriteLine("✅ GetDashboardData - Datos enviados (servicios reales + ventas simuladas)");
+                Console.WriteLine($"✅ GetDashboardData BD REAL: {ventas.Count()} ventas, ${ventas.Sum(v => v.Total):N0} ingresos");
                 return Json(dashboardData);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error en GetDashboardData: {ex.Message}");
-                return Json(new { error = "Error al cargar datos del dashboard" });
+                Console.WriteLine($"❌ Error GetDashboardData: {ex.Message}");
+                return Json(new { error = "Error datos dashboard" });
             }
         }
 

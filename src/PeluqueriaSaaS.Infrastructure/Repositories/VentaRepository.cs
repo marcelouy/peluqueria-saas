@@ -54,11 +54,27 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
         {
             return await _context.Ventas
                 .Where(v => v.TenantId == tenantId && v.EsActivo)
-                .Include(v => v.Empleado)
-                .Include(v => v.Cliente)
+                .AsNoTracking()
+                .Select(v => new Venta
+                {
+                    VentaId = v.VentaId,
+                    NumeroVenta = v.NumeroVenta ?? "V-000",
+                    FechaVenta = v.FechaVenta,
+                    Total = v.Total,
+                    SubTotal = v.SubTotal,
+                    Descuento = v.Descuento,
+                    EstadoVenta = v.EstadoVenta ?? "Completada",
+                    EmpleadoId = v.EmpleadoId,
+                    ClienteId = v.ClienteId,
+                    TenantId = v.TenantId,
+                    EsActivo = v.EsActivo,
+                    FechaCreacion = v.FechaCreacion,
+                    Observaciones = v.Observaciones ?? ""
+                })
                 .OrderByDescending(v => v.FechaVenta)
                 .ToListAsync();
         }
+
 
         public async Task<Venta?> GetByIdAsync(int ventaId, string tenantId = "default")
         {
