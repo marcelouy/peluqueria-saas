@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PeluqueriaSaaS.Application.Features.Clientes.Commands;
 using PeluqueriaSaaS.Application.Features.Clientes.Queries;
 using PeluqueriaSaaS.Application.DTOs;
+using ClosedXML.Excel;
 
 namespace PeluqueriaSaaS.Web.Controllers
 {
@@ -110,6 +111,87 @@ namespace PeluqueriaSaaS.Web.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al cargar cliente: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportarClientesExcel()
+        {
+            try
+            {
+                Console.WriteLine($"📊 ExportarClientesExcel - Iniciando export clientes");
+
+                // ✅ FIX: Cambiar GetClientesQuery por ObtenerClientesQuery (naming consistency)
+                var request = new ObtenerClientesQuery();
+                var clientesDto = await _mediator.Send(request);
+                
+                Console.WriteLine($"📊 Total clientes para export: {clientesDto.Count()}");
+
+                // Crear Excel usando ClosedXML
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Clientes");
+
+                // Configurar encabezados - WITH FECHAREGISTRO (correct DTO property)
+                worksheet.Cell(1, 1).Value = "ID";
+                worksheet.Cell(1, 2).Value = "Nombre";
+                worksheet.Cell(1, 3).Value = "Apellido";
+                worksheet.Cell(1, 4).Value = "Email";
+                worksheet.Cell(1, 5).Value = "Teléfono";
+                worksheet.Cell(1, 6).Value = "Fecha Nacimiento";
+                worksheet.Cell(1, 7).Value = "Fecha Registro";
+                worksheet.Cell(1, 8).Value = "Estado";
+                worksheet.Cell(1, 9).Value = "Notas";
+
+                // Estilo encabezados
+                var headerRange = worksheet.Range(1, 1, 1, 9);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightGreen;
+                headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                // Llenar datos - WITH FECHAREGISTRO (using correct DTO property)
+                int row = 2;
+                foreach (var cliente in clientesDto)
+                {
+                    worksheet.Cell(row, 1).Value = cliente.Id;
+                    worksheet.Cell(row, 2).Value = cliente.Nombre ?? "";
+                    worksheet.Cell(row, 3).Value = cliente.Apellido ?? "";
+                    worksheet.Cell(row, 4).Value = cliente.Email ?? "";
+                    worksheet.Cell(row, 5).Value = cliente.Telefono ?? "";
+                    worksheet.Cell(row, 6).Value = cliente.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "";
+                    worksheet.Cell(row, 7).Value = cliente.FechaRegistro.ToString("dd/MM/yyyy HH:mm");
+                    worksheet.Cell(row, 8).Value = cliente.EsActivo ? "Activo" : "Inactivo";
+                    worksheet.Cell(row, 9).Value = cliente.Notas ?? "";
+                    row++;
+                }
+
+                // Ajustar ancho columnas automáticamente
+                worksheet.Columns().AdjustToContents();
+
+                // Agregar filtros automáticos
+                worksheet.RangeUsed().SetAutoFilter();
+
+                // Crear nombre archivo con timestamp
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var fileName = $"clientes_export_{timestamp}.xlsx";
+
+                // Crear stream y devolver archivo
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                stream.Position = 0;
+
+                Console.WriteLine($"✅ Excel clientes generado exitosamente: {fileName}");
+
+                return File(
+                    stream.ToArray(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error generando Excel clientes: {ex.Message}");
+                TempData["Error"] = "Error al generar el archivo Excel de clientes. Intenta nuevamente.";
                 return RedirectToAction(nameof(Index));
             }
         }

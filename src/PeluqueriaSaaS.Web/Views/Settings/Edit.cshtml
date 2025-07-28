@@ -1,0 +1,477 @@
+@model PeluqueriaSaaS.Domain.Entities.Settings
+
+@{
+    ViewData["Title"] = "Editar Configuración";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> Editar Configuración del Sistema
+                    </h4>
+                    <div>
+                        <a href="@Url.Action("Index", "Settings")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                        <button type="button" class="btn btn-warning ml-2" onclick="resetToDefaults()">
+                            <i class="fas fa-undo"></i> Restaurar Valores
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form id="settingsForm" method="post" action="@Url.Action("Edit", "Settings")" novalidate="novalidate">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" value="@Model.Id" />
+                        <input type="hidden" name="FechaCreacion" value="@Model.FechaCreacion" />
+                        <input type="hidden" name="CodigoPeluqueria" value="@Model.CodigoPeluqueria" />
+
+                        <!-- INFORMACIÓN GENERAL -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-store"></i> Información de la Peluquería
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="NombrePeluqueria" class="form-label">Nombre de la Peluquería <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="NombrePeluqueria" name="NombrePeluqueria" 
+                                           value="@Model.NombrePeluqueria" maxlength="100" required>
+                                    <div class="invalid-feedback">El nombre es obligatorio y debe tener máximo 100 caracteres.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="TelefonoPeluqueria" class="form-label">Teléfono</label>
+                                    <input type="tel" class="form-control" id="TelefonoPeluqueria" name="TelefonoPeluqueria" 
+                                           value="@Model.TelefonoPeluqueria" maxlength="20" placeholder="099 123 456">
+                                    <div class="invalid-feedback">Formato de teléfono inválido.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="EmailPeluqueria" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="EmailPeluqueria" name="EmailPeluqueria" 
+                                           value="@Model.EmailPeluqueria" maxlength="100" placeholder="info@mipeluqueria.com.uy">
+                                    <div class="invalid-feedback">Email inválido.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="DireccionPeluqueria" class="form-label">Dirección</label>
+                                    <input type="text" class="form-control" id="DireccionPeluqueria" name="DireccionPeluqueria" 
+                                           value="@Model.DireccionPeluqueria" maxlength="200" placeholder="Avenida Principal 123, Montevideo">
+                                    <div class="invalid-feedback">Dirección demasiado larga.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CONFIGURACIÓN RESUMEN SERVICIO -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-receipt"></i> Resumen de Servicio 
+                                    <small class="text-muted">(Feature Opcional Uruguay)</small>
+                                </h5>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-info mb-3">
+                                    <div class="card-body">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" role="switch" 
+                                                   id="ResumenServicioHabilitado" name="ResumenServicioHabilitado" 
+                                                   value="true" @(Model.ResumenServicioHabilitado ? "checked" : "")
+                                                   onchange="toggleResumenFields(this.checked)">
+                                            <label class="form-check-label" for="ResumenServicioHabilitado">
+                                                <strong>Habilitar Resumen de Servicio</strong>
+                                                <br><small class="text-muted">Permite generar comprobantes internos personalizados</small>
+                                            </label>
+                                            <input type="hidden" name="ResumenServicioHabilitado" value="false">
+                                        </div>
+
+                                        <div id="resumenFields" style="display: @(Model.ResumenServicioHabilitado ? "block" : "none")">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="ResumenEncabezado" class="form-label">Encabezado del Resumen</label>
+                                                        <textarea class="form-control" id="ResumenEncabezado" name="ResumenEncabezado" 
+                                                                  rows="3" maxlength="500" placeholder="Gracias por elegir nuestros servicios...">@Model.ResumenEncabezado</textarea>
+                                                        <div class="form-text">Máximo 500 caracteres</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="ResumenPiePagina" class="form-label">Pie de Página</label>
+                                                        <textarea class="form-control" id="ResumenPiePagina" name="ResumenPiePagina" 
+                                                                  rows="3" maxlength="1000" placeholder="¡Esperamos verte pronto!">@Model.ResumenPiePagina</textarea>
+                                                        <div class="form-text">Máximo 1000 caracteres</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   id="MostrarLogoEnResumen" name="MostrarLogoEnResumen" 
+                                                                   value="true" @(Model.MostrarLogoEnResumen ? "checked" : "")>
+                                                            <label class="form-check-label" for="MostrarLogoEnResumen">
+                                                                Mostrar Logo en Resumen
+                                                            </label>
+                                                            <input type="hidden" name="MostrarLogoEnResumen" value="false">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="RutaLogo" class="form-label">Ruta del Logo</label>
+                                                        <input type="text" class="form-control" id="RutaLogo" name="RutaLogo" 
+                                                               value="@Model.RutaLogo" maxlength="200" placeholder="/images/logo.png">
+                                                        <div class="form-text">Ruta relativa o URL del logo</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   id="UsarTemplateCustom" name="UsarTemplateCustom" 
+                                                                   value="true" @(Model.UsarTemplateCustom ? "checked" : "")
+                                                                   onchange="toggleCustomTemplate(this.checked)">
+                                                            <label class="form-check-label" for="UsarTemplateCustom">
+                                                                Usar Template Personalizado
+                                                            </label>
+                                                            <input type="hidden" name="UsarTemplateCustom" value="false">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3" id="customTemplateField" style="display: @(Model.UsarTemplateCustom ? "block" : "none")">
+                                                        <label for="TemplateCustomHTML" class="form-label">HTML Personalizado</label>
+                                                        <textarea class="form-control" id="TemplateCustomHTML" name="TemplateCustomHTML" 
+                                                                  rows="4" maxlength="2000" placeholder="<div>Mi template personalizado...</div>">@Model.TemplateCustomHTML</textarea>
+                                                        <div class="form-text">HTML personalizado para el resumen (máximo 2000 caracteres)</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- OPCIONES VISUALIZACIÓN -->
+                                            <h6 class="text-secondary mt-3 mb-2">Opciones de Visualización</h6>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="MostrarDatosCliente" name="MostrarDatosCliente" 
+                                                               value="true" @(Model.MostrarDatosCliente ? "checked" : "")>
+                                                        <label class="form-check-label" for="MostrarDatosCliente">
+                                                            Datos del Cliente
+                                                        </label>
+                                                        <input type="hidden" name="MostrarDatosCliente" value="false">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="MostrarEmpleadoServicio" name="MostrarEmpleadoServicio" 
+                                                               value="true" @(Model.MostrarEmpleadoServicio ? "checked" : "")>
+                                                        <label class="form-check-label" for="MostrarEmpleadoServicio">
+                                                            Empleado que Atendió
+                                                        </label>
+                                                        <input type="hidden" name="MostrarEmpleadoServicio" value="false">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="MostrarFechaHora" name="MostrarFechaHora" 
+                                                               value="true" @(Model.MostrarFechaHora ? "checked" : "")>
+                                                        <label class="form-check-label" for="MostrarFechaHora">
+                                                            Fecha y Hora
+                                                        </label>
+                                                        <input type="hidden" name="MostrarFechaHora" value="false">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="MostrarDetalleServicios" name="MostrarDetalleServicios" 
+                                                               value="true" @(Model.MostrarDetalleServicios ? "checked" : "")>
+                                                        <label class="form-check-label" for="MostrarDetalleServicios">
+                                                            Detalle de Servicios
+                                                        </label>
+                                                        <input type="hidden" name="MostrarDetalleServicios" value="false">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="MostrarTotalServicio" name="MostrarTotalServicio" 
+                                                               value="true" @(Model.MostrarTotalServicio ? "checked" : "")>
+                                                        <label class="form-check-label" for="MostrarTotalServicio">
+                                                            Total del Servicio
+                                                        </label>
+                                                        <input type="hidden" name="MostrarTotalServicio" value="false">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CONFIGURACIÓN VISUAL -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-palette"></i> Configuración Visual
+                                </h5>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="ColorPrimario" class="form-label">Color Primario</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="ColorPrimario" name="ColorPrimario" 
+                                               value="@(Model.ColorPrimario ?? "#007bff")" title="Seleccionar color primario">
+                                        <input type="text" class="form-control" id="ColorPrimarioText" 
+                                               value="@(Model.ColorPrimario ?? "#007bff")" maxlength="50" placeholder="#007bff">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="ColorSecundario" class="form-label">Color Secundario</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="ColorSecundario" name="ColorSecundario" 
+                                               value="@(Model.ColorSecundario ?? "#6c757d")" title="Seleccionar color secundario">
+                                        <input type="text" class="form-control" id="ColorSecundarioText" 
+                                               value="@(Model.ColorSecundario ?? "#6c757d")" maxlength="50" placeholder="#6c757d">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="TamanoFuente" class="form-label">Tamaño de Fuente</label>
+                                    <select class="form-control" id="TamanoFuente" name="TamanoFuente">
+                                        @if (Model.TamanoFuente == "10px")
+                                        {
+                                            <option value="10px" selected>10px - Pequeño</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="10px">10px - Pequeño</option>
+                                        }
+                                        
+                                        @if (Model.TamanoFuente == "12px")
+                                        {
+                                            <option value="12px" selected>12px - Normal</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="12px">12px - Normal</option>
+                                        }
+                                        
+                                        @if (Model.TamanoFuente == "14px")
+                                        {
+                                            <option value="14px" selected>14px - Mediano</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="14px">14px - Mediano</option>
+                                        }
+                                        
+                                        @if (Model.TamanoFuente == "16px")
+                                        {
+                                            <option value="16px" selected>16px - Grande</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="16px">16px - Grande</option>
+                                        }
+                                        
+                                        @if (Model.TamanoFuente == "18px")
+                                        {
+                                            <option value="18px" selected>18px - Extra Grande</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="18px">18px - Extra Grande</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="SimboloMoneda" class="form-label">Símbolo de Moneda</label>
+                                    <select class="form-control" id="SimboloMoneda" name="SimboloMoneda">
+                                        @if (Model.SimboloMoneda == "$U")
+                                        {
+                                            <option value="$U" selected>$U - Peso Uruguayo</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="$U">$U - Peso Uruguayo</option>
+                                        }
+                                        
+                                        @if (Model.SimboloMoneda == "$")
+                                        {
+                                            <option value="$" selected>$ - Dólar</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="$">$ - Dólar</option>
+                                        }
+                                        
+                                        @if (Model.SimboloMoneda == "€")
+                                        {
+                                            <option value="€" selected>€ - Euro</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="€">€ - Euro</option>
+                                        }
+                                        
+                                        @if (Model.SimboloMoneda == "UYU")
+                                        {
+                                            <option value="UYU" selected>UYU - Peso Uruguayo ISO</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="UYU">UYU - Peso Uruguayo ISO</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CONFIGURACIÓN SISTEMA -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-server"></i> Configuración del Sistema
+                                </h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                           id="NotificacionesEmail" name="NotificacionesEmail" 
+                                           value="true" @(Model.NotificacionesEmail ? "checked" : "")>
+                                    <label class="form-check-label" for="NotificacionesEmail">
+                                        <strong>Notificaciones por Email</strong>
+                                        <br><small class="text-muted">Enviar notificaciones automáticas</small>
+                                    </label>
+                                    <input type="hidden" name="NotificacionesEmail" value="false">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                           id="BackupAutomatico" name="BackupAutomatico" 
+                                           value="true" @(Model.BackupAutomatico ? "checked" : "")>
+                                    <label class="form-check-label" for="BackupAutomatico">
+                                        <strong>Backup Automático</strong>
+                                        <br><small class="text-muted">Respaldar datos periódicamente</small>
+                                    </label>
+                                    <input type="hidden" name="BackupAutomatico" value="false">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="DiasRetencionVentas" class="form-label">Días de Retención de Ventas</label>
+                                    <input type="number" class="form-control" id="DiasRetencionVentas" name="DiasRetencionVentas" 
+                                           value="@Model.DiasRetencionVentas" min="30" max="3650" step="1">
+                                    <div class="form-text">Entre 30 y 3650 días (30 días - 10 años)</div>
+                                    <div class="invalid-feedback">Debe estar entre 30 y 3650 días.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOTONES ACCIÓN -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-save"></i> Guardar Configuración
+                                        </button>
+                                        <button type="button" class="btn btn-info ml-2" id="previewBtn" 
+                                                onclick="previewResumen()" 
+                                                style="display: @(Model.ResumenServicioHabilitado ? "inline-block" : "none")">
+                                            <i class="fas fa-eye"></i> Vista Previa Resumen
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <a href="@Url.Action("Index", "Settings")" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancelar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS PERSONALIZADO -->
+<style>
+    .form-control-color {
+        width: 50px;
+        height: 38px;
+        padding: 2px;
+    }
+    
+    .form-check-input:checked {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .form-switch .form-check-input {
+        width: 3rem;
+        height: 1.5rem;
+    }
+    
+    .card.border-info {
+        border-width: 2px;
+    }
+    
+    .invalid-feedback {
+        display: none;
+    }
+    
+    .was-validated .form-control:invalid ~ .invalid-feedback {
+        display: block;
+    }
+    
+    .character-count {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-align: right;
+        margin-top: 0.25rem;
+    }
+</style>
+
+@section Scripts {
+    <script src="~/js/settings-edit.js"></script>
+}

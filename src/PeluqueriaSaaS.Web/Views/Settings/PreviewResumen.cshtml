@@ -1,0 +1,283 @@
+@model PeluqueriaSaaS.Domain.Entities.Settings
+
+@{
+    ViewData["Title"] = "Vista Previa Resumen";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-eye"></i> Vista Previa - Resumen de Servicio
+                    </h4>
+                    <div>
+                        <a href="@Url.Action("Index", "Settings")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver a Configuración
+                        </a>
+                        <button type="button" class="btn btn-success ml-2" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf"></i> Exportar PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    
+                    @if (!Model.ResumenServicioHabilitado)
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Resumen de Servicio Deshabilitado</strong>
+                            <br>Para ver la vista previa, debe habilitar el resumen de servicio en la configuración.
+                            <a href="@Url.Action("Edit", "Settings", new { id = Model.Id })" class="alert-link">Ir a Configuración</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- VISTA PREVIA DEL RESUMEN -->
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div id="resumenPreview" class="resumen-container">
+                                    
+                                    @if (!Model.UsarTemplateCustom)
+                                    {
+                                        <!-- TEMPLATE ESTÁNDAR -->
+                                        <div class="resumen-standard" style="
+                                            font-family: Arial, sans-serif;
+                                            font-size: @(Model.TamanoFuente ?? "12px");
+                                            color: #333;
+                                            max-width: 400px;
+                                            margin: 0 auto;
+                                            padding: 20px;
+                                            border: 2px solid @(Model.ColorPrimario ?? "#007bff");
+                                            border-radius: 8px;
+                                            background-color: #fff;
+                                        ">
+                                            <!-- ENCABEZADO -->
+                                            <div class="resumen-header text-center mb-3" style="
+                                                border-bottom: 2px solid @(Model.ColorSecundario ?? "#6c757d");
+                                                padding-bottom: 15px;
+                                            ">
+                                                @if (Model.MostrarLogoEnResumen && !string.IsNullOrEmpty(Model.RutaLogo))
+                                                {
+                                                    <img src="@Model.RutaLogo" alt="Logo" style="max-height: 60px; margin-bottom: 10px;" 
+                                                         onerror="this.style.display='none';">
+                                                }
+                                                
+                                                <h3 style="color: @(Model.ColorPrimario ?? "#007bff"); margin: 0;">
+                                                    @(Model.NombrePeluqueria ?? "Mi Peluquería")
+                                                </h3>
+                                                
+                                                @if (!string.IsNullOrEmpty(Model.DireccionPeluqueria))
+                                                {
+                                                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">
+                                                        @Model.DireccionPeluqueria
+                                                    </p>
+                                                }
+                                                
+                                                @if (!string.IsNullOrEmpty(Model.TelefonoPeluqueria) || !string.IsNullOrEmpty(Model.EmailPeluqueria))
+                                                {
+                                                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">
+                                                        @if (!string.IsNullOrEmpty(Model.TelefonoPeluqueria))
+                                                        {
+                                                            <span>Tel: @Model.TelefonoPeluqueria</span>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(Model.EmailPeluqueria))
+                                                        {
+                                                            @if (!string.IsNullOrEmpty(Model.TelefonoPeluqueria)) { <span> | </span> }
+                                                            <span>@Model.EmailPeluqueria</span>
+                                                        }
+                                                    </p>
+                                                }
+                                            </div>
+
+                                            <!-- MENSAJE PERSONALIZADO ENCABEZADO -->
+                                            @if (!string.IsNullOrEmpty(Model.ResumenEncabezado))
+                                            {
+                                                <div class="resumen-mensaje mb-3" style="
+                                                    background-color: #f8f9fa;
+                                                    padding: 10px;
+                                                    border-radius: 5px;
+                                                    border-left: 4px solid @(Model.ColorPrimario ?? "#007bff");
+                                                    font-style: italic;
+                                                ">
+                                                    @Model.ResumenEncabezado
+                                                </div>
+                                            }
+
+                                            <!-- INFORMACIÓN DEL SERVICIO -->
+                                            <div class="resumen-info">
+                                                <h4 style="color: @(Model.ColorPrimario ?? "#007bff"); margin-bottom: 15px; text-align: center;">
+                                                    RESUMEN DE SERVICIO
+                                                </h4>
+
+                                                @if (Model.MostrarFechaHora)
+                                                {
+                                                    <div style="margin-bottom: 10px;">
+                                                        <strong>Fecha y Hora:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                }
+
+                                                @if (Model.MostrarDatosCliente)
+                                                {
+                                                    <div style="margin-bottom: 10px;">
+                                                        <strong>Cliente:</strong> <span style="color: @(Model.ColorSecundario ?? "#6c757d");">María García (EJEMPLO)</span>
+                                                    </div>
+                                                }
+
+                                                @if (Model.MostrarEmpleadoServicio)
+                                                {
+                                                    <div style="margin-bottom: 10px;">
+                                                        <strong>Atendido por:</strong> <span style="color: @(Model.ColorSecundario ?? "#6c757d");">Ana Rodríguez (EJEMPLO)</span>
+                                                    </div>
+                                                }
+
+                                                @if (Model.MostrarDetalleServicios)
+                                                {
+                                                    <div style="margin: 15px 0;">
+                                                        <strong>Servicios:</strong>
+                                                        <div style="margin-left: 15px; margin-top: 8px;">
+                                                            <div style="border-bottom: 1px dotted #ccc; padding: 5px 0; display: flex; justify-content: space-between;">
+                                                                <span>Corte de Cabello</span>
+                                                                <span>@(Model.SimboloMoneda ?? "$U") 800</span>
+                                                            </div>
+                                                            <div style="border-bottom: 1px dotted #ccc; padding: 5px 0; display: flex; justify-content: space-between;">
+                                                                <span>Peinado</span>
+                                                                <span>@(Model.SimboloMoneda ?? "$U") 500</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+
+                                                @if (Model.MostrarTotalServicio)
+                                                {
+                                                    <div style="
+                                                        margin-top: 15px;
+                                                        padding-top: 10px;
+                                                        border-top: 2px solid @(Model.ColorPrimario ?? "#007bff");
+                                                        text-align: right;
+                                                    ">
+                                                        <strong style="font-size: 1.2em; color: @(Model.ColorPrimario ?? "#007bff");">
+                                                            TOTAL: @(Model.SimboloMoneda ?? "$U") 1,300
+                                                        </strong>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <!-- PIE DE PÁGINA -->
+                                            @if (!string.IsNullOrEmpty(Model.ResumenPiePagina))
+                                            {
+                                                <div class="resumen-footer" style="
+                                                    margin-top: 20px;
+                                                    padding-top: 15px;
+                                                    border-top: 1px solid #dee2e6;
+                                                    text-align: center;
+                                                    font-size: 0.9em;
+                                                    color: @(Model.ColorSecundario ?? "#6c757d");
+                                                ">
+                                                    @Model.ResumenPiePagina
+                                                </div>
+                                            }
+
+                                            <!-- FOOTER SISTEMA -->
+                                            <div style="
+                                                margin-top: 15px;
+                                                padding-top: 10px;
+                                                border-top: 1px solid #dee2e6;
+                                                text-align: center;
+                                                font-size: 0.75em;
+                                                color: #999;
+                                            ">
+                                                <div>Comprobante interno - Sin valor fiscal</div>
+                                                <div>Generado el @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <!-- TEMPLATE PERSONALIZADO -->
+                                        <div class="resumen-custom">
+                                            @if (!string.IsNullOrEmpty(Model.TemplateCustomHTML))
+                                            {
+                                                @Html.Raw(Model.TemplateCustomHTML)
+                                            }
+                                            else
+                                            {
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    <strong>Template Personalizado</strong><br>
+                                                    No hay contenido HTML personalizado configurado.
+                                                    <a href="@Url.Action("Edit", "Settings", new { id = Model.Id })">Configurar Template</a>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INFORMACIÓN ADICIONAL -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Información sobre el Preview</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Datos de ejemplo:</strong> Los datos mostrados (cliente, empleado, servicios) son ejemplos para demostración.</li>
+                                        <li><strong>Personalización:</strong> Puede modificar colores, textos y opciones en la configuración.</li>
+                                        <li><strong>Template personalizado:</strong> @(Model.UsarTemplateCustom ? "Está usando un template HTML personalizado." : "Está usando el template estándar del sistema.")</li>
+                                        <li><strong>Uso:</strong> Este resumen se puede generar desde el sistema POS al finalizar un servicio.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS PERSONALIZADO -->
+<style>
+    .resumen-container {
+        background-color: #f8f9fa;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .resumen-standard {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    @@media print {
+        .card-header, .alert, .btn {
+            display: none !important;
+        }
+        
+        .resumen-container {
+            background-color: white;
+            padding: 0;
+            box-shadow: none;
+        }
+        
+        body {
+            background-color: white;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function exportToPDF() {
+            // Función para exportar a PDF
+            window.print();
+        }
+        
+        // Auto-refresh si se cambia la configuración
+        function refreshPreview() {
+            location.reload();
+        }
+    </script>
+}

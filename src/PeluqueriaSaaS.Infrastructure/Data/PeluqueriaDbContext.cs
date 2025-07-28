@@ -12,7 +12,6 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<Empresa> Empresas { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
         public DbSet<Cliente> Clientes { get; set; }
-        //public DbSet<ClienteBasico> ClientesBasicos { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<EmpleadoBasico> EmpleadosBasicos { get; set; }
         public DbSet<Servicio> Servicios { get; set; }
@@ -22,6 +21,9 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<CitaServicio> CitaServicios { get; set; }
         public DbSet<Venta> Ventas { get; set; }
         public DbSet<VentaDetalle> VentaDetalles { get; set; }
+
+        // ✅ NUEVO - SETTINGS DBSET
+        public DbSet<Settings> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -156,6 +158,36 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 // Índices
                 entity.HasIndex(vd => vd.VentaId);
                 entity.HasIndex(vd => vd.ServicioId);
+            });
+
+            // ✅ NUEVA CONFIGURACIÓN SETTINGS
+            modelBuilder.Entity<Settings>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+                
+                // Configuración básica (según la estructura entity existente)
+                entity.Property(s => s.NombrePeluqueria).HasMaxLength(100);
+                entity.Property(s => s.DireccionPeluqueria).HasMaxLength(200);
+                entity.Property(s => s.TelefonoPeluqueria).HasMaxLength(20);
+                entity.Property(s => s.EmailPeluqueria).HasMaxLength(100);
+                entity.Property(s => s.ResumenEncabezado).HasMaxLength(500);
+                entity.Property(s => s.ResumenPiePagina).HasMaxLength(1000);
+                entity.Property(s => s.RutaLogo).HasMaxLength(200);
+                entity.Property(s => s.ColorPrimario).HasMaxLength(50);
+                entity.Property(s => s.ColorSecundario).HasMaxLength(50);
+                entity.Property(s => s.TamanoFuente).HasMaxLength(20);
+                entity.Property(s => s.SimboloMoneda).HasMaxLength(10);
+                entity.Property(s => s.FormatoMoneda).HasMaxLength(50);
+                entity.Property(s => s.CodigoPeluqueria).HasMaxLength(50);
+                entity.Property(s => s.TemplateCustomHTML).HasMaxLength(2000);
+                
+                // Defaults
+                entity.Property(s => s.ResumenServicioHabilitado).HasDefaultValue(false);
+                entity.Property(s => s.Activo).HasDefaultValue(true);
+                entity.Property(s => s.FechaCreacion).HasDefaultValueSql("GETDATE()");
+                
+                // Índices
+                entity.HasIndex(s => s.CodigoPeluqueria).IsUnique();
             });
         }
     }
