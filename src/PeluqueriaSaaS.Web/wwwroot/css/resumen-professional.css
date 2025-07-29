@@ -1,0 +1,626 @@
+/* CREAR: wwwroot/css/resumen-professional.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #1f2937;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Main Container */
+.resumen-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header Section */
+.header {
+    background: linear-gradient(135deg, var(--primary-color, #3b82f6) 0%, var(--secondary-color, #1e40af) 100%);
+    color: white;
+    padding: 40px 40px 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: rotate(45deg);
+}
+
+.header-content {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    align-items: center;
+}
+
+.company-info h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.025em;
+}
+
+.company-tagline {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+.logo-container {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.logo-placeholder {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+/* Document Info */
+.document-info {
+    background: #f8fafc;
+    padding: 20px 40px;
+    border-left: 4px solid var(--primary-color, #3b82f6);
+    margin: 0;
+}
+
+.document-info h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.info-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+}
+
+/* Main Content */
+.main-content {
+    padding: 40px;
+}
+
+/* Client Section */
+.client-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-icon {
+    width: 24px;
+    height: 24px;
+    background: var(--primary-color, #3b82f6);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+.client-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.client-card .info-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.client-card .info-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+.client-card .info-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+    word-break: break-word;
+}
+
+/* Services Table */
+.services-section {
+    margin-bottom: 40px;
+}
+
+.services-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.services-table th {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.services-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+}
+
+.services-table tr:last-child td {
+    border-bottom: none;
+}
+
+.services-table tr:hover {
+    background: #f9fafb;
+}
+
+.service-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.service-category {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.price-cell {
+    text-align: right;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--primary-color, #3b82f6);
+}
+
+.employee-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Totals Section */
+.totals-section {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.totals-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.total-row.final {
+    border-top: 2px solid #e5e7eb;
+    padding-top: 15px;
+    margin-top: 10px;
+}
+
+.total-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.total-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #1f2937;
+}
+
+.total-row.final .total-label {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.total-row.final .total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color, #3b82f6);
+}
+
+/* Footer */
+.footer {
+    background: #f8fafc;
+    padding: 30px 40px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.legal-notice {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+
+.contact-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.contact-item {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .resumen-container {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: none;
+        margin: 0;
+    }
+    
+    .header::before {
+        display: none;
+    }
+    
+    .header {
+        padding: 20px;
+        background: var(--primary-color, #3b82f6) !important;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+    
+    .document-info {
+        padding: 15px 20px;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+    
+    .footer {
+        padding: 15px 20px;
+    }
+    
+    .services-section {
+        page-break-inside: avoid;
+    }
+    
+    .totals-section {
+        page-break-inside: avoid;
+    }
+}
+
+/* Impresora Térmica (58mm-80mm) */
+@media print and (max-width: 80mm) {
+    body {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
+    .resumen-container {
+        width: 100%;
+        font-size: 11px;
+    }
+    
+    .header {
+        padding: 10px;
+        text-align: center;
+    }
+    
+    .header-content {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .company-info h1 {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
+    
+    .company-tagline {
+        font-size: 0.8rem;
+    }
+    
+    .logo-container {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto;
+    }
+    
+    .document-info {
+        padding: 8px;
+    }
+    
+    .document-info h2 {
+        font-size: 1rem;
+        margin-bottom: 6px;
+        text-align: center;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .info-label {
+        font-size: 0.7rem;
+    }
+    
+    .info-value {
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    
+    .main-content {
+        padding: 8px;
+    }
+    
+    .section-title {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+        text-align: center;
+    }
+    
+    .section-icon {
+        display: none;
+    }
+    
+    .client-card {
+        padding: 8px;
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    
+    .client-card .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+    }
+    
+    .client-card .info-label {
+        font-size: 0.65rem;
+    }
+    
+    .client-card .info-value {
+        font-size: 0.8rem;
+    }
+    
+    .services-table {
+        font-size: 0.7rem;
+    }
+    
+    .services-table th,
+    .services-table td {
+        padding: 4px 2px;
+    }
+    
+    .services-table th {
+        font-size: 0.65rem;
+    }
+    
+    .service-name {
+        font-size: 0.75rem;
+        margin-bottom: 1px;
+    }
+    
+    .service-category {
+        font-size: 0.6rem;
+    }
+    
+    .employee-name {
+        font-size: 0.7rem;
+    }
+    
+    .price-cell {
+        font-size: 0.8rem;
+    }
+    
+    .totals-section {
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .total-row {
+        gap: 4px;
+        padding: 2px 0;
+    }
+    
+    .total-label {
+        font-size: 0.75rem;
+    }
+    
+    .total-value {
+        font-size: 0.8rem;
+    }
+    
+    .total-row.final .total-label {
+        font-size: 0.85rem;
+    }
+    
+    .total-row.final .total-value {
+        font-size: 1rem;
+    }
+    
+    .footer {
+        padding: 8px;
+        font-size: 0.6rem;
+    }
+    
+    .legal-notice {
+        font-size: 0.6rem;
+        margin-bottom: 4px;
+    }
+    
+    .contact-info {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+    
+    .contact-item {
+        font-size: 0.6rem;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 30px 20px 20px;
+    }
+    
+    .header-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+    
+    .document-info {
+        padding: 20px;
+    }
+    
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .client-card {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .services-table {
+        font-size: 0.875rem;
+    }
+    
+    .services-table th,
+    .services-table td {
+        padding: 12px 8px;
+    }
+    
+    .footer {
+        padding: 20px;
+    }
+    
+    .contact-info {
+        grid-template-columns: 1fr;
+    }
+}

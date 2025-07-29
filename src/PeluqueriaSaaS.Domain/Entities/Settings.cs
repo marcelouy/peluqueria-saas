@@ -86,9 +86,9 @@ namespace PeluqueriaSaaS.Domain.Entities
         [StringLength(50)]
         public string CodigoPeluqueria { get; set; } = "MAIN";
 
-        // ✅ CONFIGURACIÓN RESUMEN TEMPLATE
+        // ✅ CONFIGURACIÓN RESUMEN TEMPLATE - FIXED NULLABLE
         [StringLength(2000)]
-        public string TemplateCustomHTML { get; set; } = string.Empty;
+        public string? TemplateCustomHTML { get; set; } = string.Empty;
 
         public bool UsarTemplateCustom { get; set; } = false;
 

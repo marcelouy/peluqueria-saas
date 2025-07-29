@@ -171,9 +171,11 @@ function setupCharacterCounter(fieldId, maxLength) {
     // Initial update
     updateCounter();
     
-    // Event listeners
+    // Event listeners - FIXED SETTIMEOUT SYNTAX
     field.addEventListener('input', updateCounter);
-    field.addEventListener('paste', setTimeout(updateCounter, 10));
+    field.addEventListener('paste', function() {
+        setTimeout(updateCounter, 10);
+    });
 }
 
 // ✅ CONDITIONAL FIELDS

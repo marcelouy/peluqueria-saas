@@ -179,7 +179,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(s => s.SimboloMoneda).HasMaxLength(10);
                 entity.Property(s => s.FormatoMoneda).HasMaxLength(50);
                 entity.Property(s => s.CodigoPeluqueria).HasMaxLength(50);
-                entity.Property(s => s.TemplateCustomHTML).HasMaxLength(2000);
+                entity.Property(s => s.TemplateCustomHTML).HasMaxLength(2000).IsRequired(false);
                 
                 // Defaults
                 entity.Property(s => s.ResumenServicioHabilitado).HasDefaultValue(false);
