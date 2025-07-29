@@ -110,7 +110,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(v => v.Descuento).HasColumnType("decimal(10,2)");
                 entity.Property(v => v.Total).HasColumnType("decimal(10,2)");
                 entity.Property(v => v.EstadoVenta).IsRequired().HasMaxLength(20);
-                entity.Property(v => v.Observaciones).HasMaxLength(500);
+                entity.Property(v => v.Observaciones).HasMaxLength(500).IsRequired(false);
                 entity.Property(v => v.TenantId).IsRequired().HasMaxLength(50);
                 
                 // Relaciones
@@ -136,7 +136,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(vd => vd.NombreServicio).IsRequired().HasMaxLength(100);
                 entity.Property(vd => vd.PrecioUnitario).HasColumnType("decimal(10,2)");
                 entity.Property(vd => vd.Subtotal).HasColumnType("decimal(10,2)");
-                entity.Property(vd => vd.NotasServicio).HasMaxLength(200);
+                entity.Property(vd => vd.NotasServicio).HasMaxLength(200).IsRequired(false);
                 entity.Property(vd => vd.TenantId).IsRequired().HasMaxLength(50);
                 
                 // Relaciones

@@ -19,21 +19,24 @@ namespace PeluqueriaSaaS.Web.Controllers
         private readonly PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext _dbContext;
         private const string TENANT_ID = "default";
         private readonly ITipoServicioRepository _tipoServicioRepository;
+        private readonly ISettingsRepository _settingsRepository;
 
-       public VentasController
-       (
-            IVentaRepository ventaRepository,
-            IEmpleadoRepository empleadoRepository,
-            IMediator mediator,
-            IServicioRepository servicioRepository,
-            ITipoServicioRepository tipoServicioRepository,  // ← AGREGAR
-            PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext dbContext)
+        public VentasController
+         (
+              IVentaRepository ventaRepository,
+              IEmpleadoRepository empleadoRepository,
+              IMediator mediator,
+              IServicioRepository servicioRepository,
+              ITipoServicioRepository tipoServicioRepository,
+              PeluqueriaSaaS.Infrastructure.Data.PeluqueriaDbContext dbContext,
+              ISettingsRepository settingsRepository)
         {
             _ventaRepository = ventaRepository;
             _empleadoRepository = empleadoRepository;
             _mediator = mediator;
             _servicioRepository = servicioRepository;
-            _tipoServicioRepository = tipoServicioRepository;  // ← AGREGAR
+            _tipoServicioRepository = tipoServicioRepository;
+            _settingsRepository = settingsRepository;
             _dbContext = dbContext;
         }
 
@@ -81,6 +84,9 @@ namespace PeluqueriaSaaS.Web.Controllers
                 ViewBag.CantidadVentas = ventasHoy.Count;
                 ViewBag.TotalVentas = ventasHoy.Sum(v => v.Total);
                 ViewBag.FechaFiltro = fecha.Value;  // Para mostrar en calendar
+
+                // ✅ AGREGAR RESUMEN HABILITADO PARA INDEX
+                ViewBag.ResumenHabilitado = await IsResumenHabilitado();
 
                 Console.WriteLine($"=== RESUMEN DÍA DEBUG ===");
                 Console.WriteLine($"Fecha filtrada: {fecha.Value:yyyy-MM-dd}");
@@ -277,6 +283,9 @@ namespace PeluqueriaSaaS.Web.Controllers
                 venta.EmpleadoNombre = empleado?.Nombre ?? "Empleado";
                 venta.ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente";
 
+                // ✅ AGREGAR ESTA LÍNEA PARA RESUMEN:
+                ViewBag.ResumenHabilitado = await IsResumenHabilitado();
+
                 return View(venta);
             }
             catch (Exception ex)
@@ -367,12 +376,12 @@ namespace PeluqueriaSaaS.Web.Controllers
                 });
             }
         }
-        
+
         private async Task<Dictionary<string, List<ServicioBasicoDto>>> CargarServiciosAgrupados()
         {
             var servicios = await _servicioRepository.GetAllAsync(TENANT_ID);
             var tipos = await _tipoServicioRepository.GetAllAsync(TENANT_ID);
-            
+
             return servicios
                 .Where(s => s.EsActivo)
                 .GroupBy(s => s.TipoServicio?.Nombre ?? "Sin Categoría")
@@ -384,6 +393,394 @@ namespace PeluqueriaSaaS.Web.Controllers
                     TipoServicioNombre = g.Key,
                     DuracionMinutos = s.DuracionMinutos
                 }).ToList());
+        }
+
+        // Generar resumen de servicio para una venta específica
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GenerarResumen(int ventaId)
+        {
+            try
+            {
+                Console.WriteLine($"🧾 Generando resumen para venta: {ventaId}");
+                
+                // Verificar si resumen está habilitado
+                var settings = await _settingsRepository.GetSettingsAsync();
+                if (settings == null || !settings.ResumenServicioHabilitado)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "El resumen de servicio no está habilitado. Configure en Settings." 
+                    });
+                }
+                
+                // Obtener datos de la venta
+                var venta = await _dbContext.Ventas
+                    .Where(v => v.VentaId == ventaId && v.TenantId == TENANT_ID)
+                    .FirstOrDefaultAsync();
+                    
+                if (venta == null)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Venta no encontrada" 
+                    });
+                }
+                
+                // Obtener detalles de la venta
+                var ventaDetalles = await _dbContext.VentaDetalles
+                    .Where(vd => vd.VentaId == ventaId)
+                    .ToListAsync();
+                
+                // ✅ FIX: EmpleadoId nullable correction
+                var empleado = venta.EmpleadoId > 0 ?
+                    await _dbContext.Empleados.FindAsync(venta.EmpleadoId) : null;
+                
+                // Obtener datos cliente
+                var cliente = await _dbContext.Clientes
+                    .Where(c => c.Id == venta.ClienteId)
+                    .Select(c => new { c.Nombre, c.Apellido })
+                    .FirstOrDefaultAsync();
+                
+                // Crear objeto venta para template
+                var ventaData = new {
+                    Id = venta.VentaId,
+                    FechaVenta = venta.FechaVenta,
+                    Total = venta.Total,
+                    ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente"
+                };
+                
+                // Generar HTML del resumen
+                var resumenHtml = GenerarResumenHTML(settings, ventaData, ventaDetalles, empleado);
+                
+                Console.WriteLine($"✅ Resumen generado exitosamente para venta {ventaId}");
+                
+                return Json(new { 
+                    success = true, 
+                    html = resumenHtml,
+                    ventaId = ventaId
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error generando resumen: {ex.Message}");
+                return Json(new { 
+                    success = false, 
+                    message = "Error al generar el resumen de servicio" 
+                });
+            }
+        }
+
+        
+        /// <summary>
+        /// Descargar resumen como PDF
+        /// UBICACIÓN: Agregar al final de VentasController.cs antes del último }
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> DescargarResumenPDF(int ventaId)
+        {
+            try
+            {
+                Console.WriteLine($"📥 Descargando PDF resumen venta: {ventaId}");
+                
+                // Verificar settings habilitado
+                var settings = await _settingsRepository.GetSettingsAsync();
+                if (settings == null || !settings.ResumenServicioHabilitado)
+                {
+                    return BadRequest("Resumen de servicio no habilitado");
+                }
+                
+                // Obtener datos venta
+                var venta = await _dbContext.Ventas
+                    .Where(v => v.VentaId == ventaId && v.TenantId == TENANT_ID)
+                    .FirstOrDefaultAsync();
+                    
+                if (venta == null)
+                {
+                    return NotFound("Venta no encontrada");
+                }
+                
+                var ventaDetalles = await _dbContext.VentaDetalles
+                    .Where(vd => vd.VentaId == ventaId)
+                    .ToListAsync();
+                    
+                // ✅ FIX: EmpleadoId int type handling (not nullable)  
+                var empleado = venta.EmpleadoId > 0 ? 
+                    await _dbContext.Empleados.FindAsync(venta.EmpleadoId) : null;
+                
+                var cliente = await _dbContext.Clientes
+                    .Where(c => c.Id == venta.ClienteId)
+                    .Select(c => new { c.Nombre, c.Apellido })
+                    .FirstOrDefaultAsync();
+                
+                var ventaData = new {
+                    Id = venta.VentaId,
+                    FechaVenta = venta.FechaVenta,
+                    Total = venta.Total,
+                    ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente"
+                };
+                
+                // Generar HTML
+                var resumenHtml = GenerarResumenHTML(settings, ventaData, ventaDetalles, empleado);
+                
+                // Convertir a PDF (implementación básica)
+                var pdfBytes = GenerarPDFFromHTML(resumenHtml, $"Resumen_Venta_{ventaId}");
+                
+                var fileName = $"resumen_venta_{ventaId}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                
+                Console.WriteLine($"✅ PDF generado: {fileName}");
+                
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error generando PDF: {ex.Message}");
+                return BadRequest("Error al generar PDF");
+            }
+        }
+
+
+
+        /// <summary>
+        /// Verificar si resumen está habilitado (para mostrar/ocultar botón)
+        /// </summary>
+        public async Task<bool> IsResumenHabilitado()
+        {
+            try
+            {
+                var settings = await _settingsRepository.GetSettingsAsync();
+                return settings?.ResumenServicioHabilitado ?? false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error verificando resumen habilitado: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Generar HTML del resumen con datos reales de la venta
+        /// </summary>
+        private string GenerarResumenHTML(Settings settings, dynamic venta, dynamic ventaDetalles, dynamic empleado)
+        {
+            var clienteNombre = venta.ClienteNombre ?? "Cliente";
+            var empleadoNombre = empleado?.Nombre ?? "Empleado";
+            var fechaVenta = venta.FechaVenta ?? DateTime.Now;
+            var totalVenta = venta.Total ?? 0;
+            
+            // Construir servicios HTML
+            var serviciosHtml = "";
+            if (settings.MostrarDetalleServicios && ventaDetalles != null)
+            {
+                var serviciosDetalle = "";
+                decimal subtotal = 0;
+                
+                foreach (var detalle in ventaDetalles)
+                {
+                    var servicioNombre = detalle.NombreServicio ?? "Servicio";
+                    var precio = detalle.PrecioUnitario ?? 0;
+                    subtotal += precio;
+                    
+                    serviciosDetalle += $@"
+                        <div style='border-bottom: 1px dotted #ccc; padding: 5px 0; display: flex; justify-content: space-between;'>
+                            <span>{servicioNombre}</span>
+                            <span>{settings.SimboloMoneda} {precio:N0}</span>
+                        </div>";
+                }
+                
+                serviciosHtml = $@"
+                    <div style='margin: 15px 0;'>
+                        <strong>Servicios Realizados:</strong>
+                        <div style='margin-left: 15px; margin-top: 8px;'>
+                            {serviciosDetalle}
+                        </div>
+                    </div>";
+            }
+            
+            // Template principal
+            if (settings.UsarTemplateCustom && !string.IsNullOrEmpty(settings.TemplateCustomHTML))
+            {
+                // Template personalizado con reemplazos
+                var customHtml = settings.TemplateCustomHTML
+                    .Replace("{{CLIENTE}}", clienteNombre)
+                    .Replace("{{EMPLEADO}}", empleadoNombre)
+                    .Replace("{{FECHA}}", fechaVenta.ToString("dd/MM/yyyy HH:mm"))
+                    .Replace("{{TOTAL}}", $"{settings.SimboloMoneda} {totalVenta:N0}")
+                    .Replace("{{SERVICIOS}}", serviciosHtml);
+                
+                return $@"
+                    <div class='resumen-container'>
+                        <div class='resumen-custom'>
+                            {customHtml}
+                        </div>
+                    </div>";
+            }
+            
+            // Template estándar con datos reales
+            var logoHtml = "";
+            if (settings.MostrarLogoEnResumen && !string.IsNullOrEmpty(settings.RutaLogo))
+            {
+                logoHtml = $@"<img src='{settings.RutaLogo}' alt='Logo' style='max-height: 60px; margin-bottom: 10px;' onerror='this.style.display=""none""'>";
+            }
+            
+            var encabezadoHtml = "";
+            if (!string.IsNullOrEmpty(settings.ResumenEncabezado))
+            {
+                encabezadoHtml = $@"
+                    <div class='resumen-mensaje mb-3' style='
+                        background-color: #f8f9fa;
+                        padding: 10px;
+                        border-radius: 5px;
+                        border-left: 4px solid {settings.ColorPrimario};
+                        font-style: italic;
+                        margin-bottom: 15px;
+                    '>
+                        {settings.ResumenEncabezado}
+                    </div>";
+            }
+            
+            var datosClienteHtml = settings.MostrarDatosCliente ? $@"
+                <div style='margin-bottom: 10px;'>
+                    <strong>Cliente:</strong> <span style='color: {settings.ColorSecundario};'>{clienteNombre}</span>
+                </div>" : "";
+            
+            // ✅ FIX: empleadoHtml variable declared correctly
+            var empleadoHtml = settings.MostrarEmpleadoServicio ? $@"
+                <div style='margin-bottom: 10px;'>
+                    <strong>Atendido por:</strong> <span style='color: {settings.ColorSecundario};'>{empleadoNombre}</span>
+                </div>" : "";
+            
+            var fechaHtml = settings.MostrarFechaHora ? $@"
+                <div style='margin-bottom: 10px;'>
+                    <strong>Fecha y Hora:</strong> {fechaVenta:dd/MM/yyyy HH:mm}
+                </div>" : "";
+            
+            var totalHtml = settings.MostrarTotalServicio ? $@"
+                <div style='
+                    margin-top: 15px;
+                    padding-top: 10px;
+                    border-top: 2px solid {settings.ColorPrimario};
+                    text-align: right;
+                '>
+                    <strong style='font-size: 1.2em; color: {settings.ColorPrimario};'>
+                        TOTAL: {settings.SimboloMoneda} {totalVenta:N0}
+                    </strong>
+                </div>" : "";
+            
+            var piePaginaHtml = !string.IsNullOrEmpty(settings.ResumenPiePagina) ? $@"
+                <div style='
+                    margin-top: 20px;
+                    padding-top: 15px;
+                    border-top: 1px solid #dee2e6;
+                    text-align: center;
+                    font-size: 0.9em;
+                    color: {settings.ColorSecundario};
+                '>
+                    {settings.ResumenPiePagina}
+                </div>" : "";
+            
+            return $@"
+                <div class='resumen-container'>
+                    <div class='resumen-print' style='
+                        font-family: Arial, sans-serif;
+                        font-size: {settings.TamanoFuente};
+                        color: #333;
+                        max-width: 400px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        border: 2px solid {settings.ColorPrimario};
+                        border-radius: 8px;
+                        background-color: #fff;
+                    '>
+                        <!-- ENCABEZADO -->
+                        <div style='
+                            text-align: center;
+                            border-bottom: 2px solid {settings.ColorSecundario};
+                            padding-bottom: 15px;
+                            margin-bottom: 15px;
+                        '>
+                            {logoHtml}
+                            <h3 style='color: {settings.ColorPrimario}; margin: 0;'>
+                                {settings.NombrePeluqueria}
+                            </h3>
+                            <p style='margin: 5px 0; font-size: 0.9em; color: #666;'>
+                                {settings.DireccionPeluqueria}
+                            </p>
+                            <p style='margin: 5px 0; font-size: 0.9em; color: #666;'>
+                                Tel: {settings.TelefonoPeluqueria} | {settings.EmailPeluqueria}
+                            </p>
+                        </div>
+
+                        {encabezadoHtml}
+
+                        <!-- INFORMACIÓN VENTA -->
+                        <div>
+                            <h4 style='color: {settings.ColorPrimario}; margin-bottom: 15px; text-align: center;'>
+                                RESUMEN DE SERVICIO
+                            </h4>
+                            <div style='margin-bottom: 10px;'>
+                                <strong>Venta #:</strong> {venta.Id}
+                            </div>
+                            {fechaHtml}
+                            {datosClienteHtml}
+                            {empleadoHtml}
+                            {serviciosHtml}
+                            {totalHtml}
+                        </div>
+
+                        {piePaginaHtml}
+
+                        <!-- FOOTER -->
+                        <div style='
+                            margin-top: 15px;
+                            padding-top: 10px;
+                            border-top: 1px solid #dee2e6;
+                            text-align: center;
+                            font-size: 0.75em;
+                            color: #999;
+                        '>
+                            <div>Comprobante interno - Sin valor fiscal</div>
+                            <div>Generado el {DateTime.Now:dd/MM/yyyy HH:mm}</div>
+                        </div>
+                    </div>
+                </div>";
+        }
+
+
+/// <summary>
+        /// Generar PDF desde HTML (implementación básica)
+        /// </summary>
+        private byte[] GenerarPDFFromHTML(string html, string titulo)
+        {
+            var htmlCompleto = $@"
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>{titulo}</title>
+                    <style>
+                        body {{ 
+                            margin: 0; 
+                            padding: 20px; 
+                            font-family: Arial, sans-serif; 
+                            background: white;
+                        }}
+                        .resumen-container {{ 
+                            background: white; 
+                            padding: 0; 
+                        }}
+                        @media print {{
+                            body {{ margin: 0; padding: 10px; }}
+                        }}
+                    </style>
+                </head>
+                <body>
+                    {html}
+                </body>
+                </html>";
+            
+            // Por ahora HTML como PDF (en producción usar iTextSharp o similar)
+            return System.Text.Encoding.UTF8.GetBytes(htmlCompleto);
         }
     }
 }

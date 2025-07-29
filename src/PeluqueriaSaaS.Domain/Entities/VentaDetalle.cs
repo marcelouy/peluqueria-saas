@@ -62,9 +62,10 @@ namespace PeluqueriaSaaS.Domain.Entities
         
         /// <summary>
         /// Notas específicas de este servicio en la venta
+        /// ✅ FIX CRÍTICO: Nullable para manejar NULL values en BD
         /// </summary>
         [StringLength(200)]
-        public string NotasServicio { get; set; }
+        public string? NotasServicio { get; set; }
         
         /// <summary>
         /// CRÍTICO: Multi-tenant identifier
@@ -97,6 +98,6 @@ namespace PeluqueriaSaaS.Domain.Entities
         /// Navegación al empleado que realizó específicamente este servicio
         /// (opcional - para ventas multi-empleado futuras)
         /// </summary>
-        public virtual Empleado EmpleadoServicio { get; set; }
+        public virtual Empleado? EmpleadoServicio { get; set; }
     }
 }

@@ -22,6 +22,37 @@
                 </div>
             </div>
 
+            <!-- BOTÓN GENERAR RESUMEN (Solo si está habilitado) -->
+            @if (ViewBag.ResumenHabilitado == true)
+            {
+                <div class="mb-4">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-receipt text-info"></i> 
+                                        Resumen de Servicio
+                                    </h6>
+                                    <p class="text-muted mb-0">
+                                        Generar comprobante interno personalizado para el cliente
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button type="button" class="btn btn-info btn-lg" 
+                                            id="generarResumenBtn" 
+                                            onclick="generarResumenServicio(@Model.VentaId)" 
+                                            data-venta-id="@Model.VentaId">
+                                        <i class="fas fa-receipt"></i> 
+                                        Generar Resumen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <!-- INFORMACIÓN BÁSICA VENTA -->
             <div class="row mb-4">
                 <div class="col-md-8">
@@ -114,7 +145,7 @@
                 </div>
             </div>
 
-            <!-- NOTA: DETALLES SERVICIOS -->
+            <!-- DETALLES SERVICIOS -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -123,7 +154,6 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- TABLA PLACEHOLDER PARA SERVICIOS -->
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
@@ -218,14 +248,224 @@
     </div>
 </div>
 
+<!-- MODAL RESUMEN PREVIEW -->
+<div class="modal fade" id="resumenModal" tabindex="-1" aria-labelledby="resumenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="resumenModalLabel">
+                    <i class="fas fa-receipt"></i> 
+                    Resumen de Servicio - Venta #<span id="resumenVentaId"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="resumenContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Content will be loaded here via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" id="imprimirResumenBtn" onclick="imprimirResumen()">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-success" id="descargarPDFBtn" onclick="descargarResumenPDF()">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
 $(document).ready(function() {
-    // Auto-focus en botón volver para navegación con teclado
     $('.btn-outline-secondary').focus();
+    console.log('🧾 Resumen integration JavaScript loaded');
+});
+
+function generarResumenServicio(ventaId) {
+    console.log('🧾 Generando resumen para venta:', ventaId);
     
-    // Futura implementación: cargar detalles de servicios vía AJAX
-    // TODO: Implementar carga de VentaDetalles
+    if (!ventaId || ventaId <= 0) {
+        alert('Error: ID de venta no válido');
+        return;
+    }
+    
+    const btn = document.getElementById('generarResumenBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+    
+    $.ajax({
+        url: '/Ventas/GenerarResumen',
+        type: 'POST',
+        data: {
+            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+            ventaId: ventaId
+        },
+        success: function(response) {
+            console.log('✅ Resumen generado exitosamente:', response);
+            
+            if (response.success) {
+                $('#resumenContent').html(response.html);
+                $('#resumenVentaId').text(response.ventaId);
+                $('#descargarPDFBtn').data('venta-id', response.ventaId);
+                $('#resumenModal').modal('show');
+                mostrarNotificacion('Resumen generado correctamente', 'success');
+            } else {
+                console.error('❌ Error en respuesta:', response.message);
+                alert('Error: ' + (response.message || 'No se pudo generar el resumen'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Error AJAX generando resumen:', error);
+            let errorMessage = 'Error al generar el resumen de servicio';
+            try {
+                const response = JSON.parse(xhr.responseText);
+                errorMessage = response.message || errorMessage;
+            } catch (e) {
+                // Usar mensaje default
+            }
+            alert('Error: ' + errorMessage);
+        },
+        complete: function() {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+}
+
+function imprimirResumen() {
+    console.log('🖨️ Imprimiendo resumen...');
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    const resumenContent = document.getElementById('resumenContent').innerHTML;
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Resumen de Servicio</title>
+            <meta charset="utf-8">
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 20px;
+                    background: white;
+                }
+                .no-print { display: none !important; }
+            </style>
+        </head>
+        <body>
+            \${resumenContent}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    setTimeout(function() {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+    
+    mostrarNotificacion('Enviando a impresión...', 'info');
+}
+
+function descargarResumenPDF() {
+    console.log('Descargando PDF...');
+    
+    // Buscar VentaId en el modal o URL
+    var ventaId = null;
+    
+    // Buscar en el título del modal
+    var modalTitle = document.querySelector('#resumenModal .modal-title');
+    if (modalTitle) {
+        var match = modalTitle.textContent.match(/Venta #(\d+)/);
+        if (match) {
+            ventaId = match[1];
+        }
+    }
+    
+    // Si no encontró, buscar en URL
+    if (!ventaId) {
+        var urlMatch = window.location.pathname.match(/\/Ventas\/Details\/(\d+)/);
+        if (urlMatch) {
+            ventaId = urlMatch[1];
+        }
+    }
+    
+    if (!ventaId) {
+        alert('No se pudo determinar el ID de la venta');
+        return;
+    }
+    
+    console.log('VentaId encontrado:', ventaId);
+    
+    // Redirigir a la descarga
+    window.open('/Settings/ExportarPDF?ventaId=' + ventaId, '_blank');
+}
+
+function mostrarNotificacion(message, type) {
+    $('.alert-notification').remove();
+    
+    let alertClass, icon;
+    switch(type) {
+        case 'success':
+            alertClass = 'alert-success';
+            icon = 'fas fa-check-circle';
+            break;
+        case 'info':
+            alertClass = 'alert-info';
+            icon = 'fas fa-info-circle';
+            break;
+        case 'warning':
+            alertClass = 'alert-warning';
+            icon = 'fas fa-exclamation-triangle';
+            break;
+        case 'error':
+            alertClass = 'alert-danger';
+            icon = 'fas fa-times-circle';
+            break;
+        default:
+            alertClass = 'alert-info';
+            icon = 'fas fa-info-circle';
+            break;
+    }
+    
+    const notification = `
+        <div class="alert \${alertClass} alert-dismissible fade show alert-notification" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <i class="\${icon}"></i> \${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('body').append(notification);
+    
+    setTimeout(function() {
+        $('.alert-notification').fadeOut();
+    }, 5000);
+}
+
+$('#resumenModal').on('hidden.bs.modal', function() {
+    $('#resumenContent').empty();
+    $('#resumenVentaId').text('');
+    $('#descargarPDFBtn').removeData('venta-id');
 });
 </script>
+
+<style>
+#generarResumenBtn {
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    min-width: 180px;
+}
+
+#generarResumenBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+</style>
 }

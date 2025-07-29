@@ -69,7 +69,7 @@ namespace PeluqueriaSaaS.Domain.Entities
         /// Observaciones adicionales de la venta
         /// </summary>
         [StringLength(500)]
-        public string Observaciones { get; set; }
+        public string? Observaciones { get; set; }
         
         /// <summary>
         /// CRÍTICO: Multi-tenant identifier
