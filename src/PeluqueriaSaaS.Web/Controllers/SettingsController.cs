@@ -11,14 +11,20 @@ namespace PeluqueriaSaaS.Web.Controllers
 {
     public class SettingsController : Controller
     {
+        private readonly ILogger<SettingsController> _logger;
         private readonly ISettingsRepository _settingsRepository;
+        private readonly IPdfService _pdfService;
+
         private readonly PeluqueriaDbContext _context;
 
         // ✅ CONSTRUCTOR ACTUALIZADO: Agregar PeluqueriaDbContext dependency
-        public SettingsController(ISettingsRepository settingsRepository, PeluqueriaDbContext context)
+        public SettingsController(ISettingsRepository settingsRepository, PeluqueriaDbContext context,
+                    ILogger<SettingsController> logger,IPdfService pdfService)
         {
             _settingsRepository = settingsRepository;
+            _logger = logger;
             _context = context;
+            _pdfService = pdfService;
         }
 
         // GET: Settings
@@ -76,7 +82,7 @@ namespace PeluqueriaSaaS.Web.Controllers
 
                 // 🔧 FIX VALIDATION: Set default si field NULL
                 if (string.IsNullOrEmpty(settings.TemplateCustomHTML))
-                        settings.TemplateCustomHTML = string.Empty;
+                    settings.TemplateCustomHTML = string.Empty;
 
                 if (!ModelState.IsValid)
                 {
@@ -782,6 +788,120 @@ namespace PeluqueriaSaaS.Web.Controllers
             </div>
         </body>
         </html>";
+        }
+
+        /// <summary>
+        /// ✅ GENERATES PROFESSIONAL PDF - Main business differentiator
+        /// URL: /Settings/GenerarPDFProfessional?ventaId=3
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GenerarPDFProfessional(int ventaId)
+        {
+            try
+            {
+                _logger?.LogInformation("Generating professional PDF for venta {VentaId}", ventaId);
+
+                // ✅ CHECK PDF SERVICE AVAILABILITY
+                if (!await _pdfService.IsServiceAvailableAsync())
+                {
+                    _logger?.LogError("PDF service is not available");
+                    return StatusCode(503, "Servicio de PDF temporalmente no disponible");
+                }
+
+                // ✅ GENERATE PROFESSIONAL PDF
+                var pdfBytes = await _pdfService.GenerateServiceSummaryPdfAsync(ventaId);
+
+                // ✅ RETURN PDF FILE
+                var fileName = $"resumen-servicio-{ventaId}-{DateTime.Now:yyyyMMdd-HHmm}.pdf";
+                
+                _logger?.LogInformation("PDF generated successfully for venta {VentaId}, size: {Size} bytes", 
+                    ventaId, pdfBytes.Length);
+
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger?.LogWarning("Venta {VentaId} not found for PDF generation: {Error}", ventaId, ex.Message);
+                return NotFound($"Venta con ID {ventaId} no encontrada");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error generating professional PDF for venta {VentaId}", ventaId);
+                return StatusCode(500, "Error interno al generar PDF");
+            }
+        }
+
+        /// <summary>
+        /// ✅ GENERATES THERMAL PRINTER PDF - For small receipt printers
+        /// URL: /Settings/GenerarPDFTermico?ventaId=3&ancho=80
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GenerarPDFTermico(int ventaId, int ancho = 80)
+        {
+            try
+            {
+                _logger?.LogInformation("Generating thermal PDF for venta {VentaId}, width: {Width}mm", ventaId, ancho);
+
+                // ✅ VALIDATE WIDTH
+                if (ancho != 58 && ancho != 80)
+                {
+                    return BadRequest("Ancho de impresora debe ser 58mm o 80mm");
+                }
+
+                // ✅ CHECK PDF SERVICE AVAILABILITY
+                if (!await _pdfService.IsServiceAvailableAsync())
+                {
+                    return StatusCode(503, "Servicio de PDF no disponible");
+                }
+
+                // ✅ GENERATE THERMAL PDF
+                var pdfBytes = await _pdfService.GenerateThermalReceiptPdfAsync(ventaId, ancho);
+
+                // ✅ RETURN THERMAL PDF
+                var fileName = $"recibo-termico-{ventaId}-{ancho}mm-{DateTime.Now:yyyyMMdd-HHmm}.pdf";
+                
+                _logger?.LogInformation("Thermal PDF generated for venta {VentaId}, width: {Width}mm, size: {Size} bytes", 
+                    ventaId, ancho, pdfBytes.Length);
+
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound($"Venta con ID {ventaId} no encontrada");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error generating thermal PDF for venta {VentaId}", ventaId);
+                return StatusCode(500, "Error interno al generar PDF térmico");
+            }
+        }
+
+        /// <summary>
+        /// ✅ PDF SERVICE HEALTH CHECK - Monitoring endpoint
+        /// URL: /Settings/PDFHealthCheck
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> PDFHealthCheck()
+        {
+            try
+            {
+                var isHealthy = await _pdfService.IsServiceAvailableAsync();
+                
+                return Json(new { 
+                    status = isHealthy ? "healthy" : "unhealthy", 
+                    timestamp = DateTime.Now,
+                    service = "PuppeteerSharp PDF Service"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "PDF health check failed");
+                return Json(new { 
+                    status = "error", 
+                    timestamp = DateTime.Now,
+                    error = ex.Message
+                });
+            }
         }
 
 

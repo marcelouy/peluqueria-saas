@@ -2,6 +2,7 @@
 using PeluqueriaSaaS.Infrastructure.Data;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Repositories;
+using PeluqueriaSaaS.Infrastructure.Services;
 using MediatR;
 using System.Reflection;
 
@@ -22,6 +23,11 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<PeluqueriaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ✅ PDF SERVICES REGISTRATION - Using Repository Manager Pattern
+builder.Services.AddLogging();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IBrowserPool, BrowserPool>();
+builder.Services.AddTransient<IPdfService, PuppeteerPdfService>();
 // 3. MEDIATR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
@@ -40,6 +46,7 @@ builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 
 // ✅ 7. SETTINGS REPOSITORY - CRÍTICO PARA /Settings ENDPOINT
 builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+
 
 var app = builder.Build();
 
