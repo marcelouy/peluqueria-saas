@@ -19,18 +19,20 @@ builder.WebHost.UseKestrel(options =>
 // 1. CONFIGURACIÓN BASE
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(PeluqueriaSaaS.Application.Features.Clientes.Queries.ObtenerClientesQuery).Assembly));
+
+
 // 2. ENTITY FRAMEWORK
 builder.Services.AddDbContext<PeluqueriaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ✅ PDF SERVICES REGISTRATION - Using Repository Manager Pattern
-builder.Services.AddLogging();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IBrowserPool, BrowserPool>();
 builder.Services.AddTransient<IPdfService, PuppeteerPdfService>();
-// 3. MEDIATR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
+// ✅ LOGGING CONFIGURATION - Verificar que existe
+builder.Services.AddLogging();
 // 4. AUTOMAPPER (SI SE USA)
 // builder.Services.AddAutoMapper(typeof(Program));
 

@@ -460,8 +460,8 @@ namespace PeluqueriaSaaS.Infrastructure.Services
                 var thermal when thermal.StartsWith("thermal_") => new PdfOptions
                 {
                     Width = thermal.Contains("58") ? "58mm" : "80mm",
-                    Height = "auto",
                     PrintBackground = true,
+                    PreferCSSPageSize = true, // Ajusta al contenido si hay @page en CSS
                     MarginOptions = new MarginOptions
                     {
                         Top = "2mm",
