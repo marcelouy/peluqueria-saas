@@ -8,6 +8,7 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 //TODO: SACAR EN PRODUCCION 
 // ✅ Fuerza Kestrel puro (sin IIS) Sacar esta linea para produccion o preguntar a claudeIA
 builder.WebHost.UseKestrel(options =>

@@ -454,7 +454,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     worksheet.Cell(row, 7).Value = servicio.TipoServicio?.Nombre ?? "Sin categoría";
                     worksheet.Cell(row, 8).Value = servicio.EsActivo ? "Activo" : "Inactivo";
                     worksheet.Cell(row, 9).Value = servicio.FechaCreacion;
-                    worksheet.Cell(row, 10).Value = servicio.FechaActualizacion?.ToString() ?? "";
+                    worksheet.Cell(row, 10).Value = servicio.FechaActualizacion.ToString() ?? "";
                     row++;
                 }
 
@@ -495,10 +495,6 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
-
-        // NOTA: Agregar using para ClosedXML al inicio del archivo:
-        // 
-
 
         // AJAX: Buscar servicios
         [HttpGet]
