@@ -130,8 +130,21 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Nombre = $"{c.Nombre} {c.Apellido}".Trim()
                 }).ToList();
 
+                // ✅ AGREGAR CLIENTE OCASIONAL COMO PRIMERA OPCIÓN
+                model.Clientes.Insert(0, new ClienteBasicoDto
+                {
+                    ClienteId = 0,
+                    Nombre = "Cliente Ocasional (Walk-in)"
+                });
+
                 // Cargar servicios
                 model.ServiciosAgrupados = await CargarServiciosAgrupados();
+
+                // ✅ MENSAJE INFORMATIVO INICIAL
+                if (TempData["Info"] == null && TempData["Warning"] == null && TempData["Success"] == null)
+                {
+                    TempData["Info"] = "💡 Selecciona empleado (obligatorio), cliente (opcional), agrega servicios y procesa la venta";
+                }
 
                 return View(model);
             }
@@ -148,81 +161,357 @@ namespace PeluqueriaSaaS.Web.Controllers
         {
             try
             {
-                // 🔍 DEBUG ESPECÍFICO - Mantener temporalmente
-                Console.WriteLine($"=== DEBUG POST VENTA ===");
-                Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
-                Console.WriteLine($"VentaActual es null: {model.VentaActual == null}");
-                Console.WriteLine($"Detalles count: {model.VentaActual?.Detalles?.Count ?? 0}");
-                Console.WriteLine($"EmpleadoId: {model.VentaActual?.EmpleadoId}");
-                Console.WriteLine($"ClienteId: {model.VentaActual?.ClienteId}");
-
-                // Debug ModelState errors
-                if (!ModelState.IsValid)
+                // 🔍 DEBUG NIVEL 1: VERIFICACIÓN BÁSICA MODEL
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 1 ===");
+                Console.WriteLine($"POST method called at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                Console.WriteLine($"model es null: {model == null}");
+                
+                if (model == null)
                 {
-                    foreach (var error in ModelState)
-                    {
-                        Console.WriteLine($"ModelState Error - Key: {error.Key}, Errors: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
-                    }
+                    Console.WriteLine($"❌ Model is null - returning to POS");
+                    TempData["Error"] = "Error: No se recibieron datos del formulario";
+                    return RedirectToAction(nameof(POS));
                 }
 
-                // Debug detalles específicos
-                if (model.VentaActual?.Detalles != null)
+                Console.WriteLine($"VentaActual es null: {model.VentaActual == null}");
+                
+                if (model.VentaActual == null)
                 {
+                    Console.WriteLine($"❌ VentaActual is null - returning to POS");
+                    TempData["Error"] = "Error: Datos de venta no válidos";
+                    return RedirectToAction(nameof(POS));
+                }
+
+                // 🔍 DEBUG NIVEL 2: VERIFICACIÓN DATOS VENTA
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 2 ===");
+                Console.WriteLine($"VentaActual.EmpleadoId: {model.VentaActual.EmpleadoId}");
+                Console.WriteLine($"VentaActual.ClienteId: {model.VentaActual.ClienteId}");
+                Console.WriteLine($"VentaActual.Descuento: {model.VentaActual.Descuento}");
+                Console.WriteLine($"VentaActual.FechaVenta: {model.VentaActual.FechaVenta}");
+                Console.WriteLine($"VentaActual.Observaciones: '{model.VentaActual.Observaciones}'");
+                
+                // Verificar Detalles
+                Console.WriteLine($"Detalles es null: {model.VentaActual.Detalles == null}");
+                Console.WriteLine($"Detalles count: {model.VentaActual.Detalles?.Count ?? 0}");
+
+                // 🔍 DEBUG NIVEL 3: VERIFICACIÓN MODELSTATE
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 3 ===");
+                Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+                Console.WriteLine($"ModelState.ErrorCount: {ModelState.ErrorCount}");
+
+                // ✅ UX IMPROVEMENT: VALIDACIÓN MODELSTATE MEJORADA
+                if (!ModelState.IsValid)
+                {
+                    Console.WriteLine($"❌ VALIDATION FAILED - ModelState invalid");
+                    
+                    // ✅ MENSAJES ESPECÍFICOS POR ERROR
+                    var erroresEspecificos = new List<string>();
+                    
+                    foreach (var modelError in ModelState)
+                    {
+                        foreach (var error in modelError.Value.Errors)
+                        {
+                            erroresEspecificos.Add($"• {error.ErrorMessage}");
+                        }
+                    }
+                    
+                    if (erroresEspecificos.Any())
+                    {
+                        TempData["Warning"] = $"Por favor corrige los siguientes campos:\n{string.Join("\n", erroresEspecificos)}";
+                    }
+                    else
+                    {
+                        TempData["Warning"] = "Por favor revisa los datos del formulario";
+                    }
+                    
+                    // ✅ MANTENER DATOS - Recargar vista con modelo actual
+                    await CargarDatosPOS(model);
+                    return View(model);
+                }
+
+                // 🔍 DEBUG NIVEL 4: VERIFICACIÓN DETALLES ESPECÍFICOS
+                if (model.VentaActual.Detalles != null)
+                {
+                    Console.WriteLine($"=== DEBUG POST VENTA NIVEL 4 - DETALLES ===");
+                    Console.WriteLine($"Total detalles para procesar: {model.VentaActual.Detalles.Count}");
+                    
                     for (int i = 0; i < model.VentaActual.Detalles.Count; i++)
                     {
                         var detalle = model.VentaActual.Detalles[i];
-                        Console.WriteLine($"Detalle {i}: ServicioId={detalle.ServicioId}, Cantidad={detalle.Cantidad}, Precio={detalle.PrecioUnitario}");
+                        Console.WriteLine($"--- Detalle {i + 1} ---");
+                        Console.WriteLine($"  ServicioId: {detalle.ServicioId}");
+                        Console.WriteLine($"  NombreServicio: '{detalle.NombreServicio ?? "NULL"}'");
+                        Console.WriteLine($"  Cantidad: {detalle.Cantidad}");
+                        Console.WriteLine($"  PrecioUnitario: {detalle.PrecioUnitario}");
+                        Console.WriteLine($"  Subtotal: {detalle.Subtotal}");
+                        Console.WriteLine($"  EmpleadoServicioId: {detalle.EmpleadoServicioId?.ToString() ?? "NULL"}");
+                        Console.WriteLine($"  NotasServicio: '{detalle.NotasServicio ?? "NULL"}'");
                     }
+                    Console.WriteLine($"===========================================");
                 }
 
-                Console.WriteLine($"========================");
+                // 🔍 DEBUG NIVEL 5: VERIFICACIÓN CÁLCULOS
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 5 - CÁLCULOS ===");
+                Console.WriteLine($"SubTotalCalculado: {model.SubTotalCalculado}");
+                Console.WriteLine($"TotalCalculado: {model.TotalCalculado}");
+                Console.WriteLine($"Manual SubTotal check: {model.VentaActual.Detalles?.Sum(d => d.Subtotal) ?? 0}");
+                Console.WriteLine($"Manual Total check: {(model.VentaActual.Detalles?.Sum(d => d.Subtotal) ?? 0) - model.VentaActual.Descuento}");
+                Console.WriteLine($"==========================================");
 
-                if (!ModelState.IsValid || !model.VentaActual.Detalles.Any())
+                // ✅ UX IMPROVEMENT: VALIDACIÓN SERVICIOS MEJORADA
+                if (model.VentaActual.Detalles?.Any() != true)
                 {
-                    TempData["Error"] = "Debe agregar servicios a la venta";
-                    return RedirectToAction(nameof(POS));
+                    Console.WriteLine($"❌ VALIDATION FAILED - No services selected");
+                    
+                    TempData["Warning"] = "⚠️ Debe agregar al menos un servicio a la venta para poder procesarla. Use el panel de servicios para seleccionar los servicios que el cliente desea.";
+                    
+                    // ✅ MANTENER DATOS - Recargar vista con modelo actual
+                    await CargarDatosPOS(model);
+                    return View(model);
                 }
+
+                // ✅ UX IMPROVEMENT: VALIDACIÓN EMPLEADO MEJORADA
+                if (model.VentaActual.EmpleadoId <= 0)
+                {
+                    Console.WriteLine($"❌ VALIDATION FAILED - No employee selected");
+                    
+                    TempData["Warning"] = "⚠️ Debe seleccionar un empleado. El empleado es obligatorio para tracking de comisiones y responsabilidad de la venta.";
+                    
+                    // ✅ MANTENER DATOS - Recargar vista con modelo actual
+                    await CargarDatosPOS(model);
+                    return View(model);
+                }
+
+                // ✅ CLIENTE OPCIONAL CON MENSAJE INFORMATIVO
+                int clienteIdFinal = model.VentaActual.ClienteId;
+                if (clienteIdFinal <= 0)
+                {
+                    clienteIdFinal = await ObtenerClientePorDefectoId();
+                    Console.WriteLine($"🏪 Cliente no seleccionado - usando cliente por defecto: {clienteIdFinal}");
+                    
+                    // ✅ MENSAJE INFORMATIVO (NO ERROR)
+                    TempData["Info"] = "ℹ️ No se seleccionó cliente específico. La venta se asignará a 'Cliente Ocasional' automáticamente.";
+                }
+
+                // 🔍 DEBUG NIVEL 6: CREACIÓN ENTITY VENTA
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 6 - ENTITY CREATION ===");
 
                 var venta = new Venta
                 {
                     FechaVenta = DateTime.Now,
                     EmpleadoId = model.VentaActual.EmpleadoId,
-                    ClienteId = model.VentaActual.ClienteId,
+                    ClienteId = clienteIdFinal,  // ✅ FIXED: Usar clienteIdFinal en lugar de model.VentaActual.ClienteId
                     SubTotal = model.SubTotalCalculado,
                     Descuento = model.VentaActual.Descuento,
                     Total = model.TotalCalculado,
+                    EstadoVenta = "Completada",
+                    Observaciones = model.VentaActual.Observaciones,
                     TenantId = TENANT_ID,
-                    VentaDetalles = model.VentaActual.Detalles.Select(d => new VentaDetalle
-                    {
-                        ServicioId = d.ServicioId,
-                        NombreServicio = d.NombreServicio,
-                        PrecioUnitario = d.PrecioUnitario,
-                        Cantidad = d.Cantidad,
-                        Subtotal = d.Subtotal,
-                        TenantId = TENANT_ID
-                    }).ToList()
+                    EsActivo = true,
+                    FechaCreacion = DateTime.UtcNow
                 };
 
-                // 🔍 DEBUG antes de guardar
-                Console.WriteLine($"=== ANTES GUARDAR VENTA ===");
-                Console.WriteLine($"Venta Total: {venta.Total}");
-                Console.WriteLine($"Detalles count: {venta.VentaDetalles.Count}");
+                Console.WriteLine($"Venta entity created:");
+                Console.WriteLine($"  FechaVenta: {venta.FechaVenta}");
+                Console.WriteLine($"  EmpleadoId: {venta.EmpleadoId}");
+                Console.WriteLine($"  ClienteId: {venta.ClienteId} (USING clienteIdFinal)");
+                Console.WriteLine($"  SubTotal: {venta.SubTotal}");
+                Console.WriteLine($"  Descuento: {venta.Descuento}");
+                Console.WriteLine($"  Total: {venta.Total}");
+                Console.WriteLine($"  TenantId: '{venta.TenantId}'");
+                Console.WriteLine($"  EsActivo: {venta.EsActivo}");
 
-                await _ventaRepository.CreateAsync(venta);
+                // 🔍 DEBUG NIVEL 7: CREACIÓN VENTADETALLES
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 7 - VENTADETALLES ===");
 
-                Console.WriteLine($"=== VENTA GUARDADA EXITOSAMENTE ===");
+                venta.VentaDetalles = new List<VentaDetalle>();
+                
+                foreach (var detalleDto in model.VentaActual.Detalles)
+                {
+                    Console.WriteLine($"Processing detalle: ServicioId={detalleDto.ServicioId}");
+                    
+                    var ventaDetalle = new VentaDetalle
+                    {
+                        ServicioId = detalleDto.ServicioId,
+                        NombreServicio = !string.IsNullOrEmpty(detalleDto.NombreServicio) 
+                            ? detalleDto.NombreServicio 
+                            : $"Servicio-{detalleDto.ServicioId}",
+                        PrecioUnitario = detalleDto.PrecioUnitario,
+                        Cantidad = detalleDto.Cantidad,
+                        Subtotal = detalleDto.Subtotal,
+                        EmpleadoServicioId = detalleDto.EmpleadoServicioId,
+                        NotasServicio = detalleDto.NotasServicio,
+                        TenantId = TENANT_ID
+                    };
 
-                TempData["Success"] = "Venta creada exitosamente";
-                return RedirectToAction(nameof(POS));
+                    Console.WriteLine($"VentaDetalle created:");
+                    Console.WriteLine($"  ServicioId: {ventaDetalle.ServicioId}");
+                    Console.WriteLine($"  NombreServicio: '{ventaDetalle.NombreServicio}'");
+                    Console.WriteLine($"  PrecioUnitario: {ventaDetalle.PrecioUnitario}");
+                    Console.WriteLine($"  Cantidad: {ventaDetalle.Cantidad}");
+                    Console.WriteLine($"  Subtotal: {ventaDetalle.Subtotal}");
+                    Console.WriteLine($"  TenantId: '{ventaDetalle.TenantId}'");
+
+                    venta.VentaDetalles.Add(ventaDetalle);
+                }
+
+                Console.WriteLine($"Total VentaDetalles created: {venta.VentaDetalles.Count}");
+                Console.WriteLine($"================================================");
+
+                // 🔍 DEBUG NIVEL 8: REPOSITORY SAVE
+                Console.WriteLine($"=== DEBUG POST VENTA NIVEL 8 - REPOSITORY SAVE ===");
+                Console.WriteLine($"About to call _ventaRepository.CreateAsync...");
+                Console.WriteLine($"Repository type: {_ventaRepository.GetType().Name}");
+
+                try
+                {
+                    Console.WriteLine($"Calling CreateAsync at: {DateTime.Now:HH:mm:ss.fff}");
+                    await _ventaRepository.CreateAsync(venta);
+                    Console.WriteLine($"CreateAsync completed at: {DateTime.Now:HH:mm:ss.fff}");
+                    Console.WriteLine($"✅ VENTA GUARDADA EXITOSAMENTE");
+                }
+                catch (Exception repositoryEx)
+                {
+                    Console.WriteLine($"❌ REPOSITORY ERROR:");
+                    Console.WriteLine($"  Message: {repositoryEx.Message}");
+                    Console.WriteLine($"  StackTrace: {repositoryEx.StackTrace}");
+                    
+                    if (repositoryEx.InnerException != null)
+                    {
+                        Console.WriteLine($"  InnerException: {repositoryEx.InnerException.Message}");
+                        Console.WriteLine($"  InnerStackTrace: {repositoryEx.InnerException.StackTrace}");
+                    }
+                    
+                    throw; // Re-throw para capturar en outer catch
+                }
+
+                Console.WriteLine($"=== VENTA CREATION COMPLETED SUCCESSFULLY ===");
+                Console.WriteLine($"Venta ID assigned: {venta.VentaId}");
+                Console.WriteLine($"NumeroVenta: {venta.NumeroVenta}");
+                Console.WriteLine($"==============================================");
+
+                // ✅ UX IMPROVEMENT: SUCCESS MESSAGE MEJORADO
+                var empleadoNombre = "Empleado";
+                var clienteNombre = "Cliente";
+
+                try 
+                {
+                    var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
+                    var cliente = await _dbContext.Clientes.FindAsync(venta.ClienteId);
+                    
+                    empleadoNombre = empleado?.Nombre ?? "Empleado";
+                    clienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente Ocasional";
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error obteniendo nombres para mensaje: {ex.Message}");
+                }
+
+                TempData["Success"] = $"✅ Venta #{venta.VentaId} creada exitosamente\n" +
+                                     $"💰 Total: ${venta.Total:N0}\n" +
+                                     $"👨‍💼 Empleado: {empleadoNombre}\n" +
+                                     $"👤 Cliente: {clienteNombre}\n" +
+                                     $"📋 Servicios: {venta.VentaDetalles.Count}";
+                
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"=== ERROR EN POST VENTA ===");
-                Console.WriteLine($"Exception: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                Console.WriteLine($"=== OUTER EXCEPTION CAUGHT ===");
+                Console.WriteLine($"Exception Type: {ex.GetType().Name}");
+                Console.WriteLine($"Exception Message: {ex.Message}");
+                Console.WriteLine($"Exception StackTrace: {ex.StackTrace}");
+                
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                    Console.WriteLine($"Inner StackTrace: {ex.InnerException.StackTrace}");
+                }
+                Console.WriteLine($"===============================");
 
-                TempData["Error"] = $"Error: {ex.Message}";
+                TempData["Error"] = $"Error al crear la venta: {ex.Message}";
                 return RedirectToAction(nameof(POS));
+            }
+        }
+
+        /// <summary>
+        /// Recarga datos necesarios para vista POS manteniendo información del usuario
+        /// Usado cuando hay errores de validación para no perder trabajo del usuario
+        /// </summary>
+        private async Task CargarDatosPOS(PosViewModel model)
+        {
+            try
+            {
+                Console.WriteLine($"🔄 Recargando datos POS manteniendo información del usuario...");
+                
+                // Verificar que model y VentaActual existan
+                if (model == null)
+                {
+                    Console.WriteLine($"❌ Model es null en CargarDatosPOS");
+                    return;
+                }
+                
+                if (model.VentaActual == null)
+                {
+                    model.VentaActual = new CreateVentaDto();
+                }
+                
+                // Recargar empleados para dropdown
+                var empleados = await _empleadoRepository.GetAllAsync();
+                model.Empleados = empleados.Where(e => e.EsActivo).Select(e => new EmpleadoBasicoDto
+                {
+                    EmpleadoId = e.Id,
+                    Nombre = e.Nombre
+                }).ToList();
+
+                Console.WriteLine($"✅ Empleados cargados: {model.Empleados.Count}");
+
+                // Recargar clientes para dropdown
+                var clientes = await _dbContext.Clientes
+                    .Where(c => c.EsActivo)
+                    .Select(c => new { c.Id, c.Nombre, c.Apellido })
+                    .ToListAsync();
+
+                model.Clientes = clientes.Select(c => new ClienteBasicoDto
+                {
+                    ClienteId = c.Id,
+                    Nombre = $"{c.Nombre} {c.Apellido}".Trim()
+                }).ToList();
+
+                // ✅ AGREGAR OPCIÓN "CLIENTE OCASIONAL" AL INICIO
+                model.Clientes.Insert(0, new ClienteBasicoDto
+                {
+                    ClienteId = 0,
+                    Nombre = "Cliente Ocasional (Walk-in)"
+                });
+
+                Console.WriteLine($"✅ Clientes cargados: {model.Clientes.Count}");
+
+                // Recargar servicios agrupados
+                model.ServiciosAgrupados = await CargarServiciosAgrupados();
+                
+                Console.WriteLine($"✅ Servicios agrupados cargados: {model.ServiciosAgrupados.Count} categorías");
+                Console.WriteLine($"✅ Servicios seleccionados mantenidos: {model.VentaActual?.Detalles?.Count ?? 0}");
+                
+                // Inicializar listas si son null
+                model.VentaActual.Detalles ??= new List<CreateVentaDetalleDto>();
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error recargando datos POS: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                // En caso de error, mantener listas vacías para evitar errores de vista
+                model.Empleados ??= new List<EmpleadoBasicoDto>();
+                model.Clientes ??= new List<ClienteBasicoDto>();
+                model.ServiciosAgrupados ??= new Dictionary<string, List<ServicioBasicoDto>>();
+                
+                if (model.VentaActual == null)
+                {
+                    model.VentaActual = new CreateVentaDto();
+                }
+                model.VentaActual.Detalles ??= new List<CreateVentaDetalleDto>();
             }
         }
 
@@ -539,7 +828,38 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Obtiene ID del primer cliente activo para ventas walk-in
+        /// Método agregado para permitir ventas sin cliente específico
+        /// </summary>
+        private async Task<int> ObtenerClientePorDefectoId()
+        {
+            try
+            {
+                Console.WriteLine($"🔍 Buscando cliente por defecto...");
+                
+                // Buscar primer cliente activo del tenant
+                var primerCliente = await _dbContext.Clientes
+                    .Where(c => c.TenantId == TENANT_ID && c.EsActivo)
+                    .OrderBy(c => c.Id)  // Tomar el primero por ID
+                    .FirstOrDefaultAsync();
+                
+                if (primerCliente != null)
+                {
+                    Console.WriteLine($"✅ Cliente por defecto encontrado: ID {primerCliente.Id} - {primerCliente.Nombre} {primerCliente.Apellido}");
+                    return primerCliente.Id;
+                }
+                
+                Console.WriteLine($"⚠️ No se encontraron clientes activos - usando fallback ID 1");
+                return 1; // Fallback básico
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error obteniendo cliente por defecto: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return 1; // Fallback en caso de error
+            }
+        }
 
         /// <summary>
         /// Verificar si resumen está habilitado (para mostrar/ocultar botón)
@@ -746,8 +1066,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 </div>";
         }
 
-
-/// <summary>
+        /// <summary>
         /// Generar PDF desde HTML (implementación básica)
         /// </summary>
         private byte[] GenerarPDFFromHTML(string html, string titulo)
