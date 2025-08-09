@@ -1,5 +1,6 @@
 using PeluqueriaSaaS.Domain.Entities.Base;
 using System.ComponentModel.DataAnnotations;
+using PeluqueriaSaaS.Domain.Entities.Configuration;
 
 namespace PeluqueriaSaaS.Domain.Entities
 {
@@ -49,7 +50,19 @@ namespace PeluqueriaSaaS.Domain.Entities
 
         // Navegación
         public virtual ICollection<VentaDetalle> VentaDetalles { get; set; } = new List<VentaDetalle>();
+        public virtual ICollection<ArticuloImpuesto> ArticulosImpuestos { get; set; } = new List<ArticuloImpuesto>();
 
+        public IEnumerable<ArticuloImpuesto> ImpuestosVigentes
+        {
+            get
+            {
+                var hoy = DateTime.Today;
+                return ArticulosImpuestos?.Where(ai => 
+                    ai.FechaInicioAplicacion <= hoy && 
+                    (ai.FechaFinAplicacion == null || ai.FechaFinAplicacion >= hoy)) 
+                    ?? Enumerable.Empty<ArticuloImpuesto>();
+            }
+        }
         // Métodos negocio
         public void CalcularMargen()
         {

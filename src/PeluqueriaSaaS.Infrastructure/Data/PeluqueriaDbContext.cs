@@ -23,10 +23,17 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<VentaDetalle> VentaDetalles { get; set; }
         public DbSet<Settings> Settings { get; set; }
         public DbSet<Articulo> Articulos { get; set; }
+        public DbSet<TipoImpuesto> TiposImpuestos { get; set; }
+        public DbSet<TasaImpuesto> TasasImpuestos { get; set; }
+        public DbSet<ArticuloImpuesto> ArticulosImpuestos { get; set; }
+        public DbSet<ServicioImpuesto> ServiciosImpuestos { get; set; }
+        public DbSet<HistoricoTasaImpuesto> HistoricoTasasImpuestos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<TipoImpuesto>().ToTable("TiposImpuestos");
+            modelBuilder.Entity<TasaImpuesto>().ToTable("TasasImpuestos");
             // IGNORAR TODOS LOS VALUEOBJECTS
             modelBuilder.Ignore<Email>();
             modelBuilder.Ignore<Telefono>();
