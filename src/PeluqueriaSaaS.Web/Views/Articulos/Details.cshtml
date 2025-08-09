@@ -1,0 +1,394 @@
+@model PeluqueriaSaaS.Domain.Entities.Articulo
+
+@{
+    ViewData["Title"] = "Detalles del Artículo";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-eye text-info"></i>
+                        Detalles del Artículo
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Columna Principal -->
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Código:</strong></label>
+                                        <p class="form-control-plaintext">@(Model.Codigo ?? "Sin código")</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Nombre:</strong></label>
+                                        <p class="form-control-plaintext">@Model.Nombre</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Descripción:</strong></label>
+                                        <p class="form-control-plaintext">@(Model.Descripcion ?? "Sin descripción")</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Precio Venta:</strong></label>
+                                        <p class="form-control-plaintext text-success">
+                                            <i class="fas fa-dollar-sign"></i> @Model.Precio.ToString("F2")
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Precio Costo:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @if (Model.PrecioCosto.HasValue)
+                                            {
+                                                <span><i class="fas fa-dollar-sign"></i> @Model.PrecioCosto.Value.ToString("F2")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No definido</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Margen:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @if (Model.Margen.HasValue)
+                                            {
+                                                <span class="badge bg-info">@Model.Margen.Value.ToString("F1")%</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No calculado</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.Oferta)
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>En Oferta:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-tag"></i> SÍ
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Precio Oferta:</strong></label>
+                                            <p class="form-control-plaintext text-warning">
+                                                @if (Model.PrecioOferta.HasValue)
+                                                {
+                                                    <span><i class="fas fa-dollar-sign"></i> @Model.PrecioOferta.Value.ToString("F2")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No definido</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Stock Actual:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @if (Model.Stock <= Model.StockMinimo)
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> @Model.Stock
+                                                </span>
+                                                <small class="text-danger d-block">Stock bajo</small>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">@Model.Stock</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Stock Mínimo:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge bg-secondary">@Model.StockMinimo</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Control Stock:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @if (Model.RequiereStock)
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-check"></i> SÍ
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-times"></i> NO
+                                                </span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Categoría:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @if (!string.IsNullOrEmpty(Model.Categoria))
+                                            {
+                                                <span class="badge bg-primary">@Model.Categoria</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Sin categoría</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Marca:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @(Model.Marca ?? "Sin marca")
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Proveedor:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @(Model.Proveedor ?? "Sin proveedor")
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.Peso.HasValue || !string.IsNullOrEmpty(Model.Contenido))
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Peso:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                @if (Model.Peso.HasValue)
+                                                {
+                                                    <span>@Model.Peso.Value.ToString("F3") kg</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No definido</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Contenido:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                @(Model.Contenido ?? "No definido")
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Estado:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            @if (Model.Activo)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> ACTIVO
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times-circle"></i> INACTIVO
+                                                </span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Lateral - Información de Auditoría -->
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle"></i>
+                                        Información de Auditoría
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>ID:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge bg-dark">#@Model.Id</span>
+                                        </p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Creado por:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <i class="fas fa-user"></i> @(Model.CreadoPor ?? "Sistema")
+                                        </p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Fecha creación:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <i class="fas fa-calendar"></i> @Model.FechaCreacion.ToString("dd/MM/yyyy")<br>
+                                            <i class="fas fa-clock"></i> @Model.FechaCreacion.ToString("HH:mm")
+                                        </p>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(Model.ActualizadoPor))
+                                    {
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Actualizado por:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                <i class="fas fa-user-edit"></i> @Model.ActualizadoPor
+                                            </p>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Fecha actualización:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                <i class="fas fa-calendar"></i> @Model.FechaActualizacion.ToString("dd/MM/yyyy")<br>
+                                                <i class="fas fa-clock"></i> @Model.FechaActualizacion.ToString("HH:mm")
+                                            </p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mb-3">
+                                            <p class="text-muted">
+                                                <em>Sin actualizaciones</em>
+                                            </p>
+                                        </div>
+                                    }
+
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Precio Efectivo:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge bg-success fs-6">
+                                                <i class="fas fa-dollar-sign"></i> @Model.PrecioEfectivo.ToString("F2")
+                                            </span>
+                                        </p>
+                                        <small class="text-muted">
+                                            @if (Model.Oferta && Model.PrecioOferta.HasValue)
+                                            {
+                                                <span>Precio con oferta aplicada</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Precio regular</span>
+                                            }
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver a la Lista
+                        </a>
+                        
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar el artículo "<strong>@Model.Nombre</strong>"?
+                <br><br>
+                <small class="text-muted">Esta acción desactivará el artículo pero mantendrá su historial.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control-plaintext {
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.card.border-info {
+    border-width: 2px;
+}
+</style>

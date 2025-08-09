@@ -44,6 +44,75 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
             return articulo;
         }
 
+        public async Task<Articulo> UpdateAsync(Articulo articulo)
+        {
+            Console.WriteLine($"🔧 UpdateAsync iniciado - ID: {articulo.Id}");
+
+            // VALIDACIÓN: ID debe ser > 0
+            if (articulo.Id <= 0)
+            {
+                var errorMsg = $"ID inválido para UPDATE: {articulo.Id}";
+                Console.WriteLine($"❌ {errorMsg}");
+                throw new ArgumentException(errorMsg, nameof(articulo));
+            }
+
+            try
+            {
+                // CLEAR tracking conflicts
+                Console.WriteLine($"🔧 Clearing change tracker...");
+                _context.ChangeTracker.Clear();
+
+                // Obtener entidad existente para UPDATE manual
+                var existingEntity = await _context.Articulos
+                    .FirstOrDefaultAsync(a => a.Id == articulo.Id && a.TenantId == "1");
+
+                if (existingEntity == null)
+                {
+                    var errorMsg = $"Artículo no encontrado para UPDATE - ID: {articulo.Id}";
+                    Console.WriteLine($"❌ {errorMsg}");
+                    throw new InvalidOperationException(errorMsg);
+                }
+
+                Console.WriteLine($"✅ Entidad existente encontrada - preservando audit fields");
+
+                // Actualizar propiedades manualmente (preservar campos críticos)
+                existingEntity.Nombre = articulo.Nombre;
+                existingEntity.Descripcion = articulo.Descripcion;
+                existingEntity.Precio = articulo.Precio;
+                existingEntity.PrecioCosto = articulo.PrecioCosto;
+                existingEntity.Categoria = articulo.Categoria;
+                existingEntity.Marca = articulo.Marca;
+                existingEntity.Proveedor = articulo.Proveedor;
+                existingEntity.Stock = articulo.Stock;
+                existingEntity.StockMinimo = articulo.StockMinimo;
+                existingEntity.Oferta = articulo.Oferta;
+                existingEntity.PrecioOferta = articulo.PrecioOferta;
+                existingEntity.RequiereStock = articulo.RequiereStock;
+                existingEntity.Peso = articulo.Peso;
+                existingEntity.Contenido = articulo.Contenido;
+
+                // Actualizar campos auditoria (preservar CreadoPor)
+                var currentUser = await _userService.GetCurrentUserIdentifierAsync();
+                SetAuditFieldsSafe(existingEntity, currentUser, false);
+
+                // Calcular margen
+                existingEntity.CalcularMargen();
+
+                Console.WriteLine($"✅ Propiedades actualizadas - Usuario: {currentUser}");
+
+                // EF Core detecta cambios automáticamente
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"✅ UPDATE ejecutado exitoso - ID: {articulo.Id}");
+                return existingEntity;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en UpdateAsync: {ex.Message}");
+                throw;
+            }
+        }
+
         /// <summary>
         /// 🔍 MÉTODO ULTRA-ROBUSTA: Debugging profundo para TenantId assignment
         /// </summary>
@@ -59,164 +128,94 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
             {
                 var entityType = entity.GetType();
                 Console.WriteLine($"🔍 DEBUGGING: Entidad tipo {entityType.Name}");
-                Console.WriteLine($"🔍 DEBUGGING: Base type {entityType.BaseType?.Name}");
                 Console.WriteLine($"🔍 DEBUGGING: TenantId a asignar: '{tenantId}'");
 
-                // DEBUGGING: Listar TODOS los fields disponibles
-                Console.WriteLine("🔍 DEBUGGING: Todos los fields disponibles:");
-                var allFields = entityType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var field in allFields)
-                {
-                    Console.WriteLine($"   - Field: {field.Name}, Type: {field.FieldType.Name}, DeclaringType: {field.DeclaringType?.Name}");
-                }
-
-                // DEBUGGING: Listar TODAS las properties disponibles
-                Console.WriteLine("🔍 DEBUGGING: Todas las properties disponibles:");
-                var allProps = entityType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var prop in allProps)
-                {
-                    var getter = prop.GetGetMethod(true);
-                    var setter = prop.GetSetMethod(true);
-                    Console.WriteLine($"   - Property: {prop.Name}, Type: {prop.PropertyType.Name}, Getter: {getter != null}, Setter: {setter != null}, DeclaringType: {prop.DeclaringType?.Name}");
-                }
-
-                // ✅ TÉCNICA 1: Backing field con debugging detallado
+                // ✅ TÉCNICA 1: Backing field
                 var backingFieldNames = new[]
                 {
-                    "<TenantId>k__BackingField",  // Auto-property backing field
-                    "_tenantId",                   // Manual backing field lowercase
-                    "_TenantId",                   // Manual backing field Pascal
-                    "tenantId",                    // Field lowercase
-                    "TenantId"                     // Field Pascal (unlikely pero posible)
+                    "<TenantId>k__BackingField",
+                    "_tenantId",
+                    "_TenantId",
+                    "tenantId",
+                    "TenantId"
                 };
 
-                Console.WriteLine("🔍 DEBUGGING: Intentando backing fields...");
                 foreach (var fieldName in backingFieldNames)
                 {
                     var backingField = entityType.GetField(fieldName, 
                         BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                     
-                    Console.WriteLine($"   - Buscando field '{fieldName}': {(backingField != null ? "ENCONTRADO" : "NO ENCONTRADO")}");
-                    
-                    if (backingField != null)
+                    if (backingField != null && backingField.FieldType == typeof(string))
                     {
-                        Console.WriteLine($"     Type: {backingField.FieldType.Name}, CanWrite: true");
-                        if (backingField.FieldType == typeof(string))
-                        {
-                            backingField.SetValue(entity, tenantId);
-                            Console.WriteLine($"✅ SUCCESS: TenantId asignado via backing field '{fieldName}': {tenantId}");
-                            
-                            // Verificar que se asignó correctamente
-                            var verificacion = backingField.GetValue(entity);
-                            Console.WriteLine($"✅ VERIFICACIÓN: Valor después de asignar: '{verificacion}'");
-                            return;
-                        }
+                        backingField.SetValue(entity, tenantId);
+                        Console.WriteLine($"✅ SUCCESS: TenantId asignado via backing field '{fieldName}': {tenantId}");
+                        return;
                     }
                 }
 
-                // ✅ TÉCNICA 2: Property setter con debugging
-                Console.WriteLine("🔍 DEBUGGING: Intentando property setters...");
+                // ✅ TÉCNICA 2: Property setter
                 var tenantProperty = entityType.GetProperty("TenantId", 
                     BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 
                 if (tenantProperty != null)
                 {
-                    Console.WriteLine($"   - Property TenantId encontrada: Type={tenantProperty.PropertyType.Name}");
-                    var getter = tenantProperty.GetGetMethod(true);
                     var setter = tenantProperty.GetSetMethod(true);
-                    Console.WriteLine($"   - Getter: {(getter != null ? "EXISTE" : "NO EXISTE")}");
-                    Console.WriteLine($"   - Setter: {(setter != null ? "EXISTE" : "NO EXISTE")}");
-                    
                     if (setter != null && tenantProperty.PropertyType == typeof(string))
                     {
-                        Console.WriteLine($"   - Intentando invocar setter...");
                         setter.Invoke(entity, new object[] { tenantId });
                         Console.WriteLine($"✅ SUCCESS: TenantId asignado via property setter: {tenantId}");
-                        
-                        // Verificar asignación
-                        var verificacion = tenantProperty.GetValue(entity);
-                        Console.WriteLine($"✅ VERIFICACIÓN: Valor después de asignar: '{verificacion}'");
                         return;
                     }
                 }
 
-                // ✅ TÉCNICA 3: Jerarquía con debugging detallado
-                Console.WriteLine("🔍 DEBUGGING: Intentando jerarquía de herencia...");
+                // ✅ TÉCNICA 3: Jerarquía de herencia
                 var currentType = entityType;
                 while (currentType != null && currentType != typeof(object))
                 {
-                    Console.WriteLine($"   - Explorando tipo: {currentType.Name}");
-                    
                     var prop = currentType.GetProperty("TenantId", 
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                     
                     if (prop != null)
                     {
-                        Console.WriteLine($"     TenantId encontrado en {currentType.Name}");
                         var setMethod = prop.GetSetMethod(true);
                         if (setMethod != null)
                         {
-                            Console.WriteLine($"     Setter encontrado, invocando...");
                             setMethod.Invoke(entity, new object[] { tenantId });
                             Console.WriteLine($"✅ SUCCESS: TenantId asignado via herencia en {currentType.Name}: {tenantId}");
-                            
-                            // Verificar asignación
-                            var verificacion = prop.GetValue(entity);
-                            Console.WriteLine($"✅ VERIFICACIÓN: Valor después de asignar: '{verificacion}'");
                             return;
                         }
-                        else
-                        {
-                            Console.WriteLine($"     Setter NO encontrado en {currentType.Name}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"     TenantId NO encontrado en {currentType.Name}");
                     }
                     
                     currentType = currentType.BaseType;
                 }
 
-                Console.WriteLine("❌ FRACASO TOTAL: Ninguna técnica funcionó para asignar TenantId");
-                
-                // DEBUGGING FINAL: Mostrar valor actual de TenantId
-                try
-                {
-                    var currentValue = entityType.GetProperty("TenantId")?.GetValue(entity);
-                    Console.WriteLine($"🔍 VALOR ACTUAL TenantId: '{currentValue}'");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ No se pudo leer valor actual TenantId: {ex.Message}");
-                }
+                Console.WriteLine("❌ No se pudo asignar TenantId");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ EXCEPCIÓN en SetTenantIdRobust: {ex.Message}");
-                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"❌ Error en SetTenantIdRobust: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ✅ Método que YA FUNCIONA para campos auditoria - mantenido igual
+        /// ✅ Método audit fields para CREATE + UPDATE con reflection robusta
         /// </summary>
         private void SetAuditFieldsSafe(object entity, string userName, bool isCreating)
         {
             try
             {
-                var entityType = entity.GetType();
+                Console.WriteLine($"🔧 SetAuditFieldsSafe - isCreating: {isCreating}, Usuario: {userName}");
 
                 if (isCreating)
                 {
-                    // CreatedBy / CreadoPor
+                    // CREATE mode: Setear campos creación
                     SetPropertySafe(entity, "CreadoPor", userName);
-                    SetPropertySafe(entity, "CreatedBy", userName);
+                    SetPropertySafe(entity, "FechaCreacion", DateTime.UtcNow);
                 }
 
-                // UpdatedBy / ActualizadoPor
+                // ALWAYS: Setear campos actualización
                 SetPropertySafe(entity, "ActualizadoPor", userName);
-                SetPropertySafe(entity, "UpdatedBy", userName);
+                SetPropertySafe(entity, "FechaActualizacion", DateTime.UtcNow);
 
                 Console.WriteLine($"✅ Campos auditoria asignados - Usuario: {userName}");
             }
@@ -226,23 +225,48 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
             }
         }
 
-        private void SetPropertySafe(object entity, string propertyName, object value)
+        /// <summary>
+        /// ✅ Reflection robusta para protected setters
+        /// </summary>
+        private void SetPropertySafe(object entity, string propertyName, object? value)
         {
             try
             {
-                var property = entity.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-                if (property != null && property.CanWrite)
+                var entityType = entity.GetType();
+                
+                // Buscar property en toda la jerarquía
+                var property = entityType.GetProperty(propertyName, 
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                
+                if (property != null)
                 {
-                    property.SetValue(entity, value);
+                    // Intentar setter público primero
+                    if (property.CanWrite && property.GetSetMethod() != null)
+                    {
+                        property.SetValue(entity, value);
+                        Console.WriteLine($"✅ {propertyName} asignado via public setter: {value}");
+                        return;
+                    }
+                    
+                    // Si setter público no disponible, usar reflection para protected setter
+                    var setter = property.GetSetMethod(true);
+                    if (setter != null)
+                    {
+                        setter.Invoke(entity, new object?[] { value });
+                        Console.WriteLine($"✅ {propertyName} asignado via protected setter: {value}");
+                        return;
+                    }
                 }
+                
+                Console.WriteLine($"⚠️ No se pudo asignar {propertyName}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"⚠️ No se pudo setear {propertyName}: {ex.Message}");
+                Console.WriteLine($"⚠️ Error asignando {propertyName}: {ex.Message}");
             }
         }
 
-        // ===== RESTO DE MÉTODOS CRUD SIN CAMBIOS =====
+        // ===== RESTO DE MÉTODOS CRUD =====
 
         public async Task<IEnumerable<Articulo>> GetAllAsync(string tenantId)
         {
@@ -258,18 +282,6 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
                 .FirstOrDefaultAsync(a => a.Id == id && a.TenantId == tenantId);
         }
 
-        public async Task<Articulo> UpdateAsync(Articulo articulo)
-        {
-            var currentUser = await _userService.GetCurrentUserIdentifierAsync();
-            
-            SetAuditFieldsSafe(articulo, currentUser, false); // Solo update fields
-            articulo.CalcularMargen();
-            
-            _context.Articulos.Update(articulo);
-            await _context.SaveChangesAsync();
-            return articulo;
-        }
-
         public async Task<bool> DeleteAsync(int id, string tenantId)
         {
             var articulo = await GetByIdAsync(id, tenantId);
@@ -277,7 +289,6 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
 
             var currentUser = await _userService.GetCurrentUserIdentifierAsync();
             
-            // Soft delete - usar reflection para Activo (setter privado)
             SetPropertySafe(articulo, "Activo", false);
             SetAuditFieldsSafe(articulo, currentUser, false);
             
@@ -320,9 +331,10 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
             var articulo = await GetByIdAsync(articuloId, tenantId);
             if (articulo == null || !articulo.RequiereStock) return false;
 
-            if (articulo.Stock < cantidad) return false; // Stock insuficiente
+            if (articulo.Stock < cantidad) return false;
 
             articulo.Stock -= cantidad;
+            
             var currentUser = await _userService.GetCurrentUserIdentifierAsync();
             SetAuditFieldsSafe(articulo, currentUser, false);
 

@@ -16,15 +16,23 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Edit" method="post">
-                        @* ✅ CRÍTICO: Hidden field para preservar Id en POST *@
-                        @Html.HiddenFor(model => model.Id)
+                        @* 🚨 FIX CRÍTICO: Triple safeguard para preservar Id *@
+                        @* Principal: ASP.NET Core syntax - MÁS ROBUSTO *@
+                        <input type="hidden" asp-for="Id" />
+                        
+                        @* Backup 1: Manual value assignment *@
+                        <input type="hidden" name="ArticuloId" value="@Model.Id" />
+                        
+                        @* Backup 2: Route value preservation *@
+                        <input type="hidden" name="OriginalId" value="@ViewBag.ArticuloId" />
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Codigo" class="form-label">Código</label>
-                                    <input asp-for="Codigo" class="form-control" placeholder="Código único (opcional)" />
+                                    <input asp-for="Codigo" class="form-control" placeholder="Código único (opcional)" readonly />
                                     <span asp-validation-for="Codigo" class="text-danger"></span>
+                                    <small class="form-text text-muted">El código no se puede modificar</small>
                                 </div>
                             </div>
                             
@@ -221,13 +229,89 @@
     </div>
 </div>
 
+@* 🔧 DEBUG INFO CARD - REMOVER EN PRODUCCIÓN *@
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">🔧 DEBUG INFO - UPDATE FIX</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <small>
+                                <strong>Model.Id:</strong> @Model.Id<br />
+                                <strong>ViewBag.ArticuloId:</strong> @ViewBag.ArticuloId<br />
+                                <strong>Route ID:</strong> @Context.Request.RouteValues["id"]
+                            </small>
+                        </div>
+                        <div class="col-md-8">
+                            <small>
+                                <strong>Audit Info:</strong><br />
+                                <strong>Creado por:</strong> @Model.CreadoPor | <strong>Fecha:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")<br />
+                                @if (!string.IsNullOrEmpty(Model.ActualizadoPor))
+                                {
+                                    <text><strong>Actualizado por:</strong> @Model.ActualizadoPor | <strong>Fecha:</strong> @Model.FechaActualizacion.ToString("dd/MM/yyyy HH:mm")</text>
+                                }
+                                else
+                                {
+                                    <em>Sin actualizaciones previas</em>
+                                }
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // 🔧 DEBUG: Verificar hidden fields antes del submit
+        document.querySelector('form').addEventListener('submit', function(e) {
+            console.log('🔧 Form submit - Hidden field values:');
+            console.log('Id (asp-for):', document.querySelector('input[name="Id"]')?.value);
+            console.log('ArticuloId (backup):', document.querySelector('input[name="ArticuloId"]')?.value);
+            console.log('OriginalId (route):', document.querySelector('input[name="OriginalId"]')?.value);
+            
+            // Verificar que al menos uno tiene valor
+            const id1 = document.querySelector('input[name="Id"]')?.value;
+            const id2 = document.querySelector('input[name="ArticuloId"]')?.value;
+            const id3 = document.querySelector('input[name="OriginalId"]')?.value;
+            
+            if (!id1 && !id2 && !id3) {
+                console.error('❌ NINGÚN ID DISPONIBLE - FORM SUBMISSION PROBLEMÁTICA');
+                alert('Error: No se pudo preservar el ID del artículo. Contacte al administrador.');
+                e.preventDefault();
+                return false;
+            } else {
+                console.log('✅ Al menos un ID disponible para submission');
+            }
+        });
+        
+        // 🔧 DEBUG: Mostrar información al cargar la página
+        console.log('🔧 Edit.cshtml loaded - Article ID: @Model.Id');
+        console.log('🔧 ViewBag.ArticuloId: @ViewBag.ArticuloId');
+        console.log('🔧 Route ID: @Context.Request.RouteValues["id"]');
+    </script>
 }
 
 <style>
 .required-field::after {
     content: " *";
     color: red;
+}
+
+/* Debug card styling */
+.card.border-warning {
+    border-width: 2px;
+}
+
+.card.border-warning .card-header {
+    border-bottom: 2px solid #ffc107;
 }
 </style>
