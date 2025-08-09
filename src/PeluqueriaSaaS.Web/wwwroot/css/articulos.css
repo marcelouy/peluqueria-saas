@@ -1,0 +1,21 @@
+/* CSS BÁSICO ARTICULOS */
+.articulos-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.section-header {
+    border-left: 4px solid #007bff;
+    padding-left: 15px;
+    margin-bottom: 20px;
+}
+
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.margen-calculado {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}

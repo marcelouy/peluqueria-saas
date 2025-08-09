@@ -4,7 +4,7 @@ namespace PeluqueriaSaaS.Domain.Interfaces
 {
     public interface IEmpleadoRepository
     {
-        // Métodos básicos CRUD
+        // ✅ MÉTODOS EXISTENTES EN LA IMPLEMENTACIÓN ACTUAL
         Task<IEnumerable<Empleado>> GetAllAsync();
         Task<Empleado?> GetByIdAsync(int id);
         Task<Empleado> AddAsync(Empleado empleado);
@@ -12,8 +12,21 @@ namespace PeluqueriaSaaS.Domain.Interfaces
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
         
-        // Métodos específicos que usan los handlers
-        Task<Empleado> CreateAsync(Empleado empleado); // Alias para AddAsync
-        Task<IEnumerable<Empleado>> GetActivosAsync(); // Solo empleados activos
+        // ✅ MÉTODOS ADICIONALES EXISTENTES
+        Task<Empleado> CreateAsync(Empleado empleado);
+        Task<IEnumerable<Empleado>> GetActivosAsync();
+        
+        // ✅ MÉTODOS PARA USERIDENTIFICATIONSERVICE (ya implementados)
+        Task<Empleado?> GetByEmailAsync(string email, string tenantId);
+        Task<Empleado?> GetByDocumentoAsync(string documento, string tenantId);
+        Task<IEnumerable<Empleado>> GetAdministradoresAsync(string tenantId);
+        Task<IEnumerable<string>> GetCargosAsync(string tenantId);
+        Task<IEnumerable<Empleado>> GetEmpleadosActivosSimpleAsync(string tenantId);
+        Task<bool> IsEmpleadoAdminAsync(int empleadoId, string tenantId);
+        Task<Empleado?> GetByUsernameAsync(string username, string tenantId);
+        Task<IEnumerable<Empleado>> SearchEmpleadosAsync(string searchTerm, string tenantId, int limit = 10);
+        
+        // ✅ MÉTODO ADICIONAL PARA USERIDENTIFICATIONSERVICE CON TENANTID
+        Task<IEnumerable<Empleado>> GetActivosAsync(string tenantId);
     }
 }

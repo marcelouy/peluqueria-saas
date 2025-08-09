@@ -1,0 +1,231 @@
+@model PeluqueriaSaaS.Domain.Entities.Articulo
+
+@{
+    ViewData["Title"] = "Nuevo Artículo";
+}
+
+<link rel="stylesheet" href="~/css/articulos.css" />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-header articulos-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-plus"></i> Nuevo Artículo
+                    </h3>
+                </div>
+
+                <form asp-action="Create" method="post" novalidate>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Información Básica -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-info-circle"></i> Información Básica
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Codigo" class="form-label">Código</label>
+                                    <input asp-for="Codigo" class="form-control" placeholder="Ej: ART001" />
+                                    <span asp-validation-for="Codigo" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label asp-for="Nombre" class="form-label required-field">Nombre</label>
+                                    <input asp-for="Nombre" class="form-control" placeholder="Ej: Champú Loreal 500ml" />
+                                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descripcion" class="form-label">Descripción</label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="3" placeholder="Descripción detallada..."></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger"></span>
+                        </div>
+
+                        <!-- Pricing -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-dollar-sign"></i> Precios y Márgenes
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label asp-for="PrecioCosto" class="form-label">Precio Costo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="PrecioCosto" class="form-control" type="number" step="0.01" />
+                                    </div>
+                                    <span asp-validation-for="PrecioCosto" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label asp-for="Precio" class="form-label required-field">Precio Venta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="Precio" class="form-control" type="number" step="0.01" />
+                                    </div>
+                                    <span asp-validation-for="Precio" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Margen %</label>
+                                    <input type="text" class="form-control margen-calculado" id="margenCalculado" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input asp-for="Oferta" class="form-check-input" type="checkbox" />
+                                    <label asp-for="Oferta" class="form-check-label">En oferta</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="precioOfertaRow" style="display: none;">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label asp-for="PrecioOferta" class="form-label">Precio Oferta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="PrecioOferta" class="form-control" type="number" step="0.01" />
+                                    </div>
+                                    <span asp-validation-for="PrecioOferta" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventario -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-warehouse"></i> Control de Inventario
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check mb-3">
+                                    <input asp-for="RequiereStock" class="form-check-input" type="checkbox" />
+                                    <label asp-for="RequiereStock" class="form-check-label">Requiere control de stock</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3" id="stockActualDiv">
+                                <div class="mb-3">
+                                    <label asp-for="Stock" class="form-label">Stock Actual</label>
+                                    <input asp-for="Stock" class="form-control" type="number" />
+                                    <span asp-validation-for="Stock" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3" id="stockMinimoDiv">
+                                <div class="mb-3">
+                                    <label asp-for="StockMinimo" class="form-label">Stock Mínimo</label>
+                                    <input asp-for="StockMinimo" class="form-control" type="number" />
+                                    <span asp-validation-for="StockMinimo" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clasificación -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-tags"></i> Clasificación
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Categoria" class="form-label">Categoría</label>
+                                    <input asp-for="Categoria" class="form-control" list="categoriasList" />
+                                    <datalist id="categoriasList">
+                                        @foreach (var categoria in ViewBag.Categorias as IEnumerable<string> ?? Enumerable.Empty<string>())
+                                        {
+                                            <option value="@categoria"></option>
+                                        }
+                                    </datalist>
+                                    <span asp-validation-for="Categoria" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Marca" class="form-label">Marca</label>
+                                    <input asp-for="Marca" class="form-control" list="marcasList" />
+                                    <datalist id="marcasList">
+                                        @foreach (var marca in ViewBag.Marcas as IEnumerable<string> ?? Enumerable.Empty<string>())
+                                        {
+                                            <option value="@marca"></option>
+                                        }
+                                    </datalist>
+                                    <span asp-validation-for="Marca" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Proveedor" class="form-label">Proveedor</label>
+                                    <input asp-for="Proveedor" class="form-control" list="proveedoresList" />
+                                    <datalist id="proveedoresList">
+                                        @foreach (var proveedor in ViewBag.Proveedores as IEnumerable<string> ?? Enumerable.Empty<string>())
+                                        {
+                                            <option value="@proveedor"></option>
+                                        }
+                                    </datalist>
+                                    <span asp-validation-for="Proveedor" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información Física -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-weight"></i> Información Física
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Contenido" class="form-label">Contenido</label>
+                                    <input asp-for="Contenido" class="form-control" placeholder="Ej: 500ml" />
+                                    <span asp-validation-for="Contenido" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Peso" class="form-label">Peso (kg)</label>
+                                    <input asp-for="Peso" class="form-control" type="number" step="0.001" />
+                                    <span asp-validation-for="Peso" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); return false;">
+                                <i class="fas fa-save"></i> Guardar Artículo
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/articulos.js"></script> *@
+}

@@ -21,9 +21,8 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<CitaServicio> CitaServicios { get; set; }
         public DbSet<Venta> Ventas { get; set; }
         public DbSet<VentaDetalle> VentaDetalles { get; set; }
-
-        // ✅ NUEVO - SETTINGS DBSET
         public DbSet<Settings> Settings { get; set; }
+        public DbSet<Articulo> Articulos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -77,7 +76,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(e => e.FechaCreacion).IsRequired();
                 entity.Property(e => e.FechaActualizacion).IsRequired();
                 entity.Property(e => e.EsActivo).IsRequired().HasDefaultValue(true);
-                
+
                 // ✅ RELACIÓN CORREGIDA: int → int (compatible)
                 entity.HasOne(s => s.TipoServicio)
                     .WithMany()
@@ -96,7 +95,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.HasKey(e => e.Id); // ✅ Id es int (hereda de EntityBase)
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.TenantId).IsRequired();
-                
+
                 // Índice único por tenant
                 entity.HasIndex(e => new { e.TenantId, e.Nombre }).IsUnique();
             });
@@ -112,18 +111,18 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(v => v.EstadoVenta).IsRequired().HasMaxLength(20);
                 entity.Property(v => v.Observaciones).HasMaxLength(500).IsRequired(false);
                 entity.Property(v => v.TenantId).IsRequired().HasMaxLength(50);
-                
+
                 // Relaciones
                 entity.HasOne(v => v.Empleado)
                     .WithMany()
                     .HasForeignKey(v => v.EmpleadoId)
                     .OnDelete(DeleteBehavior.Restrict);
-                
+
                 entity.HasOne(v => v.Cliente)
                     .WithMany()
                     .HasForeignKey(v => v.ClienteId)
                     .OnDelete(DeleteBehavior.Restrict);
-                
+
                 // Índices
                 entity.HasIndex(v => new { v.FechaVenta, v.TenantId });
                 entity.HasIndex(v => v.NumeroVenta).IsUnique();
@@ -138,23 +137,23 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(vd => vd.Subtotal).HasColumnType("decimal(10,2)");
                 entity.Property(vd => vd.NotasServicio).HasMaxLength(200).IsRequired(false);
                 entity.Property(vd => vd.TenantId).IsRequired().HasMaxLength(50);
-                
+
                 // Relaciones
                 entity.HasOne(vd => vd.Venta)
                     .WithMany(v => v.VentaDetalles)
                     .HasForeignKey(vd => vd.VentaId)
                     .OnDelete(DeleteBehavior.Cascade);
-                
+
                 entity.HasOne(vd => vd.Servicio)
                     .WithMany()
                     .HasForeignKey(vd => vd.ServicioId)
                     .OnDelete(DeleteBehavior.Restrict);
-                
+
                 entity.HasOne(vd => vd.EmpleadoServicio)
                     .WithMany()
                     .HasForeignKey(vd => vd.EmpleadoServicioId)
                     .OnDelete(DeleteBehavior.SetNull);
-                
+
                 // Índices
                 entity.HasIndex(vd => vd.VentaId);
                 entity.HasIndex(vd => vd.ServicioId);
@@ -164,7 +163,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             modelBuilder.Entity<Settings>(entity =>
             {
                 entity.HasKey(s => s.Id);
-                
+
                 // Configuración básica (según la estructura entity existente)
                 entity.Property(s => s.NombrePeluqueria).HasMaxLength(100);
                 entity.Property(s => s.DireccionPeluqueria).HasMaxLength(200);
@@ -180,12 +179,12 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(s => s.FormatoMoneda).HasMaxLength(50);
                 entity.Property(s => s.CodigoPeluqueria).HasMaxLength(50);
                 entity.Property(s => s.TemplateCustomHTML).HasMaxLength(2000).IsRequired(false);
-                
+
                 // Defaults
                 entity.Property(s => s.ResumenServicioHabilitado).HasDefaultValue(false);
                 entity.Property(s => s.Activo).HasDefaultValue(true);
                 entity.Property(s => s.FechaCreacion).HasDefaultValueSql("GETDATE()");
-                
+
                 // Índices
                 entity.HasIndex(s => s.CodigoPeluqueria).IsUnique();
             });
