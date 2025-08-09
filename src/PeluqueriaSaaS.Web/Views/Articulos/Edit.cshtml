@@ -2,7 +2,14 @@
 
 @{
     ViewData["Title"] = "Editar Artículo";
+    // Calcular margen inicial si hay valores
+    decimal margenInicial = 0;
+    if (Model.PrecioCosto.HasValue && Model.PrecioCosto.Value > 0) {
+        margenInicial = ((Model.Precio - Model.PrecioCosto.Value) / Model.PrecioCosto.Value) * 100;
+    }
 }
+
+<link rel="stylesheet" href="~/css/articulos.css" />
 
 <div class="container-fluid">
     <div class="row">
@@ -16,18 +23,23 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Edit" method="post">
-                        @* 🚨 FIX CRÍTICO: Triple safeguard para preservar Id *@
-                        @* Principal: ASP.NET Core syntax - MÁS ROBUSTO *@
+                        @* Preservar IDs y campos de auditoría *@
                         <input type="hidden" asp-for="Id" />
-                        
-                        @* Backup 1: Manual value assignment *@
                         <input type="hidden" name="ArticuloId" value="@Model.Id" />
-                        
-                        @* Backup 2: Route value preservation *@
                         <input type="hidden" name="OriginalId" value="@ViewBag.ArticuloId" />
+                        <input type="hidden" asp-for="TenantId" />
+                        <input type="hidden" asp-for="FechaCreacion" />
+                        <input type="hidden" asp-for="CreadoPor" />
+                        
+                        <!-- Información Básica -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-info-circle"></i> Información Básica
+                            </h5>
+                        </div>
                         
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label asp-for="Codigo" class="form-label">Código</label>
                                     <input asp-for="Codigo" class="form-control" placeholder="Código único (opcional)" readonly />
@@ -36,7 +48,7 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <div class="mb-3">
                                     <label asp-for="Nombre" class="form-label required-field">Nombre</label>
                                     <input asp-for="Nombre" class="form-control" required />
@@ -55,21 +67,17 @@
                             </div>
                         </div>
 
+                        <!-- Precios y Márgenes -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-dollar-sign"></i> Precios y Márgenes
+                            </h5>
+                        </div>
+
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
-                                    <label asp-for="Precio" class="form-label required-field">Precio Venta</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input asp-for="Precio" class="form-control" type="number" step="0.01" min="0" required />
-                                    </div>
-                                    <span asp-validation-for="Precio" class="text-danger"></span>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="PrecioCosto" class="form-label">Precio Costo</label>
+                                    <label asp-for="PrecioCosto" class="form-label">Precio Costo (sin IVA)</label>
                                     <div class="input-group">
                                         <span class="input-group-text">$</span>
                                         <input asp-for="PrecioCosto" class="form-control" type="number" step="0.01" min="0" />
@@ -78,28 +86,42 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
-                                    <label class="form-label">Margen %</label>
+                                    <label asp-for="Precio" class="form-label required-field">Precio Venta (sin IVA)</label>
                                     <div class="input-group">
-                                        <input asp-for="Margen" class="form-control" type="number" step="0.01" readonly />
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="Precio" class="form-control" type="number" step="0.01" min="0" required />
+                                    </div>
+                                    <span asp-validation-for="Precio" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Margen %
+                                        <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
+                                           title="Ingrese costo y margen para calcular precio, o costo y precio para ver margen"></i>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="margenCalculado" 
+                                               step="0.01" value="@margenInicial.ToString("F2")" />
                                         <span class="input-group-text">%</span>
                                     </div>
-                                    <small class="text-muted">Se calcula automáticamente</small>
+                                    <div id="margenDisplay" class="form-text"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input asp-for="Oferta" class="form-check-input" type="checkbox" />
+                                    <label asp-for="Oferta" class="form-check-label">En Oferta</label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input asp-for="Oferta" class="form-check-input" type="checkbox" />
-                                        <label asp-for="Oferta" class="form-check-label">En Oferta</label>
-                                    </div>
-                                </div>
-                            </div>
-
+                        <div class="row" id="precioOfertaRow" style="@(Model.Oferta ? "" : "display: none;")">
                             <div class="col-md-3">
                                 <div class="mb-3">
                                     <label asp-for="PrecioOferta" class="form-label">Precio Oferta</label>
@@ -110,16 +132,38 @@
                                     <span asp-validation-for="PrecioOferta" class="text-danger"></span>
                                 </div>
                             </div>
+                        </div>
 
+                        <!-- Control de Inventario -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-warehouse"></i> Control de Inventario
+                            </h5>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-3">
+                                <div class="form-check mb-3">
+                                    <input asp-for="RequiereStock" class="form-check-input" type="checkbox" />
+                                    <label asp-for="RequiereStock" class="form-check-label">Controlar Stock</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3" id="stockActualDiv" style="@(!Model.RequiereStock ? "display: none;" : "")">
                                 <div class="mb-3">
                                     <label asp-for="Stock" class="form-label required-field">Stock Actual</label>
                                     <input asp-for="Stock" class="form-control" type="number" min="0" required />
                                     <span asp-validation-for="Stock" class="text-danger"></span>
+                                    @if(Model.Stock <= Model.StockMinimo)
+                                    {
+                                        <div class="alert alert-warning mt-1 py-1 px-2">
+                                            <small><i class="fas fa-exclamation-triangle"></i> Stock bajo el mínimo</small>
+                                        </div>
+                                    }
                                 </div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="stockMinimoDiv" style="@(!Model.RequiereStock ? "display: none;" : "")">
                                 <div class="mb-3">
                                     <label asp-for="StockMinimo" class="form-label">Stock Mínimo</label>
                                     <input asp-for="StockMinimo" class="form-control" type="number" min="0" />
@@ -128,17 +172,15 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input asp-for="RequiereStock" class="form-check-input" type="checkbox" />
-                                        <label asp-for="RequiereStock" class="form-check-label">Controlar Stock</label>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Clasificación -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-tags"></i> Clasificación
+                            </h5>
+                        </div>
 
-                            <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label asp-for="Categoria" class="form-label">Categoría</label>
                                     <input asp-for="Categoria" class="form-control" list="categorias" />
@@ -155,7 +197,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label asp-for="Marca" class="form-label">Marca</label>
                                     <input asp-for="Marca" class="form-control" list="marcas" />
@@ -172,7 +214,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label asp-for="Proveedor" class="form-label">Proveedor</label>
                                     <input asp-for="Proveedor" class="form-control" list="proveedores" />
@@ -190,7 +232,22 @@
                             </div>
                         </div>
 
+                        <!-- Información Física -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-weight"></i> Información Física
+                            </h5>
+                        </div>
+
                         <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Contenido" class="form-label">Contenido</label>
+                                    <input asp-for="Contenido" class="form-control" placeholder="Ej: 500ml, 100g, etc." />
+                                    <span asp-validation-for="Contenido" class="text-danger"></span>
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Peso" class="form-label">Peso</label>
@@ -201,13 +258,15 @@
                                     <span asp-validation-for="Peso" class="text-danger"></span>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Contenido" class="form-label">Contenido</label>
-                                    <input asp-for="Contenido" class="form-control" placeholder="Ej: 500ml, 100g, etc." />
-                                    <span asp-validation-for="Contenido" class="text-danger"></span>
-                                </div>
+                        <!-- Información de Auditoría -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-body py-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    @($"Creado: {Model.CreadoPor} - {Model.FechaCreacion:dd/MM/yyyy HH:mm}")
+                                </small>
                             </div>
                         </div>
 
@@ -229,75 +288,9 @@
     </div>
 </div>
 
-@* 🔧 DEBUG INFO CARD - REMOVER EN PRODUCCIÓN *@
-<div class="container-fluid mt-3">
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h6 class="mb-0">🔧 DEBUG INFO - UPDATE FIX</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <small>
-                                <strong>Model.Id:</strong> @Model.Id<br />
-                                <strong>ViewBag.ArticuloId:</strong> @ViewBag.ArticuloId<br />
-                                <strong>Route ID:</strong> @Context.Request.RouteValues["id"]
-                            </small>
-                        </div>
-                        <div class="col-md-8">
-                            <small>
-                                <strong>Audit Info:</strong><br />
-                                <strong>Creado por:</strong> @Model.CreadoPor | <strong>Fecha:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")<br />
-                                @if (!string.IsNullOrEmpty(Model.ActualizadoPor))
-                                {
-                                    <text><strong>Actualizado por:</strong> @Model.ActualizadoPor | <strong>Fecha:</strong> @Model.FechaActualizacion.ToString("dd/MM/yyyy HH:mm")</text>
-                                }
-                                else
-                                {
-                                    <em>Sin actualizaciones previas</em>
-                                }
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
-    <script>
-        // 🔧 DEBUG: Verificar hidden fields antes del submit
-        document.querySelector('form').addEventListener('submit', function(e) {
-            console.log('🔧 Form submit - Hidden field values:');
-            console.log('Id (asp-for):', document.querySelector('input[name="Id"]')?.value);
-            console.log('ArticuloId (backup):', document.querySelector('input[name="ArticuloId"]')?.value);
-            console.log('OriginalId (route):', document.querySelector('input[name="OriginalId"]')?.value);
-            
-            // Verificar que al menos uno tiene valor
-            const id1 = document.querySelector('input[name="Id"]')?.value;
-            const id2 = document.querySelector('input[name="ArticuloId"]')?.value;
-            const id3 = document.querySelector('input[name="OriginalId"]')?.value;
-            
-            if (!id1 && !id2 && !id3) {
-                console.error('❌ NINGÚN ID DISPONIBLE - FORM SUBMISSION PROBLEMÁTICA');
-                alert('Error: No se pudo preservar el ID del artículo. Contacte al administrador.');
-                e.preventDefault();
-                return false;
-            } else {
-                console.log('✅ Al menos un ID disponible para submission');
-            }
-        });
-        
-        // 🔧 DEBUG: Mostrar información al cargar la página
-        console.log('🔧 Edit.cshtml loaded - Article ID: @Model.Id');
-        console.log('🔧 ViewBag.ArticuloId: @ViewBag.ArticuloId');
-        console.log('🔧 Route ID: @Context.Request.RouteValues["id"]');
-    </script>
+    <script src="~/js/articulos-calculos.js"></script>
 }
 
 <style>
@@ -306,12 +299,14 @@
     color: red;
 }
 
-/* Debug card styling */
-.card.border-warning {
-    border-width: 2px;
+.section-header {
+    border-bottom: 2px solid #e3e6f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    margin-top: 1.5rem;
 }
 
-.card.border-warning .card-header {
-    border-bottom: 2px solid #ffc107;
+.section-header:first-child {
+    margin-top: 0;
 }
 </style>
