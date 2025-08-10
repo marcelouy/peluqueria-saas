@@ -113,6 +113,126 @@
                             </div>
                         </div>
 
+                        <!-- SECCIÓN DE IMPUESTOS -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-percentage"></i> Impuestos Aplicables
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Seleccione los impuestos que aplican a este artículo
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="impuestosContainer">
+                            @{
+                                var impuestosDisp = ViewBag.ImpuestosDisponibles as IEnumerable<dynamic>;
+                                if (impuestosDisp != null && impuestosDisp.Any())
+                                {
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check"></i> Se encontraron @impuestosDisp.Count() tipos de impuestos
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-times"></i> No se encontraron impuestos disponibles
+                                    </div>
+                                }
+                            }
+                            
+                            @if (ViewBag.ImpuestosDisponibles != null)
+                            {
+                                @foreach (dynamic tipo in ViewBag.ImpuestosDisponibles)
+                                {
+                                    string tipoCodigo = tipo.TipoCodigo;
+                                    string tipoNombre = tipo.TipoNombre;
+                                    var tasas = tipo.Tasas as IEnumerable<dynamic>;
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header py-2">
+                                            <h6 class="mb-0">@tipoNombre (Código: @tipoCodigo)</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (tasas != null && tasas.Any())
+                                            {
+                                                <div class="row">
+                                                    @foreach (dynamic tasa in tasas)
+                                                    {
+                                                        int tasaId = tasa.TasaId;
+                                                        string tasaNombre = tasa.Nombre;
+                                                        decimal tasaPorcentaje = tasa.Porcentaje;
+                                                        bool esDefault = tasa.EsDefault;
+                                                        
+                                                        <div class="col-md-4">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input impuesto-check" 
+                                                                       type="@(tipoCodigo == "IVA" ? "radio" : "checkbox")"
+                                                                       name="@(tipoCodigo == "IVA" ? "impuestoIVA" : "impuestosSeleccionados")"
+                                                                       value="@tasaId"
+                                                                       data-tipo="@tipoCodigo"
+                                                                       data-porcentaje="@tasaPorcentaje"
+                                                                       data-nombre="@tasaNombre"
+                                                                       @(esDefault && tipoCodigo == "IVA" ? "checked" : "")
+                                                                       id="tasa_@tasaId" />
+                                                                <label class="form-check-label" for="tasa_@tasaId">
+                                                                    @tasaNombre (@tasaPorcentaje%)
+                                                                    @if (esDefault)
+                                                                    {
+                                                                        <span class="badge bg-primary">Por defecto</span>
+                                                                    }
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-muted">No hay tasas disponibles para este tipo de impuesto</p>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Hidden input para enviar el IVA seleccionado -->
+                                <input type="hidden" name="impuestosSeleccionados" id="hiddenIVA" />
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> No hay impuestos configurados en el sistema
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Resumen de Precio con Impuestos -->
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Resumen de Precio Final</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td>Precio Venta (sin impuestos):</td>
+                                                <td class="text-end"><strong>$<span id="precioBase">0.00</span></strong></td>
+                                            </tr>
+                                            <tr id="desgloseImpuestos">
+                                                <!-- Se llenará dinámicamente -->
+                                            </tr>
+                                            <tr class="table-primary">
+                                                <td><strong>Precio Final al Consumidor:</strong></td>
+                                                <td class="text-end"><strong>$<span id="precioFinal">0.00</span></strong></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Inventario -->
                         <div class="section-header">
@@ -223,7 +343,7 @@
                             <a asp-action="Index" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Volver
                             </a>
-                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); return false;">
+                            <button type="submit" class="btn btn-primary" onclick="prepararEnvio(); this.form.submit(); return false;">
                                 <i class="fas fa-save"></i> Guardar Artículo
                             </button>
                         </div>
@@ -237,4 +357,48 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script src="~/js/articulos-calculos.js"></script>
+    <script src="~/js/articulos-impuestos-dinamicos.js"></script>
+    
+    <script>
+        // Función para preparar el envío del formulario
+        function prepararEnvio() {
+            // Copiar el valor del radio IVA seleccionado al hidden input
+            var ivaSeleccionado = document.querySelector('input[name="impuestoIVA"]:checked');
+            if (ivaSeleccionado) {
+                document.getElementById('hiddenIVA').value = ivaSeleccionado.value;
+                console.log('IVA seleccionado para envío:', ivaSeleccionado.value);
+            }
+            
+            // Debug: ver todos los impuestos que se enviarán
+            var impuestosSeleccionados = document.querySelectorAll('input[name="impuestosSeleccionados"]:checked');
+            console.log('Otros impuestos seleccionados:', impuestosSeleccionados.length);
+            
+            return true;
+        }
+        
+        // Disparar cálculo inicial cuando la página esté lista
+        window.addEventListener('load', function() {
+            if (typeof calcularPrecioConImpuestos === 'function') {
+                calcularPrecioConImpuestos();
+            }
+        });
+    </script>
 }
+
+<style>
+.required-field::after {
+    content: " *";
+    color: red;
+}
+
+.section-header {
+    border-bottom: 2px solid #e3e6f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    margin-top: 1.5rem;
+}
+
+.section-header:first-child {
+    margin-top: 0;
+}
+</style>

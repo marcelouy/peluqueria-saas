@@ -34,6 +34,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<TipoImpuesto>().ToTable("TiposImpuestos");
             modelBuilder.Entity<TasaImpuesto>().ToTable("TasasImpuestos");
+            
             // IGNORAR TODOS LOS VALUEOBJECTS
             modelBuilder.Ignore<Email>();
             modelBuilder.Ignore<Telefono>();
@@ -78,7 +79,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
                 entity.Property(e => e.DuracionMinutos).IsRequired();
-                entity.Property(e => e.TipoServicioId).IsRequired(); // ✅ CORREGIDO: ahora es int (compatible con TipoServicio.Id)
+                entity.Property(e => e.TipoServicioId).IsRequired();
                 entity.Property(e => e.TenantId).IsRequired();
                 entity.Property(e => e.FechaCreacion).IsRequired();
                 entity.Property(e => e.FechaActualizacion).IsRequired();
@@ -99,7 +100,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             // ✅ CONFIGURACIÓN DE TIPOSERVICIO (para verificar)
             modelBuilder.Entity<TipoServicio>(entity =>
             {
-                entity.HasKey(e => e.Id); // ✅ Id es int (hereda de EntityBase)
+                entity.HasKey(e => e.Id);
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.TenantId).IsRequired();
 
@@ -171,7 +172,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             {
                 entity.HasKey(s => s.Id);
 
-                // Configuración básica (según la estructura entity existente)
+                // Configuración básica
                 entity.Property(s => s.NombrePeluqueria).HasMaxLength(100);
                 entity.Property(s => s.DireccionPeluqueria).HasMaxLength(200);
                 entity.Property(s => s.TelefonoPeluqueria).HasMaxLength(20);
@@ -194,6 +195,164 @@ namespace PeluqueriaSaaS.Infrastructure.Data
 
                 // Índices
                 entity.HasIndex(s => s.CodigoPeluqueria).IsUnique();
+            });
+
+            // ==========================================
+            // 🆕 CONFIGURACIONES DE IMPUESTOS (CORREGIDAS)
+            // ==========================================
+
+            // Configuración TipoImpuesto (con propiedades correctas)
+            modelBuilder.Entity<TipoImpuesto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Codigo).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.TipoCalculo).IsRequired().HasMaxLength(20).HasDefaultValue("PORCENTAJE");
+                entity.Property(e => e.AplicaA).IsRequired().HasMaxLength(20).HasDefaultValue("AMBOS");
+                entity.Property(e => e.OrdenAplicacion).IsRequired().HasDefaultValue(1);
+                entity.Property(e => e.IncluidoEnPrecio).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+                // No configurar FechaCreacion, FechaActualizacion, CreadoPor, ActualizadoPor
+                // Ya están definidas en EntityBase y funcionan correctamente
+                
+                entity.HasIndex(e => e.Codigo).IsUnique();
+            });
+
+            // Configuración TasaImpuesto (con propiedades correctas)
+            modelBuilder.Entity<TasaImpuesto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.TipoImpuestoId).IsRequired();
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Porcentaje).HasColumnType("decimal(5,2)").IsRequired();
+                entity.Property(e => e.FechaInicio).IsRequired();
+                entity.Property(e => e.FechaFin).IsRequired(false);
+                entity.Property(e => e.CodigoTasa).HasMaxLength(50);
+                entity.Property(e => e.EsTasaPorDefecto).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.DecretoLey).HasMaxLength(200);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+                // No configurar FechaCreacion, FechaActualizacion, CreadoPor, ActualizadoPor
+                // Ya están definidas en EntityBase y funcionan correctamente
+
+                entity.HasOne(e => e.TipoImpuesto)
+                    .WithMany(t => t.Tasas)
+                    .HasForeignKey(e => e.TipoImpuestoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.TipoImpuestoId, e.FechaInicio });
+            });
+
+            // 🔧 CONFIGURACIÓN ARTICULO-IMPUESTO (RELACIÓN MANY-TO-MANY)
+            modelBuilder.Entity<ArticuloImpuesto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ArticuloId).IsRequired();
+                entity.Property(e => e.TasaImpuestoId).IsRequired();
+                entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.FechaInicioAplicacion).IsRequired();
+                entity.Property(e => e.FechaFinAplicacion).IsRequired(false);
+                entity.Property(e => e.PorcentajeEspecial).HasColumnType("decimal(5,2)");
+                entity.Property(e => e.Notas).HasMaxLength(500);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+
+                // Relación con Articulo
+                entity.HasOne(e => e.Articulo)
+                    .WithMany(a => a.ArticulosImpuestos)
+                    .HasForeignKey(e => e.ArticuloId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con TasaImpuesto
+                entity.HasOne(e => e.TasaImpuesto)
+                    .WithMany(t => t.ArticulosImpuestos)
+                    .HasForeignKey(e => e.TasaImpuestoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice único: un artículo solo puede tener una tasa de cada tipo de impuesto activa
+                entity.HasIndex(e => new { e.ArticuloId, e.TasaImpuestoId, e.TenantId, e.Activo })
+                    .HasFilter("[Activo] = 1");
+            });
+
+            // 🔧 CONFIGURACIÓN SERVICIO-IMPUESTO (RELACIÓN MANY-TO-MANY)
+            modelBuilder.Entity<ServicioImpuesto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ServicioId).IsRequired();
+                entity.Property(e => e.TasaImpuestoId).IsRequired();
+                entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.FechaInicioAplicacion).IsRequired();
+                entity.Property(e => e.FechaFinAplicacion).IsRequired(false);
+                entity.Property(e => e.PorcentajeEspecial).HasColumnType("decimal(5,2)");
+                entity.Property(e => e.Notas).HasMaxLength(500);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+
+                // Relación con Servicio
+                entity.HasOne(e => e.Servicio)
+                    .WithMany()  // Servicio no tiene la colección ServiciosImpuestos
+                    .HasForeignKey(e => e.ServicioId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con TasaImpuesto
+                entity.HasOne(e => e.TasaImpuesto)
+                    .WithMany(t => t.ServiciosImpuestos)
+                    .HasForeignKey(e => e.TasaImpuestoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice único: un servicio solo puede tener una tasa de cada tipo de impuesto activa
+                entity.HasIndex(e => new { e.ServicioId, e.TasaImpuestoId, e.TenantId, e.Activo })
+                    .HasFilter("[Activo] = 1");
+            });
+
+            // Configuración HistoricoTasaImpuesto (con propiedades correctas)
+            modelBuilder.Entity<HistoricoTasaImpuesto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.TasaImpuestoId).IsRequired();
+                entity.Property(e => e.PorcentajeAnterior).HasColumnType("decimal(5,2)").IsRequired();
+                entity.Property(e => e.PorcentajeNuevo).HasColumnType("decimal(5,2)").IsRequired();
+                entity.Property(e => e.FechaCambio).IsRequired();
+                entity.Property(e => e.Motivo).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.DecretoLey).HasMaxLength(200);
+                entity.Property(e => e.ModificadoPor).IsRequired().HasMaxLength(100);
+
+                entity.HasOne(e => e.TasaImpuesto)
+                    .WithMany()
+                    .HasForeignKey(e => e.TasaImpuestoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.TasaImpuestoId, e.FechaCambio });
+            });
+
+            // 🔧 CONFIGURACIÓN ARTICULO (con propiedades correctas)
+            modelBuilder.Entity<Articulo>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Codigo).HasMaxLength(50);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.Categoria).HasMaxLength(50);
+                entity.Property(e => e.Marca).HasMaxLength(50);
+                entity.Property(e => e.Proveedor).HasMaxLength(100);
+                entity.Property(e => e.Precio).HasColumnType("decimal(10,2)").IsRequired();
+                entity.Property(e => e.PrecioCosto).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Margen).HasColumnType("decimal(5,2)");
+                entity.Property(e => e.Oferta).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.PrecioOferta).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Stock).IsRequired().HasDefaultValue(0);
+                entity.Property(e => e.StockMinimo).IsRequired().HasDefaultValue(0);
+                entity.Property(e => e.RequiereStock).IsRequired().HasDefaultValue(true);
+                entity.Property(e => e.Peso).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Contenido).HasMaxLength(50);
+                entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+                entity.Property(e => e.FechaCreacion).IsRequired();
+                entity.Property(e => e.FechaActualizacion).IsRequired();
+
+                // Índices
+                entity.HasIndex(e => new { e.TenantId, e.Codigo }).IsUnique();
+                entity.HasIndex(e => new { e.TenantId, e.Categoria });
+                entity.HasIndex(e => new { e.TenantId, e.Marca });
+                entity.HasIndex(e => new { e.TenantId, e.Activo });
             });
         }
     }

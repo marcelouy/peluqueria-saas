@@ -7,6 +7,9 @@
     if (Model.PrecioCosto.HasValue && Model.PrecioCosto.Value > 0) {
         margenInicial = ((Model.Precio - Model.PrecioCosto.Value) / Model.PrecioCosto.Value) * 100;
     }
+    
+    // Obtener impuestos actuales del artículo
+    var impuestosActuales = ViewBag.ImpuestosActuales as List<int> ?? new List<int>();
 }
 
 <link rel="stylesheet" href="~/css/articulos.css" />
@@ -134,6 +137,149 @@
                             </div>
                         </div>
 
+                        <!-- SECCIÓN DE IMPUESTOS -->
+                        <div class="section-header">
+                            <h5 class="text-primary">
+                                <i class="fas fa-percentage"></i> Impuestos Aplicables
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Modifique los impuestos que aplican a este artículo
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="impuestosContainer">
+                            @{
+                                var impuestosDisp = ViewBag.ImpuestosDisponibles as IEnumerable<dynamic>;
+                                if (impuestosDisp != null && impuestosDisp.Any())
+                                {
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check"></i> Se encontraron @impuestosDisp.Count() tipos de impuestos
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-times"></i> No se encontraron impuestos disponibles
+                                    </div>
+                                }
+                            }
+                            
+                            @if (ViewBag.ImpuestosDisponibles != null)
+                            {
+                                @foreach (dynamic tipo in ViewBag.ImpuestosDisponibles)
+                                {
+                                    string tipoCodigo = tipo.TipoCodigo;
+                                    string tipoNombre = tipo.TipoNombre;
+                                    var tasas = tipo.Tasas as IEnumerable<dynamic>;
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header py-2 bg-light">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-receipt"></i> @tipoNombre
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (tasas != null && tasas.Any())
+                                            {
+                                                <div class="row">
+                                                    @foreach (dynamic tasa in tasas)
+                                                    {
+                                                        int tasaId = tasa.TasaId;
+                                                        string tasaNombre = tasa.Nombre;
+                                                        decimal tasaPorcentaje = tasa.Porcentaje;
+                                                        bool esDefault = tasa.EsDefault;
+                                                        bool isChecked = impuestosActuales.Contains(tasaId);
+                                                        
+                                                        <div class="col-md-4">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input impuesto-check" 
+                                                                       type="@(tipoCodigo == "IVA" ? "radio" : "checkbox")"
+                                                                       name="@(tipoCodigo == "IVA" ? "impuestoIVA" : "impuestosSeleccionados")"
+                                                                       value="@tasaId"
+                                                                       data-tipo="@tipoCodigo"
+                                                                       data-porcentaje="@tasaPorcentaje"
+                                                                       data-nombre="@tasaNombre"
+                                                                       @(isChecked ? "checked" : "")
+                                                                       id="tasa_@tasaId" />
+                                                                <label class="form-check-label" for="tasa_@tasaId">
+                                                                    @tasaNombre (@tasaPorcentaje%)
+                                                                    @if (esDefault)
+                                                                    {
+                                                                        <span class="badge bg-primary">Por defecto</span>
+                                                                    }
+                                                                    @if (isChecked)
+                                                                    {
+                                                                        <span class="badge bg-success">Actual</span>
+                                                                    }
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-muted">No hay tasas disponibles para este tipo de impuesto</p>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Hidden input para enviar el IVA seleccionado -->
+                                <input type="hidden" name="impuestosSeleccionados" id="hiddenIVA" />
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> No hay impuestos configurados en el sistema
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Resumen de Precio con Impuestos -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6><i class="fas fa-calculator"></i> Resumen de Precio Final</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Precio Venta (sin impuestos):</td>
+                                                    <td class="text-end"><strong>$<span id="precioBase">0.00</span></strong></td>
+                                                </tr>
+                                                <tr id="filaImpuestos">
+                                                    <td colspan="2">
+                                                        <div id="desgloseImpuestos" class="small text-muted">
+                                                            <!-- Se llenará dinámicamente -->
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="table-primary">
+                                                    <td><strong>Precio Final al Consumidor:</strong></td>
+                                                    <td class="text-end"><strong>$<span id="precioFinal">0.00</span></strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-warning mb-0">
+                                            <small>
+                                                <i class="fas fa-info-circle"></i> 
+                                                Los cambios en los impuestos se aplicarán a partir de la fecha actual.
+                                                Los impuestos anteriores quedarán registrados en el histórico.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Control de Inventario -->
                         <div class="section-header">
                             <h5 class="text-primary">
@@ -185,12 +331,9 @@
                                     <label asp-for="Categoria" class="form-label">Categoría</label>
                                     <input asp-for="Categoria" class="form-control" list="categorias" />
                                     <datalist id="categorias">
-                                        @if (ViewBag.Categorias != null)
+                                        @foreach (var categoria in (ViewBag.Categorias as IEnumerable<string>) ?? Enumerable.Empty<string>())
                                         {
-                                            @foreach (var categoria in ViewBag.Categorias as IEnumerable<string>)
-                                            {
-                                                <option value="@categoria">@categoria</option>
-                                            }
+                                            <option value="@categoria">@categoria</option>
                                         }
                                     </datalist>
                                     <span asp-validation-for="Categoria" class="text-danger"></span>
@@ -202,12 +345,9 @@
                                     <label asp-for="Marca" class="form-label">Marca</label>
                                     <input asp-for="Marca" class="form-control" list="marcas" />
                                     <datalist id="marcas">
-                                        @if (ViewBag.Marcas != null)
+                                        @foreach (var marca in (ViewBag.Marcas as IEnumerable<string>) ?? Enumerable.Empty<string>())
                                         {
-                                            @foreach (var marca in ViewBag.Marcas as IEnumerable<string>)
-                                            {
-                                                <option value="@marca">@marca</option>
-                                            }
+                                            <option value="@marca">@marca</option>
                                         }
                                     </datalist>
                                     <span asp-validation-for="Marca" class="text-danger"></span>
@@ -219,12 +359,9 @@
                                     <label asp-for="Proveedor" class="form-label">Proveedor</label>
                                     <input asp-for="Proveedor" class="form-control" list="proveedores" />
                                     <datalist id="proveedores">
-                                        @if (ViewBag.Proveedores != null)
+                                        @foreach (var proveedor in (ViewBag.Proveedores as IEnumerable<string>) ?? Enumerable.Empty<string>())
                                         {
-                                            @foreach (var proveedor in ViewBag.Proveedores as IEnumerable<string>)
-                                            {
-                                                <option value="@proveedor">@proveedor</option>
-                                            }
+                                            <option value="@proveedor">@proveedor</option>
                                         }
                                     </datalist>
                                     <span asp-validation-for="Proveedor" class="text-danger"></span>
@@ -276,7 +413,7 @@
                                     <i class="fas fa-arrow-left"></i> Volver
                                 </a>
                                 
-                                <button type="submit" class="btn btn-warning">
+                                <button type="submit" class="btn btn-warning" onclick="prepararEnvio(); return true;">
                                     <i class="fas fa-save"></i> Actualizar Artículo
                                 </button>
                             </div>
@@ -291,6 +428,32 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script src="~/js/articulos-calculos.js"></script>
+    <script src="~/js/articulos-impuestos-dinamicos.js"></script>
+    
+    <script>
+        // Función para preparar el envío del formulario
+        function prepararEnvio() {
+            // Copiar el valor del radio IVA seleccionado al hidden input
+            var ivaSeleccionado = document.querySelector('input[name="impuestoIVA"]:checked');
+            if (ivaSeleccionado) {
+                document.getElementById('hiddenIVA').value = ivaSeleccionado.value;
+                console.log('IVA seleccionado para envío:', ivaSeleccionado.value);
+            }
+            
+            // Debug: ver todos los impuestos que se enviarán
+            var impuestosSeleccionados = document.querySelectorAll('input[name="impuestosSeleccionados"]:checked');
+            console.log('Otros impuestos seleccionados:', impuestosSeleccionados.length);
+            
+            return true;
+        }
+        
+        // Disparar cálculo inicial cuando la página esté lista
+        window.addEventListener('load', function() {
+            if (typeof calcularPrecioConImpuestos === 'function') {
+                calcularPrecioConImpuestos();
+            }
+        });
+    </script>
 }
 
 <style>
