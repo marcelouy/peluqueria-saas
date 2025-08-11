@@ -131,14 +131,21 @@ namespace PeluqueriaSaaS.Web.Controllers
         }
 
         // POST: Articulos/Edit/5
+        // POST: Articulos/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Articulo articulo, int[] impuestosSeleccionados)
         {
+            Console.WriteLine($"=====================================");
             Console.WriteLine($"🔧 POST Edit recibido - Route ID: {id}, Model ID: {articulo.Id}");
-            Console.WriteLine($"🔧 Nombre: {articulo.Nombre}, Precio: {articulo.Precio}");
-            Console.WriteLine($"📋 Impuestos seleccionados: {string.Join(", ", impuestosSeleccionados ?? new int[0])}");
+            Console.WriteLine($"📋 Datos del artículo:");
+            Console.WriteLine($"   - Nombre: {articulo.Nombre}");
+            Console.WriteLine($"   - Precio: {articulo.Precio}");
+            Console.WriteLine($"   - Categoría: {articulo.Categoria}");
+            Console.WriteLine($"📋 Impuestos seleccionados: {(impuestosSeleccionados == null || impuestosSeleccionados.Length == 0 ? "NINGUNO" : string.Join(", ", impuestosSeleccionados))}");
+            Console.WriteLine($"=====================================");
 
+            // Validación inicial del ID
             if (id <= 0)
             {
                 Console.WriteLine("❌ Route ID inválido para UPDATE");
@@ -146,12 +153,19 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // ✅ ASEGURAR que el articulo tenga el ID correcto
+            // Asegurar que el artículo tenga el ID correcto
             SetIdViaReflection(articulo, id);
+            Console.WriteLine($"✅ ID asignado via reflection: {id}");
 
+            // Remover validaciones que no aplican
             ModelState.Remove("TenantId");
-            ModelState.Remove("ArticulosImpuestos"); // Ignorar la colección de navegación
+            ModelState.Remove("ArticulosImpuestos");
+            ModelState.Remove("CreadoPor");
+            ModelState.Remove("ActualizadoPor");
+            ModelState.Remove("FechaCreacion");
+            ModelState.Remove("FechaActualizacion");
 
+            // Validar ModelState
             if (!ModelState.IsValid)
             {
                 Console.WriteLine("❌ ModelState inválido:");
@@ -159,7 +173,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 {
                     Console.WriteLine($"   - {error.Key}: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
                 }
-                
+
                 ViewBag.ArticuloId = id;
                 await PrepararDropdownData();
                 await CargarImpuestos();
@@ -167,10 +181,11 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return View(articulo);
             }
 
-            // Validar código único
+            // Validar código único (si aplica)
             if (!string.IsNullOrEmpty(articulo.Codigo))
             {
-                if (await _articuloRepository.ExisteCodigo(articulo.Codigo, TENANT_ID, id))
+                var codigoExiste = await _articuloRepository.ExisteCodigo(articulo.Codigo, TENANT_ID, id);
+                if (codigoExiste)
                 {
                     Console.WriteLine($"❌ Código duplicado: {articulo.Codigo}");
                     ModelState.AddModelError("Codigo", "Ya existe otro artículo con este código");
@@ -184,21 +199,74 @@ namespace PeluqueriaSaaS.Web.Controllers
 
             try
             {
-                Console.WriteLine($"🔧 Llamando Repository.UpdateAsync para ID: {id}");
+                // PASO 1: Verificar estado ANTES de actualizar
+                Console.WriteLine($"🔄 PASO 1: Verificando estado actual en BD...");
+                var articuloAntes = await _context.Articulos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(a => a.Id == id);
+
+                if (articuloAntes == null)
+                {
+                    Console.WriteLine($"❌ Artículo ID {id} no existe en BD");
+                    TempData["Error"] = "El artículo no existe";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                Console.WriteLine($"   BD ANTES: Nombre='{articuloAntes.Nombre}', Precio={articuloAntes.Precio}");
+
+                var impuestosAntes = await _context.ArticulosImpuestos
+                    .Where(ai => ai.ArticuloId == id && ai.Activo)
+                    .Select(ai => ai.TasaImpuestoId)
+                    .ToListAsync();
+                Console.WriteLine($"   Impuestos ANTES: {(impuestosAntes.Any() ? string.Join(",", impuestosAntes) : "NINGUNO")}");
+
+                // PASO 2: Actualizar el artículo
+                Console.WriteLine($"🔄 PASO 2: Actualizando artículo...");
                 await _articuloRepository.UpdateAsync(articulo);
-                
-                // Actualizar impuestos asociados
+                Console.WriteLine($"✅ Artículo actualizado en repository");
+
+                // PASO 3: Verificar que el artículo se actualizó
+                var articuloDespues = await _context.Articulos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(a => a.Id == id);
+                Console.WriteLine($"   BD DESPUÉS: Nombre='{articuloDespues?.Nombre}', Precio={articuloDespues?.Precio}");
+
+                // PASO 4: Actualizar impuestos
+                Console.WriteLine($"🔄 PASO 3: Actualizando impuestos...");
+                Console.WriteLine($"   Impuestos a guardar: {(impuestosSeleccionados == null || impuestosSeleccionados.Length == 0 ? "NINGUNO" : string.Join(",", impuestosSeleccionados))}");
+
                 await ActualizarImpuestosArticulo(id, impuestosSeleccionados);
-                
-                Console.WriteLine($"✅ Repository UPDATE exitoso - ID: {id}");
+
+                // PASO 5: Verificar impuestos finales
+                Console.WriteLine($"🔄 PASO 4: Verificando impuestos finales...");
+                var impuestosDespues = await _context.ArticulosImpuestos
+                    .Where(ai => ai.ArticuloId == id && ai.Activo)
+                    .Select(ai => new { ai.TasaImpuestoId, ai.FechaInicioAplicacion })
+                    .ToListAsync();
+
+                Console.WriteLine($"   Impuestos DESPUÉS: {impuestosDespues.Count} activos");
+                foreach (var imp in impuestosDespues)
+                {
+                    Console.WriteLine($"      - TasaId: {imp.TasaImpuestoId}, Fecha: {imp.FechaInicioAplicacion}");
+                }
+
+                Console.WriteLine($"✅ PROCESO COMPLETADO EXITOSAMENTE");
                 TempData["Success"] = "Artículo actualizado exitosamente";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error en UpdateAsync: {ex.Message}");
+                Console.WriteLine($"❌ ERROR EN UPDATE:");
+                Console.WriteLine($"   Tipo: {ex.GetType().Name}");
+                Console.WriteLine($"   Mensaje: {ex.Message}");
                 Console.WriteLine($"   Stack: {ex.StackTrace}");
-                TempData["Error"] = $"Error al actualizar el artículo: {ex.Message}";
+
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
+                }
+
+                TempData["Error"] = $"Error al actualizar: {ex.Message}";
                 ViewBag.ArticuloId = id;
                 await PrepararDropdownData();
                 await CargarImpuestos();
@@ -384,8 +452,8 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 var impuestosActuales = await _context.ArticulosImpuestos
-                    .Where(ai => ai.ArticuloId == articuloId && 
-                                ai.TenantId == TENANT_ID && 
+                    .Where(ai => ai.ArticuloId == articuloId &&
+                                ai.TenantId == TENANT_ID &&
                                 ai.Activo)
                     .Select(ai => ai.TasaImpuestoId)
                     .ToListAsync();
@@ -405,23 +473,35 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 var hoy = DateTime.Now;
-                
+
                 foreach (var tasaId in tasasIds)
                 {
-                    var articuloImpuesto = new ArticuloImpuesto
-                    {
-                        ArticuloId = articuloId,
-                        TasaImpuestoId = tasaId,
-                        FechaInicioAplicacion = hoy
-                    };
-                    
-                    // Usar reflection para propiedades protegidas
-                    SetProtectedProperty(articuloImpuesto, "TenantId", TENANT_ID);
-                    SetProtectedProperty(articuloImpuesto, "Activo", true);
-                    SetProtectedProperty(articuloImpuesto, "FechaCreacion", hoy);
-                    SetProtectedProperty(articuloImpuesto, "CreadoPor", "Sistema");
+                    // Verificar que no exista ya
+                    var existe = await _context.ArticulosImpuestos
+                        .AnyAsync(ai => ai.ArticuloId == articuloId &&
+                                       ai.TasaImpuestoId == tasaId &&
+                                       ai.TenantId == TENANT_ID &&
+                                       ai.Activo);
 
-                    _context.ArticulosImpuestos.Add(articuloImpuesto);
+                    if (!existe)
+                    {
+                        var articuloImpuesto = new ArticuloImpuesto
+                        {
+                            ArticuloId = articuloId,
+                            TasaImpuestoId = tasaId,
+                            FechaInicioAplicacion = hoy
+                        };
+
+                        // Usar reflection para propiedades protegidas
+                        SetProtectedProperty(articuloImpuesto, "TenantId", TENANT_ID);
+                        SetProtectedProperty(articuloImpuesto, "Activo", true);
+                        SetProtectedProperty(articuloImpuesto, "FechaCreacion", hoy);
+                        SetProtectedProperty(articuloImpuesto, "CreadoPor", "Sistema");
+                        SetProtectedProperty(articuloImpuesto, "FechaActualizacion", hoy);
+                        SetProtectedProperty(articuloImpuesto, "ActualizadoPor", "Sistema");
+
+                        _context.ArticulosImpuestos.Add(articuloImpuesto);
+                    }
                 }
 
                 await _context.SaveChangesAsync();
@@ -430,45 +510,242 @@ namespace PeluqueriaSaaS.Web.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error guardando impuestos: {ex.Message}");
+                throw; // Propagar para manejar en el método que llama
+            }
+        }
+
+
+        // AGREGAR este método TEMPORAL en ArticulosController.cs para diagnosticar
+        // NO reemplazar nada, solo agregar para debug
+
+        private async Task DiagnosticarTablaImpuestos(int articuloId)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 === DIAGNÓSTICO DE TABLA ArticulosImpuestos ===");
+
+                // 1. Verificar estructura de la tabla
+                var connection = _context.Database.GetDbConnection();
+                await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+            SELECT COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'ArticulosImpuestos'
+            ORDER BY ORDINAL_POSITION";
+
+                Console.WriteLine("📊 Columnas en la tabla:");
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    Console.WriteLine($"   - {reader.GetString(0)}");
+                }
+                reader.Close();
+
+                // 2. Ver qué datos hay actualmente
+                command.CommandText = @"
+            SELECT TOP 5 * 
+            FROM ArticulosImpuestos 
+            WHERE ArticuloId = @articuloId";
+                command.Parameters.Clear();
+                command.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@articuloId", articuloId));
+
+                Console.WriteLine($"📋 Registros actuales para artículo {articuloId}:");
+                using var reader2 = await command.ExecuteReaderAsync();
+                if (!reader2.HasRows)
+                {
+                    Console.WriteLine("   (No hay registros)");
+                }
+                else
+                {
+                    while (await reader2.ReadAsync())
+                    {
+                        Console.WriteLine($"   ID: {reader2["Id"]}, TasaId: {reader2["TasaImpuestoId"]}, Activo: {reader2["Activo"]}");
+                    }
+                }
+
+                await connection.CloseAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en diagnóstico: {ex.Message}");
             }
         }
 
         private async Task ActualizarImpuestosArticulo(int articuloId, int[]? tasasIds)
         {
+            Console.WriteLine($"   === ActualizarImpuestosArticulo START (OPTIMIZADO v3) ===");
+            Console.WriteLine($"   ArticuloId: {articuloId}");
+            Console.WriteLine($"   Tasas recibidas: {(tasasIds == null || tasasIds.Length == 0 ? "NULL/EMPTY" : string.Join(",", tasasIds))}");
+
             try
             {
-                // Desactivar impuestos actuales
-                var impuestosActuales = await _context.ArticulosImpuestos
-                    .Where(ai => ai.ArticuloId == articuloId && 
-                                ai.TenantId == TENANT_ID && 
-                                ai.Activo)
-                    .ToListAsync();
+                // Crear una conexión independiente para no afectar el DbContext
+                var connectionString = _context.Database.GetConnectionString();
 
-                foreach (var impuesto in impuestosActuales)
+                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
                 {
-                    // Usar reflection para propiedades protegidas
-                    SetProtectedProperty(impuesto, "Activo", false);
-                    SetProtectedProperty(impuesto, "FechaActualizacion", DateTime.Now);
-                    SetProtectedProperty(impuesto, "ActualizadoPor", "Sistema");
-                    
-                    impuesto.FechaFinAplicacion = DateTime.Now;
+                    await connection.OpenAsync();
+
+                    // PASO 1: OBTENER IMPUESTOS ACTUALES ACTIVOS
+                    var impuestosActuales = new List<int>();
+                    using (var queryCommand = connection.CreateCommand())
+                    {
+                        queryCommand.CommandText = @"
+                    SELECT TasaImpuestoId 
+                    FROM ArticulosImpuestos 
+                    WHERE ArticuloId = @articuloId 
+                        AND TenantId = @tenantId 
+                        AND Activo = 1
+                    ORDER BY TasaImpuestoId";
+
+                        queryCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@articuloId", articuloId));
+                        queryCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@tenantId", TENANT_ID));
+
+                        using (var reader = await queryCommand.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                impuestosActuales.Add(reader.GetInt32(0));
+                            }
+                        }
+                    }
+
+                    Console.WriteLine($"   Impuestos ACTUALES en BD: {(impuestosActuales.Any() ? string.Join(",", impuestosActuales) : "NINGUNO")}");
+
+                    // PASO 2: PREPARAR Y COMPARAR CON NUEVOS
+                    var nuevosImpuestos = tasasIds?.OrderBy(x => x).ToList() ?? new List<int>();
+                    Console.WriteLine($"   Impuestos NUEVOS solicitados: {(nuevosImpuestos.Any() ? string.Join(",", nuevosImpuestos) : "NINGUNO")}");
+
+                    // VERIFICAR SI SON IGUALES
+                    bool sonIguales = impuestosActuales.Count == nuevosImpuestos.Count &&
+                                     impuestosActuales.SequenceEqual(nuevosImpuestos);
+
+                    if (sonIguales)
+                    {
+                        Console.WriteLine($"   ✅ Los impuestos NO han cambiado. No se requiere actualización.");
+                        Console.WriteLine($"   === ActualizarImpuestosArticulo END (SIN CAMBIOS) ===");
+                        return; // SALIR SIN HACER NADA - OPTIMIZACIÓN CLAVE
+                    }
+
+                    // PASO 3: HAY CAMBIOS - PROCEDER CON ACTUALIZACIÓN
+                    Console.WriteLine($"   ⚠️ Detectados cambios en impuestos. Actualizando...");
+
+                    // Calcular diferencias
+                    var paraDesactivar = impuestosActuales.Except(nuevosImpuestos).ToList();
+                    var paraAgregar = nuevosImpuestos.Except(impuestosActuales).ToList();
+
+                    Console.WriteLine($"   📊 Análisis de cambios:");
+                    Console.WriteLine($"      - Para DESACTIVAR: {(paraDesactivar.Any() ? string.Join(",", paraDesactivar) : "ninguno")}");
+                    Console.WriteLine($"      - Para AGREGAR: {(paraAgregar.Any() ? string.Join(",", paraAgregar) : "ninguno")}");
+                    Console.WriteLine($"      - Se MANTIENEN: {string.Join(",", impuestosActuales.Intersect(nuevosImpuestos))}");
+
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // DESACTIVAR solo los que se quitaron
+                            if (paraDesactivar.Any())
+                            {
+                                foreach (var tasaId in paraDesactivar)
+                                {
+                                    using (var updateCommand = connection.CreateCommand())
+                                    {
+                                        updateCommand.Transaction = transaction;
+                                        updateCommand.CommandText = @"
+                                    UPDATE ArticulosImpuestos 
+                                    SET Activo = 0, 
+                                        FechaFinAplicacion = GETDATE(),
+                                        FechaActualizacion = GETDATE(),
+                                        ActualizadoPor = 'Sistema'
+                                    WHERE ArticuloId = @articuloId 
+                                        AND TasaImpuestoId = @tasaId
+                                        AND TenantId = @tenantId 
+                                        AND Activo = 1";
+
+                                        updateCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@articuloId", articuloId));
+                                        updateCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@tasaId", tasaId));
+                                        updateCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@tenantId", TENANT_ID));
+
+                                        var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
+                                        Console.WriteLine($"      ✅ TasaId {tasaId} desactivado (rows: {rowsAffected})");
+                                    }
+                                }
+                            }
+
+                            // AGREGAR solo los nuevos
+                            if (paraAgregar.Any())
+                            {
+                                foreach (var tasaId in paraAgregar)
+                                {
+                                    using (var insertCommand = connection.CreateCommand())
+                                    {
+                                        insertCommand.Transaction = transaction;
+                                        insertCommand.CommandText = @"
+                                    INSERT INTO ArticulosImpuestos 
+                                    (ArticuloId, TasaImpuestoId, TenantId, FechaInicioAplicacion, 
+                                     Activo, FechaCreacion, CreadoPor, FechaActualizacion, ActualizadoPor)
+                                    VALUES 
+                                    (@articuloId, @tasaId, @tenantId, GETDATE(), 
+                                     1, GETDATE(), 'Sistema', GETDATE(), 'Sistema')";
+
+                                        insertCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@articuloId", articuloId));
+                                        insertCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@tasaId", tasaId));
+                                        insertCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@tenantId", TENANT_ID));
+
+                                        await insertCommand.ExecuteNonQueryAsync();
+                                        Console.WriteLine($"      ✅ TasaId {tasaId} agregado");
+                                    }
+                                }
+                            }
+
+                            // Confirmar transacción
+                            await transaction.CommitAsync();
+                            Console.WriteLine($"   ✅ Transacción confirmada - Cambios aplicados exitosamente");
+
+                            // Verificación final
+                            using (var verifyCommand = connection.CreateCommand())
+                            {
+                                verifyCommand.CommandText = @"
+                            SELECT COUNT(*) 
+                            FROM ArticulosImpuestos 
+                            WHERE ArticuloId = @articuloId 
+                                AND TenantId = @tenantId 
+                                AND Activo = 1";
+
+                                verifyCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@articuloId", articuloId));
+                                verifyCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@tenantId", TENANT_ID));
+
+                                var totalActivos = await verifyCommand.ExecuteScalarAsync();
+                                Console.WriteLine($"   📊 Total impuestos activos finales: {totalActivos}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await transaction.RollbackAsync();
+                            Console.WriteLine($"   ❌ ERROR en transacción - Rollback ejecutado");
+                            Console.WriteLine($"      Mensaje: {ex.Message}");
+                            throw;
+                        }
+                    }
                 }
 
-                // Agregar nuevos impuestos
-                if (tasasIds != null && tasasIds.Length > 0)
-                {
-                    await GuardarImpuestosArticulo(articuloId, tasasIds);
-                }
-                else
-                {
-                    await _context.SaveChangesAsync();
-                }
-
-                Console.WriteLine($"✅ Impuestos actualizados para artículo {articuloId}");
+                Console.WriteLine($"   === ActualizarImpuestosArticulo END (CON CAMBIOS APLICADOS) ===");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error actualizando impuestos: {ex.Message}");
+                Console.WriteLine($"   ❌ ERROR en ActualizarImpuestosArticulo:");
+                Console.WriteLine($"      Tipo: {ex.GetType().Name}");
+                Console.WriteLine($"      Mensaje: {ex.Message}");
+
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"      Inner: {ex.InnerException.Message}");
+                }
+
+                // NO lanzar excepción para que el artículo se guarde aunque fallen los impuestos
+                // Pero registrar el error para debugging
             }
         }
         

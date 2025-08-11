@@ -247,61 +247,72 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             modelBuilder.Entity<ArticuloImpuesto>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.ArticuloId).IsRequired();
-                entity.Property(e => e.TasaImpuestoId).IsRequired();
+                entity.ToTable("ArticulosImpuestos");
+
+                entity.Property(e => e.ArticuloId).IsRequired().HasColumnName("ArticuloId");
+                entity.Property(e => e.TasaImpuestoId).IsRequired().HasColumnName("TasaImpuestoId");
                 entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.FechaInicioAplicacion).IsRequired();
                 entity.Property(e => e.FechaFinAplicacion).IsRequired(false);
                 entity.Property(e => e.PorcentajeEspecial).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.Notas).HasMaxLength(500);
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
-
-                // Relación con Articulo
+                // 🔴 AGREGAR ESTAS DOS LÍNEAS PARA PREVENIR ArticuloId1
+                entity.Property(e => e.ArticuloId).ValueGeneratedNever();
+                entity.Property(e => e.TasaImpuestoId).ValueGeneratedNever();
                 entity.HasOne(e => e.Articulo)
                     .WithMany(a => a.ArticulosImpuestos)
                     .HasForeignKey(e => e.ArticuloId)
+                    .HasPrincipalKey(a => a.Id)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con TasaImpuesto
                 entity.HasOne(e => e.TasaImpuesto)
                     .WithMany(t => t.ArticulosImpuestos)
                     .HasForeignKey(e => e.TasaImpuestoId)
+                    .HasPrincipalKey(t => t.Id)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Índice único: un artículo solo puede tener una tasa de cada tipo de impuesto activa
                 entity.HasIndex(e => new { e.ArticuloId, e.TasaImpuestoId, e.TenantId, e.Activo })
-                    .HasFilter("[Activo] = 1");
+                    .HasFilter("[Activo] = 1")
+                    .IsUnique();
             });
+
+
 
             // 🔧 CONFIGURACIÓN SERVICIO-IMPUESTO (RELACIÓN MANY-TO-MANY)
             modelBuilder.Entity<ServicioImpuesto>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.ServicioId).IsRequired();
-                entity.Property(e => e.TasaImpuestoId).IsRequired();
+                entity.ToTable("ServiciosImpuestos");
+                
+                entity.Property(e => e.ServicioId).IsRequired().HasColumnName("ServicioId");
+                entity.Property(e => e.TasaImpuestoId).IsRequired().HasColumnName("TasaImpuestoId");
                 entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.FechaInicioAplicacion).IsRequired();
                 entity.Property(e => e.FechaFinAplicacion).IsRequired(false);
                 entity.Property(e => e.PorcentajeEspecial).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.Notas).HasMaxLength(500);
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
-
-                // Relación con Servicio
+                // 🔴 AGREGAR TAMBIÉN AQUÍ
+                entity.Property(e => e.ServicioId).ValueGeneratedNever();
+                entity.Property(e => e.TasaImpuestoId).ValueGeneratedNever();
                 entity.HasOne(e => e.Servicio)
-                    .WithMany()  // Servicio no tiene la colección ServiciosImpuestos
+                    .WithMany()
                     .HasForeignKey(e => e.ServicioId)
+                    .HasPrincipalKey(s => s.Id)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con TasaImpuesto
                 entity.HasOne(e => e.TasaImpuesto)
                     .WithMany(t => t.ServiciosImpuestos)
                     .HasForeignKey(e => e.TasaImpuestoId)
+                    .HasPrincipalKey(t => t.Id)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Índice único: un servicio solo puede tener una tasa de cada tipo de impuesto activa
                 entity.HasIndex(e => new { e.ServicioId, e.TasaImpuestoId, e.TenantId, e.Activo })
-                    .HasFilter("[Activo] = 1");
+                    .HasFilter("[Activo] = 1")
+                    .IsUnique();
             });
+
 
             // Configuración HistoricoTasaImpuesto (con propiedades correctas)
             modelBuilder.Entity<HistoricoTasaImpuesto>(entity =>

@@ -25,7 +25,7 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Edit" method="post">
+                    <form asp-action="Edit" method="post" onsubmit="return prepararEnvio();">
                         @* Preservar IDs y campos de auditoría *@
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" name="ArticuloId" value="@Model.Id" />
@@ -197,15 +197,30 @@
                                                         
                                                         <div class="col-md-4">
                                                             <div class="form-check">
-                                                                <input class="form-check-input impuesto-check" 
-                                                                       type="@(tipoCodigo == "IVA" ? "radio" : "checkbox")"
-                                                                       name="@(tipoCodigo == "IVA" ? "impuestoIVA" : "impuestosSeleccionados")"
-                                                                       value="@tasaId"
-                                                                       data-tipo="@tipoCodigo"
-                                                                       data-porcentaje="@tasaPorcentaje"
-                                                                       data-nombre="@tasaNombre"
-                                                                       @(isChecked ? "checked" : "")
-                                                                       id="tasa_@tasaId" />
+                                                                @if (tipoCodigo == "IVA")
+                                                                {
+                                                                    <input class="form-check-input impuesto-check impuesto-iva" 
+                                                                           type="radio"
+                                                                           name="impuestoIVA"
+                                                                           value="@tasaId"
+                                                                           data-tipo="@tipoCodigo"
+                                                                           data-porcentaje="@tasaPorcentaje"
+                                                                           data-nombre="@tasaNombre"
+                                                                           @(isChecked ? "checked" : "")
+                                                                           id="tasa_@tasaId" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input class="form-check-input impuesto-check impuesto-adicional" 
+                                                                           type="checkbox"
+                                                                           name="impuestosAdicionalesTemp"
+                                                                           value="@tasaId"
+                                                                           data-tipo="@tipoCodigo"
+                                                                           data-porcentaje="@tasaPorcentaje"
+                                                                           data-nombre="@tasaNombre"
+                                                                           @(isChecked ? "checked" : "")
+                                                                           id="tasa_@tasaId" />
+                                                                }
                                                                 <label class="form-check-label" for="tasa_@tasaId">
                                                                     @tasaNombre (@tasaPorcentaje%)
                                                                     @if (esDefault)
@@ -230,8 +245,10 @@
                                     </div>
                                 }
 
-                                <!-- Hidden input para enviar el IVA seleccionado -->
-                                <input type="hidden" name="impuestosSeleccionados" id="hiddenIVA" />
+                                <!-- Contenedor para los hidden inputs que se enviarán al servidor -->
+                                <div id="hiddenImpuestosContainer">
+                                    <!-- Aquí se agregarán dinámicamente los hidden inputs -->
+                                </div>
                             }
                             else
                             {
@@ -413,7 +430,7 @@
                                     <i class="fas fa-arrow-left"></i> Volver
                                 </a>
                                 
-                                <button type="submit" class="btn btn-warning" onclick="prepararEnvio(); return true;">
+                                <button type="submit" class="btn btn-warning">
                                     <i class="fas fa-save"></i> Actualizar Artículo
                                 </button>
                             </div>
@@ -433,24 +450,118 @@
     <script>
         // Función para preparar el envío del formulario
         function prepararEnvio() {
-            // Copiar el valor del radio IVA seleccionado al hidden input
+            console.log('=== Preparando envío de formulario ===');
+            
+            // Limpiar hidden inputs anteriores
+            var container = document.getElementById('hiddenImpuestosContainer');
+            container.innerHTML = '';
+            
+            // Obtener el IVA seleccionado (radio button)
             var ivaSeleccionado = document.querySelector('input[name="impuestoIVA"]:checked');
             if (ivaSeleccionado) {
-                document.getElementById('hiddenIVA').value = ivaSeleccionado.value;
-                console.log('IVA seleccionado para envío:', ivaSeleccionado.value);
+                console.log('IVA seleccionado:', ivaSeleccionado.value);
+                
+                // Crear hidden input para el IVA
+                var hiddenIVA = document.createElement('input');
+                hiddenIVA.type = 'hidden';
+                hiddenIVA.name = 'impuestosSeleccionados';
+                hiddenIVA.value = ivaSeleccionado.value;
+                container.appendChild(hiddenIVA);
+            } else {
+                console.warn('No hay IVA seleccionado');
             }
             
-            // Debug: ver todos los impuestos que se enviarán
-            var impuestosSeleccionados = document.querySelectorAll('input[name="impuestosSeleccionados"]:checked');
-            console.log('Otros impuestos seleccionados:', impuestosSeleccionados.length);
+            // Obtener los impuestos adicionales (checkboxes)
+            var impuestosAdicionales = document.querySelectorAll('input[name="impuestosAdicionalesTemp"]:checked');
+            console.log('Impuestos adicionales seleccionados:', impuestosAdicionales.length);
             
-            return true;
+            impuestosAdicionales.forEach(function(impuesto) {
+                console.log('Impuesto adicional:', impuesto.value);
+                
+                // Crear hidden input para cada impuesto adicional
+                var hiddenImpuesto = document.createElement('input');
+                hiddenImpuesto.type = 'hidden';
+                hiddenImpuesto.name = 'impuestosSeleccionados';
+                hiddenImpuesto.value = impuesto.value;
+                container.appendChild(hiddenImpuesto);
+            });
+            
+            // Debug: verificar todos los hidden inputs creados
+            var todosLosHidden = container.querySelectorAll('input[type="hidden"]');
+            console.log('Total de impuestos a enviar:', todosLosHidden.length);
+            todosLosHidden.forEach(function(hidden, index) {
+                console.log(`Impuesto ${index + 1}: ${hidden.value}`);
+            });
+            
+            return true; // Permitir el envío del formulario
         }
         
         // Disparar cálculo inicial cuando la página esté lista
         window.addEventListener('load', function() {
+            console.log('=== Página cargada - Iniciando cálculos ===');
+            
+            // Primero, asegurar que los tooltips estén inicializados
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Luego, disparar el cálculo de impuestos
             if (typeof calcularPrecioConImpuestos === 'function') {
+                console.log('Ejecutando calcularPrecioConImpuestos()...');
                 calcularPrecioConImpuestos();
+            } else {
+                console.error('La función calcularPrecioConImpuestos no está disponible');
+            }
+            
+            // También inicializar los event listeners para cambios
+            var impuestosChecks = document.querySelectorAll('.impuesto-check');
+            impuestosChecks.forEach(function(check) {
+                check.addEventListener('change', function() {
+                    console.log('Impuesto cambiado:', this.value);
+                    if (typeof calcularPrecioConImpuestos === 'function') {
+                        calcularPrecioConImpuestos();
+                    }
+                });
+            });
+            
+            // Listener para cambios en el precio
+            var precioInput = document.getElementById('Precio');
+            if (precioInput) {
+                precioInput.addEventListener('input', function() {
+                    if (typeof calcularPrecioConImpuestos === 'function') {
+                        calcularPrecioConImpuestos();
+                    }
+                });
+            }
+            
+            // Control de visibilidad de stock
+            var requiereStockCheckbox = document.getElementById('RequiereStock');
+            if (requiereStockCheckbox) {
+                requiereStockCheckbox.addEventListener('change', function() {
+                    var stockDiv = document.getElementById('stockActualDiv');
+                    var stockMinimoDiv = document.getElementById('stockMinimoDiv');
+                    if (this.checked) {
+                        stockDiv.style.display = 'block';
+                        stockMinimoDiv.style.display = 'block';
+                    } else {
+                        stockDiv.style.display = 'none';
+                        stockMinimoDiv.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Control de visibilidad de precio oferta
+            var ofertaCheckbox = document.getElementById('Oferta');
+            if (ofertaCheckbox) {
+                ofertaCheckbox.addEventListener('change', function() {
+                    var precioOfertaRow = document.getElementById('precioOfertaRow');
+                    if (this.checked) {
+                        precioOfertaRow.style.display = 'flex';
+                    } else {
+                        precioOfertaRow.style.display = 'none';
+                    }
+                });
             }
         });
     </script>
