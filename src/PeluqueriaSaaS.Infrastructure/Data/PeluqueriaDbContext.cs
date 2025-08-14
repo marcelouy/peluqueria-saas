@@ -139,27 +139,50 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             // Configuración VentaDetalle
             modelBuilder.Entity<VentaDetalle>(entity =>
             {
+                entity.ToTable("VentaDetalles");
                 entity.HasKey(vd => vd.VentaDetalleId);
+
+                // Propiedades básicas
+                entity.Property(vd => vd.VentaDetalleId).HasColumnName("VentaDetalleId");
+                entity.Property(vd => vd.VentaId).HasColumnName("VentaId").IsRequired();
+                entity.Property(vd => vd.ServicioId).HasColumnName("ServicioId").IsRequired();
                 entity.Property(vd => vd.NombreServicio).IsRequired().HasMaxLength(100);
                 entity.Property(vd => vd.PrecioUnitario).HasColumnType("decimal(10,2)");
+                entity.Property(vd => vd.Cantidad).IsRequired();
                 entity.Property(vd => vd.Subtotal).HasColumnType("decimal(10,2)");
+                entity.Property(vd => vd.EmpleadoServicioId).HasColumnName("EmpleadoServicioId").IsRequired(false);
                 entity.Property(vd => vd.NotasServicio).HasMaxLength(200).IsRequired(false);
                 entity.Property(vd => vd.TenantId).IsRequired().HasMaxLength(50);
+                entity.Property(vd => vd.FechaCreacion).IsRequired();
 
-                // Relaciones
+                // CRÍTICO: Prevenir shadow properties
+                entity.Property(vd => vd.VentaId).ValueGeneratedNever();
+                entity.Property(vd => vd.ServicioId).ValueGeneratedNever();
+                entity.Property(vd => vd.EmpleadoServicioId).ValueGeneratedNever();
+
+                // IGNORAR EXPLÍCITAMENTE cualquier ArticuloId
+                entity.Ignore("ArticuloId");
+                entity.Ignore("ArticuloId1");
+                entity.Ignore("Articulo");
+
+                // Relaciones EXPLÍCITAS con nombres de columna
                 entity.HasOne(vd => vd.Venta)
                     .WithMany(v => v.VentaDetalles)
                     .HasForeignKey(vd => vd.VentaId)
+                    .HasPrincipalKey(v => v.VentaId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(vd => vd.Servicio)
                     .WithMany()
                     .HasForeignKey(vd => vd.ServicioId)
+                    .HasPrincipalKey(s => s.Id)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(vd => vd.EmpleadoServicio)
                     .WithMany()
                     .HasForeignKey(vd => vd.EmpleadoServicioId)
+                    .HasPrincipalKey(e => e.Id)
+                    .IsRequired(false)
                     .OnDelete(DeleteBehavior.SetNull);
 
                 // Índices

@@ -1,9 +1,3 @@
-@*
-  Archivo: src/PeluqueriaSaaS.Web/Views/Shared/_Layout.cshtml
-  Actualizado: Julio 2025
-  Cambios: Añadida jQuery + removido site.js faltante
-*@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,11 +11,17 @@
     <!-- Font Awesome para iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- ⭐ CSS UNIFICADO - NUEVO -->
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    
+    <!-- CSS UNIFICADO -->
     <link href="~/css/peluqueria-styles.css" rel="stylesheet" />
     
     <!-- CSS personalizado adicional -->
     <link href="~/css/site.css" rel="stylesheet" />
+    
+    <!-- CSS Mejoras Ventas -->
+    <link href="~/css/ventas-mejoras.css" rel="stylesheet" />
     
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -46,18 +46,18 @@
                             Inicio
                         </a>
                     </li>
-                    <li class="nav-item"></li>
+                    <li class="nav-item">
                         <a class="nav-link" href="@Url.Action("POS", "Ventas")">
                             <i class="fas fa-cash-register text-success"></i>
                             POS
                         </a>
                     </li>
-                    <li class="nav-item"></li>
+                    <li class="nav-item">
                         <a class="nav-link" asp-controller="Articulos" asp-action="Index">
                             <i class="fas fa-box"></i> Artículos
                         </a>
                     </li>
-                    <li class="nav-item"></li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/Servicios">
                             <i class="fas fa-scissors me-1"></i>
                             Servicios
@@ -69,7 +69,7 @@
                             Clientes
                         </a>
                     </li>
-                    <li class="nav-item"></li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/Empleados">
                             <i class="fas fa-users me-1"></i>
                             Empleados
@@ -79,6 +79,24 @@
             </div>
         </div>
     </nav>
+
+    <!-- Hidden divs para TempData (para toastr) -->
+    @if (TempData["Success"] != null)
+    {
+        <div data-tempdata-success="@TempData["Success"]" style="display:none;"></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div data-tempdata-error="@TempData["Error"]" style="display:none;"></div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div data-tempdata-warning="@TempData["Warning"]" style="display:none;"></div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div data-tempdata-info="@TempData["Info"]" style="display:none;"></div>
+    }
 
     <!-- Contenido principal -->
     <main class="fade-in">
@@ -102,14 +120,32 @@
                     <p class="text-muted mb-0">
                         © @DateTime.Now.Year - Todos los derechos reservados
                     </p>
+                    <!-- Botón temporal para toggle admin -->
+                    <button onclick="toggleAdminMode()" class="btn btn-sm btn-outline-secondary mt-2">
+                        <i class="fas fa-user-shield"></i> Toggle Admin
+                    </button>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- ⚡ SCRIPTS CORREGIDOS - jQuery agregado, site.js removido -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    
+    <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Configuración Toastr -->
+    <script src="~/js/toastr-config.js"></script>
+    
+    <!-- Validación y preservación de ventas -->
+    <script src="~/js/ventas-validacion.js"></script>
+    
+    <!-- Control de fecha por rol -->
+    <script src="~/js/ventas-fecha-control.js"></script>
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>
