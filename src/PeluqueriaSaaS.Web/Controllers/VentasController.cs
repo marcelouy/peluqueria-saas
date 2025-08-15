@@ -165,7 +165,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"=== DEBUG POST VENTA NIVEL 1 ===");
                 Console.WriteLine($"POST method called at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                 Console.WriteLine($"model es null: {model == null}");
-                
+
                 if (model == null)
                 {
                     Console.WriteLine($"❌ Model is null - returning to POS");
@@ -174,7 +174,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 }
 
                 Console.WriteLine($"VentaActual es null: {model.VentaActual == null}");
-                
+
                 if (model.VentaActual == null)
                 {
                     Console.WriteLine($"❌ VentaActual is null - returning to POS");
@@ -189,7 +189,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"VentaActual.Descuento: {model.VentaActual.Descuento}");
                 Console.WriteLine($"VentaActual.FechaVenta: {model.VentaActual.FechaVenta}");
                 Console.WriteLine($"VentaActual.Observaciones: '{model.VentaActual.Observaciones}'");
-                
+
                 // Verificar Detalles
                 Console.WriteLine($"Detalles es null: {model.VentaActual.Detalles == null}");
                 Console.WriteLine($"Detalles count: {model.VentaActual.Detalles?.Count ?? 0}");
@@ -203,10 +203,10 @@ namespace PeluqueriaSaaS.Web.Controllers
                 if (!ModelState.IsValid)
                 {
                     Console.WriteLine($"❌ VALIDATION FAILED - ModelState invalid");
-                    
+
                     // ✅ MENSAJES ESPECÍFICOS POR ERROR
                     var erroresEspecificos = new List<string>();
-                    
+
                     foreach (var modelError in ModelState)
                     {
                         foreach (var error in modelError.Value.Errors)
@@ -214,7 +214,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                             erroresEspecificos.Add($"• {error.ErrorMessage}");
                         }
                     }
-                    
+
                     if (erroresEspecificos.Any())
                     {
                         TempData["Warning"] = $"Por favor corrige los siguientes campos:\n{string.Join("\n", erroresEspecificos)}";
@@ -223,7 +223,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     {
                         TempData["Warning"] = "Por favor revisa los datos del formulario";
                     }
-                    
+
                     // ✅ MANTENER DATOS - Recargar vista con modelo actual
                     await CargarDatosPOS(model);
                     return View(model);
@@ -234,7 +234,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 {
                     Console.WriteLine($"=== DEBUG POST VENTA NIVEL 4 - DETALLES ===");
                     Console.WriteLine($"Total detalles para procesar: {model.VentaActual.Detalles.Count}");
-                    
+
                     for (int i = 0; i < model.VentaActual.Detalles.Count; i++)
                     {
                         var detalle = model.VentaActual.Detalles[i];
@@ -262,9 +262,9 @@ namespace PeluqueriaSaaS.Web.Controllers
                 if (model.VentaActual.Detalles?.Any() != true)
                 {
                     Console.WriteLine($"❌ VALIDATION FAILED - No services selected");
-                    
+
                     TempData["Warning"] = "⚠️ Debe agregar al menos un servicio a la venta para poder procesarla. Use el panel de servicios para seleccionar los servicios que el cliente desea.";
-                    
+
                     // ✅ MANTENER DATOS - Recargar vista con modelo actual
                     await CargarDatosPOS(model);
                     return View(model);
@@ -274,9 +274,9 @@ namespace PeluqueriaSaaS.Web.Controllers
                 if (model.VentaActual.EmpleadoId <= 0)
                 {
                     Console.WriteLine($"❌ VALIDATION FAILED - No employee selected");
-                    
+
                     TempData["Warning"] = "⚠️ Debe seleccionar un empleado. El empleado es obligatorio para tracking de comisiones y responsabilidad de la venta.";
-                    
+
                     // ✅ MANTENER DATOS - Recargar vista con modelo actual
                     await CargarDatosPOS(model);
                     return View(model);
@@ -288,7 +288,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 {
                     clienteIdFinal = await ObtenerClientePorDefectoId();
                     Console.WriteLine($"🏪 Cliente no seleccionado - usando cliente por defecto: {clienteIdFinal}");
-                    
+
                     // ✅ MENSAJE INFORMATIVO (NO ERROR)
                     TempData["Info"] = "ℹ️ No se seleccionó cliente específico. La venta se asignará a 'Cliente Ocasional' automáticamente.";
                 }
@@ -325,16 +325,16 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"=== DEBUG POST VENTA NIVEL 7 - VENTADETALLES ===");
 
                 venta.VentaDetalles = new List<VentaDetalle>();
-                
+
                 foreach (var detalleDto in model.VentaActual.Detalles)
                 {
                     Console.WriteLine($"Processing detalle: ServicioId={detalleDto.ServicioId}");
-                    
+
                     var ventaDetalle = new VentaDetalle
                     {
                         ServicioId = detalleDto.ServicioId,
-                        NombreServicio = !string.IsNullOrEmpty(detalleDto.NombreServicio) 
-                            ? detalleDto.NombreServicio 
+                        NombreServicio = !string.IsNullOrEmpty(detalleDto.NombreServicio)
+                            ? detalleDto.NombreServicio
                             : $"Servicio-{detalleDto.ServicioId}",
                         PrecioUnitario = detalleDto.PrecioUnitario,
                         Cantidad = detalleDto.Cantidad,
@@ -375,13 +375,13 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Console.WriteLine($"❌ REPOSITORY ERROR:");
                     Console.WriteLine($"  Message: {repositoryEx.Message}");
                     Console.WriteLine($"  StackTrace: {repositoryEx.StackTrace}");
-                    
+
                     if (repositoryEx.InnerException != null)
                     {
                         Console.WriteLine($"  InnerException: {repositoryEx.InnerException.Message}");
                         Console.WriteLine($"  InnerStackTrace: {repositoryEx.InnerException.StackTrace}");
                     }
-                    
+
                     throw; // Re-throw para capturar en outer catch
                 }
 
@@ -394,11 +394,11 @@ namespace PeluqueriaSaaS.Web.Controllers
                 var empleadoNombre = "Empleado";
                 var clienteNombre = "Cliente";
 
-                try 
+                try
                 {
                     var empleado = await _dbContext.Empleados.FindAsync(venta.EmpleadoId);
                     var cliente = await _dbContext.Clientes.FindAsync(venta.ClienteId);
-                    
+
                     empleadoNombre = empleado?.Nombre ?? "Empleado";
                     clienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente Ocasional";
                 }
@@ -412,8 +412,8 @@ namespace PeluqueriaSaaS.Web.Controllers
                                      $"👨‍💼 Empleado: {empleadoNombre}\n" +
                                      $"👤 Cliente: {clienteNombre}\n" +
                                      $"📋 Servicios: {venta.VentaDetalles.Count}";
-                
-                return RedirectToAction(nameof(Index));
+
+                return RedirectToAction(nameof(POS));
             }
             catch (Exception ex)
             {
@@ -421,7 +421,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 Console.WriteLine($"Exception Type: {ex.GetType().Name}");
                 Console.WriteLine($"Exception Message: {ex.Message}");
                 Console.WriteLine($"Exception StackTrace: {ex.StackTrace}");
-                
+
                 if (ex.InnerException != null)
                 {
                     Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
@@ -443,19 +443,19 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 Console.WriteLine($"🔄 Recargando datos POS manteniendo información del usuario...");
-                
+
                 // Verificar que model y VentaActual existan
                 if (model == null)
                 {
                     Console.WriteLine($"❌ Model es null en CargarDatosPOS");
                     return;
                 }
-                
+
                 if (model.VentaActual == null)
                 {
                     model.VentaActual = new CreateVentaDto();
                 }
-                
+
                 // Recargar empleados para dropdown
                 var empleados = await _empleadoRepository.GetAllAsync();
                 model.Empleados = empleados.Where(e => e.EsActivo).Select(e => new EmpleadoBasicoDto
@@ -489,24 +489,24 @@ namespace PeluqueriaSaaS.Web.Controllers
 
                 // Recargar servicios agrupados
                 model.ServiciosAgrupados = await CargarServiciosAgrupados();
-                
+
                 Console.WriteLine($"✅ Servicios agrupados cargados: {model.ServiciosAgrupados.Count} categorías");
                 Console.WriteLine($"✅ Servicios seleccionados mantenidos: {model.VentaActual?.Detalles?.Count ?? 0}");
-                
+
                 // Inicializar listas si son null
                 model.VentaActual.Detalles ??= new List<CreateVentaDetalleDto>();
-                
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error recargando datos POS: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                
+
                 // En caso de error, mantener listas vacías para evitar errores de vista
                 model.Empleados ??= new List<EmpleadoBasicoDto>();
                 model.Clientes ??= new List<ClienteBasicoDto>();
                 model.ServiciosAgrupados ??= new Dictionary<string, List<ServicioBasicoDto>>();
-                
+
                 if (model.VentaActual == null)
                 {
                     model.VentaActual = new CreateVentaDto();
@@ -692,60 +692,64 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 Console.WriteLine($"🧾 Generando resumen para venta: {ventaId}");
-                
+
                 // Verificar si resumen está habilitado
                 var settings = await _settingsRepository.GetSettingsAsync();
                 if (settings == null || !settings.ResumenServicioHabilitado)
                 {
-                    return Json(new { 
-                        success = false, 
-                        message = "El resumen de servicio no está habilitado. Configure en Settings." 
+                    return Json(new
+                    {
+                        success = false,
+                        message = "El resumen de servicio no está habilitado. Configure en Settings."
                     });
                 }
-                
+
                 // Obtener datos de la venta
                 var venta = await _dbContext.Ventas
                     .Where(v => v.VentaId == ventaId && v.TenantId == TENANT_ID)
                     .FirstOrDefaultAsync();
-                    
+
                 if (venta == null)
                 {
-                    return Json(new { 
-                        success = false, 
-                        message = "Venta no encontrada" 
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Venta no encontrada"
                     });
                 }
-                
+
                 // Obtener detalles de la venta
                 var ventaDetalles = await _dbContext.VentaDetalles
                     .Where(vd => vd.VentaId == ventaId)
                     .ToListAsync();
-                
+
                 // ✅ FIX: EmpleadoId nullable correction
                 var empleado = venta.EmpleadoId > 0 ?
                     await _dbContext.Empleados.FindAsync(venta.EmpleadoId) : null;
-                
+
                 // Obtener datos cliente
                 var cliente = await _dbContext.Clientes
                     .Where(c => c.Id == venta.ClienteId)
                     .Select(c => new { c.Nombre, c.Apellido })
                     .FirstOrDefaultAsync();
-                
+
                 // Crear objeto venta para template
-                var ventaData = new {
+                var ventaData = new
+                {
                     Id = venta.VentaId,
                     FechaVenta = venta.FechaVenta,
                     Total = venta.Total,
                     ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente"
                 };
-                
+
                 // Generar HTML del resumen
                 var resumenHtml = GenerarResumenHTML(settings, ventaData, ventaDetalles, empleado);
-                
+
                 Console.WriteLine($"✅ Resumen generado exitosamente para venta {ventaId}");
-                
-                return Json(new { 
-                    success = true, 
+
+                return Json(new
+                {
+                    success = true,
                     html = resumenHtml,
                     ventaId = ventaId
                 });
@@ -753,14 +757,15 @@ namespace PeluqueriaSaaS.Web.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error generando resumen: {ex.Message}");
-                return Json(new { 
-                    success = false, 
-                    message = "Error al generar el resumen de servicio" 
+                return Json(new
+                {
+                    success = false,
+                    message = "Error al generar el resumen de servicio"
                 });
             }
         }
 
-        
+
         /// <summary>
         /// Descargar resumen como PDF
         /// UBICACIÓN: Agregar al final de VentasController.cs antes del último }
@@ -771,54 +776,55 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 Console.WriteLine($"📥 Descargando PDF resumen venta: {ventaId}");
-                
+
                 // Verificar settings habilitado
                 var settings = await _settingsRepository.GetSettingsAsync();
                 if (settings == null || !settings.ResumenServicioHabilitado)
                 {
                     return BadRequest("Resumen de servicio no habilitado");
                 }
-                
+
                 // Obtener datos venta
                 var venta = await _dbContext.Ventas
                     .Where(v => v.VentaId == ventaId && v.TenantId == TENANT_ID)
                     .FirstOrDefaultAsync();
-                    
+
                 if (venta == null)
                 {
                     return NotFound("Venta no encontrada");
                 }
-                
+
                 var ventaDetalles = await _dbContext.VentaDetalles
                     .Where(vd => vd.VentaId == ventaId)
                     .ToListAsync();
-                    
+
                 // ✅ FIX: EmpleadoId int type handling (not nullable)  
-                var empleado = venta.EmpleadoId > 0 ? 
+                var empleado = venta.EmpleadoId > 0 ?
                     await _dbContext.Empleados.FindAsync(venta.EmpleadoId) : null;
-                
+
                 var cliente = await _dbContext.Clientes
                     .Where(c => c.Id == venta.ClienteId)
                     .Select(c => new { c.Nombre, c.Apellido })
                     .FirstOrDefaultAsync();
-                
-                var ventaData = new {
+
+                var ventaData = new
+                {
                     Id = venta.VentaId,
                     FechaVenta = venta.FechaVenta,
                     Total = venta.Total,
                     ClienteNombre = cliente != null ? $"{cliente.Nombre} {cliente.Apellido}".Trim() : "Cliente"
                 };
-                
+
                 // Generar HTML
                 var resumenHtml = GenerarResumenHTML(settings, ventaData, ventaDetalles, empleado);
-                
+
                 // Convertir a PDF (implementación básica)
                 var pdfBytes = GenerarPDFFromHTML(resumenHtml, $"Resumen_Venta_{ventaId}");
-                
+
                 var fileName = $"resumen_venta_{ventaId}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-                
+
                 Console.WriteLine($"✅ PDF generado: {fileName}");
-                
+
                 return File(pdfBytes, "application/pdf", fileName);
             }
             catch (Exception ex)
@@ -837,19 +843,19 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 Console.WriteLine($"🔍 Buscando cliente por defecto...");
-                
+
                 // Buscar primer cliente activo del tenant
                 var primerCliente = await _dbContext.Clientes
                     .Where(c => c.TenantId == TENANT_ID && c.EsActivo)
                     .OrderBy(c => c.Id)  // Tomar el primero por ID
                     .FirstOrDefaultAsync();
-                
+
                 if (primerCliente != null)
                 {
                     Console.WriteLine($"✅ Cliente por defecto encontrado: ID {primerCliente.Id} - {primerCliente.Nombre} {primerCliente.Apellido}");
                     return primerCliente.Id;
                 }
-                
+
                 Console.WriteLine($"⚠️ No se encontraron clientes activos - usando fallback ID 1");
                 return 1; // Fallback básico
             }
@@ -887,27 +893,27 @@ namespace PeluqueriaSaaS.Web.Controllers
             var empleadoNombre = empleado?.Nombre ?? "Empleado";
             var fechaVenta = venta.FechaVenta ?? DateTime.Now;
             var totalVenta = venta.Total ?? 0;
-            
+
             // Construir servicios HTML
             var serviciosHtml = "";
             if (settings.MostrarDetalleServicios && ventaDetalles != null)
             {
                 var serviciosDetalle = "";
                 decimal subtotal = 0;
-                
+
                 foreach (var detalle in ventaDetalles)
                 {
                     var servicioNombre = detalle.NombreServicio ?? "Servicio";
                     var precio = detalle.PrecioUnitario ?? 0;
                     subtotal += precio;
-                    
+
                     serviciosDetalle += $@"
                         <div style='border-bottom: 1px dotted #ccc; padding: 5px 0; display: flex; justify-content: space-between;'>
                             <span>{servicioNombre}</span>
                             <span>{settings.SimboloMoneda} {precio:N0}</span>
                         </div>";
                 }
-                
+
                 serviciosHtml = $@"
                     <div style='margin: 15px 0;'>
                         <strong>Servicios Realizados:</strong>
@@ -916,7 +922,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                         </div>
                     </div>";
             }
-            
+
             // Template principal
             if (settings.UsarTemplateCustom && !string.IsNullOrEmpty(settings.TemplateCustomHTML))
             {
@@ -927,7 +933,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     .Replace("{{FECHA}}", fechaVenta.ToString("dd/MM/yyyy HH:mm"))
                     .Replace("{{TOTAL}}", $"{settings.SimboloMoneda} {totalVenta:N0}")
                     .Replace("{{SERVICIOS}}", serviciosHtml);
-                
+
                 return $@"
                     <div class='resumen-container'>
                         <div class='resumen-custom'>
@@ -935,14 +941,14 @@ namespace PeluqueriaSaaS.Web.Controllers
                         </div>
                     </div>";
             }
-            
+
             // Template estándar con datos reales
             var logoHtml = "";
             if (settings.MostrarLogoEnResumen && !string.IsNullOrEmpty(settings.RutaLogo))
             {
                 logoHtml = $@"<img src='{settings.RutaLogo}' alt='Logo' style='max-height: 60px; margin-bottom: 10px;' onerror='this.style.display=""none""'>";
             }
-            
+
             var encabezadoHtml = "";
             if (!string.IsNullOrEmpty(settings.ResumenEncabezado))
             {
@@ -958,23 +964,23 @@ namespace PeluqueriaSaaS.Web.Controllers
                         {settings.ResumenEncabezado}
                     </div>";
             }
-            
+
             var datosClienteHtml = settings.MostrarDatosCliente ? $@"
                 <div style='margin-bottom: 10px;'>
                     <strong>Cliente:</strong> <span style='color: {settings.ColorSecundario};'>{clienteNombre}</span>
                 </div>" : "";
-            
+
             // ✅ FIX: empleadoHtml variable declared correctly
             var empleadoHtml = settings.MostrarEmpleadoServicio ? $@"
                 <div style='margin-bottom: 10px;'>
                     <strong>Atendido por:</strong> <span style='color: {settings.ColorSecundario};'>{empleadoNombre}</span>
                 </div>" : "";
-            
+
             var fechaHtml = settings.MostrarFechaHora ? $@"
                 <div style='margin-bottom: 10px;'>
                     <strong>Fecha y Hora:</strong> {fechaVenta:dd/MM/yyyy HH:mm}
                 </div>" : "";
-            
+
             var totalHtml = settings.MostrarTotalServicio ? $@"
                 <div style='
                     margin-top: 15px;
@@ -986,7 +992,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                         TOTAL: {settings.SimboloMoneda} {totalVenta:N0}
                     </strong>
                 </div>" : "";
-            
+
             var piePaginaHtml = !string.IsNullOrEmpty(settings.ResumenPiePagina) ? $@"
                 <div style='
                     margin-top: 20px;
@@ -998,7 +1004,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 '>
                     {settings.ResumenPiePagina}
                 </div>" : "";
-            
+
             return $@"
                 <div class='resumen-container'>
                     <div class='resumen-print' style='
@@ -1097,9 +1103,214 @@ namespace PeluqueriaSaaS.Web.Controllers
                     {html}
                 </body>
                 </html>";
-            
+
             // Por ahora HTML como PDF (en producción usar iTextSharp o similar)
             return System.Text.Encoding.UTF8.GetBytes(htmlCompleto);
+        }
+        
+        // Buscar empleados para Select2
+        [HttpGet]
+        public async Task<IActionResult> BuscarEmpleados(string q = "", int page = 1)
+        {
+            const int pageSize = 20;
+            
+            try
+            {
+                // Query base
+                var query = _dbContext.Empleados
+                    .Where(e => e.EsActivo);
+                
+                // Aplicar búsqueda si hay término
+                if (!string.IsNullOrWhiteSpace(q))
+                {
+                    q = q.ToLower();
+                    query = query.Where(e => 
+                        e.Nombre.ToLower().Contains(q) ||
+                        e.Apellido.ToLower().Contains(q) ||
+                        e.Cargo.ToLower().Contains(q) ||
+                        (e.Telefono != null && e.Telefono.Contains(q))
+                    );
+                }
+                
+                // Contar total
+                var total = await query.CountAsync();
+                
+                // Paginar y obtener resultados
+                var empleados = await query
+                    .OrderBy(e => e.Nombre)
+                    .ThenBy(e => e.Apellido)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(e => new
+                    {
+                        empleadoId = e.Id,
+                        nombre = e.Nombre,
+                        apellido = e.Apellido,
+                        cargo = e.Cargo,
+                        telefono = e.Telefono,
+                        esActivo = e.EsActivo
+                    })
+                    .ToListAsync();
+                
+                return Json(new
+                {
+                    items = empleados,
+                    hasMore = (page * pageSize) < total
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en BuscarEmpleados: {ex.Message}");
+                return Json(new { items = new List<object>(), hasMore = false });
+            }
+        }
+
+        // Buscar clientes para Select2
+        [HttpGet]
+        public async Task<IActionResult> BuscarClientes(string q = "", int page = 1)
+        {
+            const int pageSize = 20;
+            
+            try
+            {
+                // Query base - CORREGIDO: _dbContext con C mayúscula
+                var query = _dbContext.Clientes
+                    .Where(c => c.EsActivo);
+                
+                // Aplicar búsqueda si hay término
+                if (!string.IsNullOrWhiteSpace(q))
+                {
+                    q = q.ToLower();
+                    query = query.Where(c => 
+                        c.Nombre.ToLower().Contains(q) ||
+                        c.Apellido.ToLower().Contains(q) ||
+                        (c.Telefono != null && c.Telefono.Contains(q)) ||
+                        (c.Email != null && c.Email.ToLower().Contains(q))
+                    );
+                }
+                
+                // Contar total
+                var total = await query.CountAsync();
+                
+                // Obtener clientes con información de visitas - CORREGIDO: _dbContext
+                var clientes = await query
+                    .OrderBy(c => c.Nombre)
+                    .ThenBy(c => c.Apellido)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new
+                    {
+                        clienteId = c.Id,
+                        nombre = c.Nombre,
+                        apellido = c.Apellido,
+                        telefono = c.Telefono,
+                        email = c.Email,
+                        totalVisitas = _dbContext.Ventas.Count(v => v.ClienteId == c.Id),
+                        ultimaVisita = _dbContext.Ventas
+                            .Where(v => v.ClienteId == c.Id)
+                            .OrderByDescending(v => v.FechaVenta)
+                            .Select(v => v.FechaVenta)
+                            .FirstOrDefault()
+                    })
+                    .ToListAsync();
+                
+                return Json(new
+                {
+                    items = clientes,
+                    hasMore = (page * pageSize) < total
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en BuscarClientes: {ex.Message}");
+                return Json(new { items = new List<object>(), hasMore = false });
+            }
+        }
+
+        // Obtener clientes frecuentes
+        [HttpGet]
+        public async Task<IActionResult> ClientesFrecuentes()
+        {
+            try
+            {
+                var fechaInicio = DateTime.Now.AddMonths(-3); // Últimos 3 meses
+                
+                // CORREGIDO: _dbContext con C mayúscula
+                var clientesFrecuentes = await _dbContext.Ventas
+                    .Where(v => v.FechaVenta >= fechaInicio)
+                    .GroupBy(v => new { v.ClienteId, v.Cliente.Nombre, v.Cliente.Apellido })
+                    .Select(g => new
+                    {
+                        clienteId = g.Key.ClienteId,
+                        nombre = g.Key.Nombre,
+                        apellido = g.Key.Apellido,
+                        visitas = g.Count()
+                    })
+                    .OrderByDescending(c => c.visitas)
+                    .Take(10)
+                    .ToListAsync();
+                
+                return Json(clientesFrecuentes);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en ClientesFrecuentes: {ex.Message}");
+                return Json(new List<object>());
+            }
+        }
+
+        // Crear cliente rápido desde POS
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearClienteRapido(string nombre, string apellido, string telefono, string email)
+        {
+            try
+            {
+                // Validación básica
+                if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) || string.IsNullOrWhiteSpace(telefono))
+                {
+                    return Json(new { success = false, message = "Faltan datos obligatorios" });
+                }
+                
+                // Verificar si ya existe por teléfono - CORREGIDO: _dbContext
+                var existente = await _dbContext.Clientes
+                    .FirstOrDefaultAsync(c => c.Telefono == telefono);
+                
+                if (existente != null)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = $"Ya existe un cliente con ese teléfono: {existente.Nombre} {existente.Apellido}" 
+                    });
+                }
+                
+                // CORREGIDO: Usar el constructor correcto de Cliente
+                var nuevoCliente = new Cliente(
+                    nombre: nombre,
+                    apellido: apellido,
+                    email: string.IsNullOrWhiteSpace(email) ? null : email,
+                    telefono: telefono,
+                    fechaNacimiento: null
+                );
+                
+                // SetTenant si es necesario (ya se llama en el constructor con "default-tenant")
+                nuevoCliente.SetTenant(TENANT_ID);
+                
+                // CORREGIDO: _dbContext con C mayúscula
+                _dbContext.Clientes.Add(nuevoCliente);
+                await _dbContext.SaveChangesAsync();
+                
+                return Json(new { 
+                    success = true, 
+                    clienteId = nuevoCliente.Id,
+                    message = "Cliente creado exitosamente" 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en CrearClienteRapido: {ex.Message}");
+                return Json(new { success = false, message = "Error al crear cliente" });
+            }
         }
     }
 }

@@ -3,23 +3,26 @@
     ViewData["Title"] = "POS - Punto de Venta";
 }
 
+@functions {
+    string GetCategoriaIcon(string categoria)
+    {
+        return categoria.ToLower() switch
+        {
+            var c when c.Contains("corte") => "cut",
+            var c when c.Contains("tratamiento") => "spa", 
+            var c when c.Contains("peinado") => "brush",
+            var c when c.Contains("barba") => "scissors",
+            var c when c.Contains("coloración") => "palette",
+            var c when c.Contains("manicure") => "hand-sparkles",
+            _ => "star"
+        };
+    }
+}
+
 @section Styles {
     <link rel="stylesheet" href="~/css/pos.css" />
     <link rel="stylesheet" href="~/css/pos-tablet.css" />
 }
-
-<!-- DEBUG TEMPORAL -->
-@* <div class="alert alert-info">
-    <strong>DEBUG:</strong><br>
-    Empleados count: @Model.Empleados.Count<br>
-    Clientes count: @Model.Clientes.Count<br>
-    @if(Model.Empleados.Any()) {
-        <text>Primer empleado: @Model.Empleados.First().Nombre (ID: @Model.Empleados.First().EmpleadoId)</text><br>
-    }
-    @if(Model.Clientes.Any()) {
-        <text>Primer cliente: @Model.Clientes.First().Nombre (ID: @Model.Clientes.First().ClienteId)</text>
-    }
-</div> *@
 
 <div class="container-fluid">
     <div class="row">
@@ -81,58 +84,74 @@
                             </div>
                         </div>
 
-                        <!-- SERVICIOS DISPONIBLES - TABLET CATEGORIZED -->
+                        <!-- SERVICIOS DISPONIBLES - MOBILE PROFESSIONAL -->
                         <div class="mb-4">
-                            <h6 class="border-bottom pb-2">
-                                <i class="fas fa-cut"></i>
-                                Servicios Disponibles
-                            </h6>
-                            
-                            <!-- BUSCADOR TABLET -->
-                            <div class="mb-3">
-                                <input type="text" 
-                                       id="buscadorServicios" 
-                                       class="form-control form-control-lg" 
-                                       placeholder="🔍 Buscar servicios..." 
-                                       style="font-size: 1.1rem;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-cut me-2"></i>Servicios Disponibles
+                                </h6>
+                                <small class="text-muted">
+                                    <span id="serviciosCount">@Model.ServiciosAgrupados.Sum(g => g.Value.Count())</span> servicios
+                                </small>
                             </div>
                             
-                            <!-- CATEGORÍAS SERVICIOS -->
+                            <!-- BUSCADOR MÓVIL OPTIMIZADO -->
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" 
+                                           id="buscadorServicios" 
+                                           class="form-control form-control-lg" 
+                                           placeholder="🔍 Buscar servicios..."
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                            <!-- SERVICIOS CATEGORIZADOS - UX MEJORADA -->
                             <div id="categoriasServicios">
-                                @foreach (var categoria in Model.ServiciosAgrupados)
+                                @foreach (var grupo in Model.ServiciosAgrupados.Select((value, index) => new { value, index }))
                                 {
-                                    <div class="categoria-servicio mb-3" data-categoria="@categoria.Key.ToLower()">
-                                        <!-- HEADER CATEGORÍA -->
+                                    <div class="categoria-servicio mb-2" data-categoria="@grupo.value.Key.ToLower()">
+                                        <!-- HEADER CATEGORÍA MEJORADO -->
                                         <button type="button" 
-                                                class="btn btn-outline-secondary w-100 text-start categoria-toggle"
+                                                class="btn btn-outline-primary w-100 text-start categoria-toggle d-flex justify-content-between align-items-center"
                                                 data-bs-toggle="collapse" 
-                                                data-bs-target="#categoria-@categoria.Key.Replace(" ", "")"
-                                                style="padding: 12px; font-size: 1.1rem;">
-                                            <i class="fas fa-folder me-2"></i>
-                                            <strong>@categoria.Key</strong>
-                                            <span class="badge bg-primary ms-2">@categoria.Value.Count</span>
-                                            <i class="fas fa-chevron-down float-end"></i>
+                                                data-bs-target="#categoria-@grupo.index"
+                                                aria-expanded="@(grupo.index == 0 ? "true" : "false")"
+                                                data-categoria-id="@grupo.index">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-@(GetCategoriaIcon(grupo.value.Key)) me-2 text-primary"></i>
+                                                <strong>@grupo.value.Key</strong>
+                                                <span class="badge bg-primary ms-2">@grupo.value.Value.Count</span>
+                                            </div>
+                                            <i class="fas fa-chevron-down categoria-chevron"></i>
                                         </button>
                                         
                                         <!-- SERVICIOS DE LA CATEGORÍA -->
-                                        <div class="collapse show" id="categoria-@categoria.Key.Replace(" ", "")">
-                                            <div class="row mt-2">
-                                                @foreach (var servicio in categoria.Value)
+                                        <div class="collapse @(grupo.index == 0 ? "show" : "")" 
+                                             id="categoria-@grupo.index" 
+                                             data-bs-parent="#categoriasServicios">
+                                            <div class="categoria-content mt-2">
+                                                @foreach (var servicio in grupo.value.Value)
                                                 {
-                                                    <div class="col-md-6 col-lg-4 mb-2 servicio-item" 
+                                                    <div class="servicio-item mb-2" 
                                                          data-nombre="@servicio.Nombre.ToLower()" 
                                                          data-tipo="@servicio.TipoServicioNombre.ToLower()">
                                                         <button type="button" 
-                                                                class="btn btn-outline-primary w-100 btn-agregar-servicio btn-tablet" 
+                                                                class="btn btn-outline-success w-100 btn-agregar-servicio servicio-btn-mobile" 
                                                                 data-servicio-id="@servicio.ServicioId"
                                                                 data-servicio-nombre="@servicio.Nombre"
                                                                 data-servicio-precio="@servicio.Precio.ToString("F2")"
                                                                 data-servicio-tipo="@servicio.TipoServicioNombre">
-                                                            <div class="text-start">
-                                                                <strong>@servicio.Nombre</strong><br>
-                                                                <small class="text-muted">@servicio.TipoServicioNombre</small><br>
-                                                                <span class="text-success fs-6">$@servicio.Precio.ToString("F2")</span>
-                                                                <span class="text-muted ms-2">(@servicio.DuracionMinutos min)</span>
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <div class="servicio-info">
+                                                                    <div class="servicio-nombre">@servicio.Nombre</div>
+                                                                    <small class="servicio-duracion text-muted">@servicio.DuracionMinutos min</small>
+                                                                </div>
+                                                                <div class="servicio-precio-container">
+                                                                    <span class="servicio-precio fw-bold text-success">$@servicio.Precio.ToString("N0")</span>
+                                                                </div>
                                                             </div>
                                                         </button>
                                                     </div>
@@ -147,6 +166,7 @@
                             <div id="sinResultados" class="text-center py-4" style="display: none;">
                                 <i class="fas fa-search fa-2x text-muted mb-2"></i>
                                 <p class="text-muted">No se encontraron servicios</p>
+                                <small class="text-muted">Intenta con otros términos de búsqueda</small>
                             </div>
                         </div>
 
@@ -272,7 +292,39 @@
         <!-- ⚡ HIDDEN INPUTS MOVIDOS DENTRO DEL FORM -->
         <div id="hiddenInputsContainer"></div>
     }
+    
     @section Scripts {
         <script src="~/js/pos-funciones.js"></script>
+        <script>
+            // MEJORA UX: Solo una categoría abierta a la vez
+            $(document).ready(function() {
+                // Configurar accordion behavior
+                $('#categoriasServicios .categoria-toggle').on('click', function() {
+                    const target = $(this).attr('data-bs-target');
+                    const isExpanded = $(this).attr('aria-expanded') === 'true';
+                    
+                    if (!isExpanded) {
+                        // Cerrar todas las demás categorías
+                        $('#categoriasServicios .collapse.show').each(function() {
+                            if ($(this).attr('id') !== target.substring(1)) {
+                                $(this).collapse('hide');
+                            }
+                        });
+                        
+                        // Actualizar aria-expanded de otros botones
+                        $('#categoriasServicios .categoria-toggle').not(this).attr('aria-expanded', 'false');
+                    }
+                });
+                
+                // Rotar chevron en accordion
+                $('#categoriasServicios .collapse').on('show.bs.collapse', function() {
+                    $(this).prev().find('.categoria-chevron').css('transform', 'rotate(180deg)');
+                });
+                
+                $('#categoriasServicios .collapse').on('hide.bs.collapse', function() {
+                    $(this).prev().find('.categoria-chevron').css('transform', 'rotate(0deg)');
+                });
+            });
+        </script>
     }
 }

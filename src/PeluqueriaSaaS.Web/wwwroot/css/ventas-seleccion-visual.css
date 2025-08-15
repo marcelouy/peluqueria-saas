@@ -1,0 +1,198 @@
+/* ========================================
+   ESTILOS PARA SELECCIÓN VISUAL SIN TECLADO
+   Optimizado para tablet/touch
+   Ubicación: wwwroot/css/ventas-seleccion-visual.css
+   ======================================== */
+
+/* Grid de empleados */
+.empleados-botones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-empleado {
+    height: 100px;
+    padding: 10px;
+    border-width: 2px;
+    transition: all 0.2s;
+}
+
+.btn-empleado:hover,
+.btn-empleado:active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.empleado-btn-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.empleado-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.empleado-nombre {
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Filtros rápidos */
+.btn-group-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+/* Clientes */
+.btn-cliente-frecuente {
+    height: 80px;
+    padding: 10px;
+    font-size: 14px;
+    border-width: 2px;
+}
+
+.btn-cliente-frecuente:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Displays de selección */
+.empleado-seleccionado-display,
+.cliente-seleccionado-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tabs de clientes */
+.nav-tabs .nav-link {
+    color: #495057;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    font-size: 14px;
+    padding: 10px 15px;
+}
+
+.nav-tabs .nav-link.active {
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Accordion de clientes */
+.accordion-button {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+
+.list-group-item-action {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.list-group-item-action:hover {
+    background-color: #e7f1ff;
+    padding-left: 25px;
+}
+
+/* Nuevo cliente form */
+#clienteNuevo .card {
+    border: 2px dashed #28a745;
+    background-color: #f8fff9;
+}
+
+/* Optimización para tablet */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .empleados-botones-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    
+    .btn-empleado {
+        height: 120px;
+        font-size: 16px;
+    }
+    
+    .empleado-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .empleado-nombre {
+        font-size: 14px;
+    }
+}
+
+/* Optimización para móvil grande */
+@media (max-width: 767px) {
+    .empleados-botones-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .btn-empleado {
+        height: 90px;
+    }
+    
+    .btn-cliente-frecuente {
+        height: 70px;
+        font-size: 12px;
+    }
+}
+
+/* Feedback táctil */
+.btn-empleado:active,
+.btn-cliente-frecuente:active,
+.list-group-item-action:active {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Desactivar selección de texto en botones */
+.btn-empleado,
+.btn-cliente-frecuente {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}

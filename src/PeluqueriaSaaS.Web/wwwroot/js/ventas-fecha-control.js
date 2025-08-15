@@ -30,7 +30,7 @@
                 this.habilitarFecha(fechaInput);
             }
             
-            // Agregar indicador visual
+            // Agregar indicador visual (más sutil)
             this.agregarIndicadorVisual(fechaInput, esAdmin);
         },
         
@@ -94,30 +94,29 @@
             });
         },
         
-        // Agregar indicador visual de estado
+        // Agregar indicador visual de estado (versión mejorada)
         agregarIndicadorVisual: function(input, esAdmin) {
             // Buscar el contenedor del input
             const container = input.parentElement;
             if (!container) return;
             
-            // Crear indicador
-            const indicator = document.createElement('div');
-            indicator.className = 'mt-1';
+            // Verificar si ya existe un indicador
+            const existingIndicator = container.querySelector('.fecha-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // Crear indicador más sutil
+            const indicator = document.createElement('small');
+            indicator.className = 'fecha-indicator text-muted d-block mt-1';
             
             if (esAdmin) {
-                indicator.innerHTML = `
-                    <small class="text-success">
-                        <i class="fas fa-unlock"></i> 
-                        Fecha editable (Administrador)
-                    </small>
-                `;
+                // Para admin - sin ícono o más discreto
+                indicator.innerHTML = 'Fecha editable';
+                indicator.className += ' text-success';
             } else {
-                indicator.innerHTML = `
-                    <small class="text-muted">
-                        <i class="fas fa-lock"></i> 
-                        Fecha bloqueada (Solo hoy)
-                    </small>
-                `;
+                // Para cajero - indicador discreto
+                indicator.innerHTML = 'Fecha fija (solo hoy)';
             }
             
             // Insertar después del input

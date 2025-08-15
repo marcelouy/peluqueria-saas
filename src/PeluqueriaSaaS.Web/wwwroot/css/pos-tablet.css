@@ -1,103 +1,316 @@
 /* ================================================
-   TABLET OPTIMIZATION CSS - POS SERVICIOS
-   Optimizado para tablets puestos trabajo
+   MOBILE PROFESSIONAL - POS SERVICIOS
+   Diseño profesional para móvil/tablet/PC
 ================================================ */
 
-/* TABLET GENERAL */
-@media (max-width: 1024px) {
-    .btn-tablet {
-        min-height: 48px !important;
-        padding: 12px !important;
-        font-size: 1rem !important;
-        touch-action: manipulation;
-    }
-    
-    .categoria-toggle {
-        min-height: 48px !important;
-        padding: 12px 16px !important;
-    }
-    
-    #buscadorServicios {
-        min-height: 48px !important;
-        font-size: 1.1rem !important;
-    }
-}
+/* ===== MOBILE FIRST - DISEÑO LIMPIO ===== */
 
-/* CATEGORÍAS STYLING */
 .categoria-servicio {
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 8px;
-    background: #f8f9fa;
-    margin-bottom: 8px;
+    border: 1px solid #e3e6f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
 .categoria-toggle {
+    background: linear-gradient(135deg, #f8f9fc 0%, #e3e6f0 100%) !important;
     border: none !important;
-    background: transparent !important;
+    padding: 16px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+    border-radius: 12px 12px 0 0 !important;
+    transition: all 0.3s ease !important;
+    min-height: 60px !important;
 }
 
-.categoria-toggle:hover {
-    background-color: #e9ecef !important;
-}
-
+.categoria-toggle:hover,
 .categoria-toggle:focus {
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    background: linear-gradient(135deg, #e3e6f0 0%, #d1d3e2 100%) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* BOTONES SERVICIOS */
-.btn-agregar-servicio.btn-tablet {
-    transition: all 0.2s ease;
-    border-radius: 6px;
+.categoria-toggle[aria-expanded="true"] {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;
+    color: white !important;
 }
 
-.btn-agregar-servicio.btn-tablet:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+.categoria-toggle[aria-expanded="true"] .badge {
+    background-color: rgba(255,255,255,0.3) !important;
 }
 
-.btn-agregar-servicio.btn-tablet:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.categoria-chevron {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
 }
 
-/* BUSCADOR */
+/* ===== CONTENIDO CATEGORÍAS ===== */
+
+.categoria-content {
+    padding: 12px;
+    background: #f8f9fc;
+}
+
+/* ===== BOTONES SERVICIOS MÓVIL ===== */
+
+.servicio-btn-mobile {
+    background: white !important;
+    border: 2px solid #e3e6f0 !important;
+    border-radius: 10px !important;
+    padding: 14px 16px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+    min-height: 70px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.servicio-btn-mobile:hover,
+.servicio-btn-mobile:focus {
+    border-color: #28a745 !important;
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%) !important;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15) !important;
+    transform: translateY(-1px) !important;
+}
+
+.servicio-btn-mobile:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2) !important;
+}
+
+/* ===== CONTENIDO SERVICIO ===== */
+
+.servicio-info {
+    flex: 1;
+    text-align: left;
+}
+
+.servicio-nombre {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.3;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.servicio-duracion {
+    font-size: 0.85rem;
+    color: #6c757d !important;
+    font-weight: 500;
+}
+
+.servicio-precio-container {
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.servicio-precio {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #28a745 !important;
+    white-space: nowrap;
+}
+
+/* ===== BUSCADOR MÓVIL ===== */
+
 #buscadorServicios {
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 12px 16px;
+    border: 2px solid #e3e6f0 !important;
+    border-radius: 10px !important;
+    padding: 14px 16px !important;
+    font-size: 1rem !important;
+    background: white !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
 }
 
 #buscadorServicios:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    border-color: #4e73df !important;
+    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.15) !important;
+    outline: none !important;
 }
 
-/* RESPONSIVE MOBILE */
-@media (max-width: 768px) {
-    .btn-tablet {
-        min-height: 52px !important;
+.input-group-text {
+    border: 2px solid #e3e6f0 !important;
+    border-right: none !important;
+    background: white !important;
+    border-radius: 10px 0 0 10px !important;
+    color: #6c757d;
+}
+
+/* ===== ICONOS CATEGORÍAS ===== */
+
+.fa-cut { color: #e74c3c !important; }
+.fa-spa { color: #9b59b6 !important; }
+.fa-brush { color: #f39c12 !important; }
+.fa-scissors { color: #3498db !important; }
+.fa-palette { color: #e67e22 !important; }
+.fa-hand-sparkles { color: #f1c40f !important; }
+.fa-star { color: #95a5a6 !important; }
+
+/* ===== RESPONSIVE ESPECÍFICO ===== */
+
+/* Móviles pequeños (320px - 576px) */
+@media (max-width: 576px) {
+    .categoria-toggle {
+        padding: 14px 12px !important;
         font-size: 0.95rem !important;
+        min-height: 55px !important;
+    }
+    
+    .servicio-btn-mobile {
+        padding: 12px 14px !important;
+        min-height: 65px !important;
+    }
+    
+    .servicio-nombre {
+        font-size: 0.95rem;
+    }
+    
+    .servicio-precio {
+        font-size: 1rem !important;
+    }
+    
+    .categoria-content {
+        padding: 8px;
+    }
+}
+
+/* Móviles grandes (577px - 767px) */
+@media (min-width: 577px) and (max-width: 767px) {
+    .categoria-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 12px;
+    }
+}
+
+/* Tablets (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .categoria-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 10px;
+        padding: 16px;
+    }
+    
+    .servicio-btn-mobile {
+        min-height: 75px !important;
     }
     
     .categoria-toggle {
-        font-size: 1rem !important;
+        min-height: 65px !important;
+        padding: 18px 16px !important;
+    }
+}
+
+/* Desktop (1025px+) */
+@media (min-width: 1025px) {
+    .categoria-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        padding: 16px;
     }
     
-    #buscadorServicios {
-        font-size: 1rem !important;
+    .servicio-btn-mobile {
+        min-height: 70px !important;
+    }
+    
+    .categoria-toggle {
+        min-height: 60px !important;
+    }
+    
+    /* Efectos hover solo en PC */
+    .servicio-btn-mobile:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.2) !important;
     }
 }
 
-/* ANIMACIONES */
+/* ===== SIN RESULTADOS ===== */
+
+#sinResultados {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fc;
+    border-radius: 12px;
+    border: 2px dashed #e3e6f0;
+    margin: 20px 0;
+}
+
+/* ===== ANIMACIONES SUAVES ===== */
+
 .collapse {
-    transition: height 0.3s ease;
+    transition: all 0.35s ease;
 }
 
-.categoria-toggle .fa-chevron-down {
-    transition: transform 0.3s ease;
+.servicio-item {
+    transition: all 0.2s ease;
 }
 
-.categoria-toggle[aria-expanded="false"] .fa-chevron-down {
-    transform: rotate(-90deg);
+/* ===== ACCESIBILIDAD ===== */
+
+.categoria-toggle:focus-visible,
+.servicio-btn-mobile:focus-visible {
+    outline: 3px solid #4e73df !important;
+    outline-offset: 2px !important;
+}
+
+/* ===== TOUCH OPTIMIZATIONS ===== */
+
+@media (hover: none) and (pointer: coarse) {
+    .categoria-toggle,
+    .servicio-btn-mobile {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    /* Eliminar hover effects en dispositivos táctiles */
+    .servicio-btn-mobile:hover {
+        transform: none !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+        border-color: #e3e6f0 !important;
+        background: white !important;
+    }
+}
+
+/* ===== BADGE MEJORADO ===== */
+
+.badge {
+    font-size: 0.75rem !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+}
+
+/* ===== COMPATIBILIDAD CON pos.css ORIGINAL ===== */
+
+/* Respeta los estilos originales del botón agregar servicio */
+.btn-agregar-servicio.servicio-btn-mobile {
+    /* Mantiene funcionalidad pero con nuevos estilos */
+}
+
+/* Mantiene tabla servicios en venta intacta */
+.servicios-venta-table {
+    /* No tocar - viene de pos.css original */
+}
+
+/* ===== LOADING STATES ===== */
+
+.categoria-toggle[aria-expanded="true"]::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(78, 115, 223, 0.1) 0%, rgba(34, 74, 190, 0.1) 100%);
+    pointer-events: none;
 }
