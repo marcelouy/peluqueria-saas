@@ -28,13 +28,14 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<ArticuloImpuesto> ArticulosImpuestos { get; set; }
         public DbSet<ServicioImpuesto> ServiciosImpuestos { get; set; }
         public DbSet<HistoricoTasaImpuesto> HistoricoTasasImpuestos { get; set; }
+        public DbSet<EstadoServicio> EstadosServicio { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<TipoImpuesto>().ToTable("TiposImpuestos");
             modelBuilder.Entity<TasaImpuesto>().ToTable("TasasImpuestos");
-            
+
             // IGNORAR TODOS LOS VALUEOBJECTS
             modelBuilder.Ignore<Email>();
             modelBuilder.Ignore<Telefono>();
@@ -185,6 +186,20 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                     .IsRequired(false)
                     .OnDelete(DeleteBehavior.SetNull);
 
+                entity.Property(vd => vd.EstadoServicioId)
+                    .IsRequired()
+                    .ValueGeneratedNever();
+
+                entity.Property(vd => vd.EmpleadoAsignadoId)
+                    .IsRequired(false)
+                    .ValueGeneratedNever();
+
+                entity.Property(vd => vd.InicioServicio)
+                    .IsRequired(false);
+
+                entity.Property(vd => vd.FinServicio)
+                    .IsRequired(false);
+
                 // Índices
                 entity.HasIndex(vd => vd.VentaId);
                 entity.HasIndex(vd => vd.ServicioId);
@@ -238,7 +253,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
                 // No configurar FechaCreacion, FechaActualizacion, CreadoPor, ActualizadoPor
                 // Ya están definidas en EntityBase y funcionan correctamente
-                
+
                 entity.HasIndex(e => e.Codigo).IsUnique();
             });
 
@@ -307,7 +322,7 @@ namespace PeluqueriaSaaS.Infrastructure.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.ToTable("ServiciosImpuestos");
-                
+
                 entity.Property(e => e.ServicioId).IsRequired().HasColumnName("ServicioId");
                 entity.Property(e => e.TasaImpuestoId).IsRequired().HasColumnName("TasaImpuestoId");
                 entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
@@ -387,6 +402,23 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.HasIndex(e => new { e.TenantId, e.Categoria });
                 entity.HasIndex(e => new { e.TenantId, e.Marca });
                 entity.HasIndex(e => new { e.TenantId, e.Activo });
+            });
+
+            // Configuración EstadoServicio (agregar después de otras configuraciones)
+            modelBuilder.Entity<EstadoServicio>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.ToTable("EstadoServicio");
+                entity.Property(e => e.Codigo).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
+                entity.Property(e => e.PermiteCobro).IsRequired();
+                entity.Property(e => e.EsFinal).IsRequired();
+                entity.Property(e => e.Orden).IsRequired();
+                entity.Property(e => e.Activo).IsRequired();
+                entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
+
+                entity.HasIndex(e => e.Codigo).IsUnique();
             });
         }
     }

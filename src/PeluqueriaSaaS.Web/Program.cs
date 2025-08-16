@@ -54,6 +54,8 @@ builder.Services.AddScoped<IArticuloRepository, ArticuloRepository>();
 // ✅ 10. SETTINGS REPOSITORY - CRÍTICO PARA /Settings ENDPOINT
 builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
+builder.Services.AddScoped<IEstadoServicioRepository, EstadoServicioRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

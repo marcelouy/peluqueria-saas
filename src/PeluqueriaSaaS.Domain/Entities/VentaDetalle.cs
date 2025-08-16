@@ -79,11 +79,15 @@ namespace PeluqueriaSaaS.Domain.Entities
         /// Fecha de creación del registro
         /// </summary>
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public int EstadoServicioId { get; set; } = 1;
+        public int? EmpleadoAsignadoId { get; set; }
+        public DateTime? InicioServicio { get; set; }
+        public DateTime? FinServicio { get; set; }
         
         // ==========================================
         // NAVIGATION PROPERTIES
         // ==========================================
-        
+
         /// <summary>
         /// Navegación a la venta principal
         /// </summary>

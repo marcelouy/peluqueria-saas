@@ -49,7 +49,6 @@ namespace PeluqueriaSaaS.Domain.Entities
         public string? Contenido { get; set; }
 
         // Navegación
-        public virtual ICollection<VentaDetalle> VentaDetalles { get; set; } = new List<VentaDetalle>();
         public virtual ICollection<ArticuloImpuesto> ArticulosImpuestos { get; set; } = new List<ArticuloImpuesto>();
 
         public IEnumerable<ArticuloImpuesto> ImpuestosVigentes
