@@ -6,7 +6,7 @@ using PeluqueriaSaaS.Application.DTOs;
 using PeluqueriaSaaS.Application.Features.Clientes.Queries;
 using PeluqueriaSaaS.Domain.Entities;
 using PeluqueriaSaaS.Domain.Interfaces;
-using PeluqueriaSaaS.Infrastructure.Repositories;
+using System.Linq;
 
 namespace PeluqueriaSaaS.Web.Controllers
 {
@@ -1107,34 +1107,34 @@ namespace PeluqueriaSaaS.Web.Controllers
             // Por ahora HTML como PDF (en producción usar iTextSharp o similar)
             return System.Text.Encoding.UTF8.GetBytes(htmlCompleto);
         }
-        
+
         // Buscar empleados para Select2
         [HttpGet]
         public async Task<IActionResult> BuscarEmpleados(string q = "", int page = 1)
         {
             const int pageSize = 20;
-            
+
             try
             {
                 // Query base
                 var query = _dbContext.Empleados
                     .Where(e => e.EsActivo);
-                
+
                 // Aplicar búsqueda si hay término
                 if (!string.IsNullOrWhiteSpace(q))
                 {
                     q = q.ToLower();
-                    query = query.Where(e => 
+                    query = query.Where(e =>
                         e.Nombre.ToLower().Contains(q) ||
                         e.Apellido.ToLower().Contains(q) ||
                         e.Cargo.ToLower().Contains(q) ||
                         (e.Telefono != null && e.Telefono.Contains(q))
                     );
                 }
-                
+
                 // Contar total
                 var total = await query.CountAsync();
-                
+
                 // Paginar y obtener resultados
                 var empleados = await query
                     .OrderBy(e => e.Nombre)
@@ -1151,7 +1151,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                         esActivo = e.EsActivo
                     })
                     .ToListAsync();
-                
+
                 return Json(new
                 {
                     items = empleados,
@@ -1170,28 +1170,28 @@ namespace PeluqueriaSaaS.Web.Controllers
         public async Task<IActionResult> BuscarClientes(string q = "", int page = 1)
         {
             const int pageSize = 20;
-            
+
             try
             {
                 // Query base - CORREGIDO: _dbContext con C mayúscula
                 var query = _dbContext.Clientes
                     .Where(c => c.EsActivo);
-                
+
                 // Aplicar búsqueda si hay término
                 if (!string.IsNullOrWhiteSpace(q))
                 {
                     q = q.ToLower();
-                    query = query.Where(c => 
+                    query = query.Where(c =>
                         c.Nombre.ToLower().Contains(q) ||
                         c.Apellido.ToLower().Contains(q) ||
                         (c.Telefono != null && c.Telefono.Contains(q)) ||
                         (c.Email != null && c.Email.ToLower().Contains(q))
                     );
                 }
-                
+
                 // Contar total
                 var total = await query.CountAsync();
-                
+
                 // Obtener clientes con información de visitas - CORREGIDO: _dbContext
                 var clientes = await query
                     .OrderBy(c => c.Nombre)
@@ -1213,7 +1213,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                             .FirstOrDefault()
                     })
                     .ToListAsync();
-                
+
                 return Json(new
                 {
                     items = clientes,
@@ -1234,7 +1234,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             try
             {
                 var fechaInicio = DateTime.Now.AddMonths(-3); // Últimos 3 meses
-                
+
                 // CORREGIDO: _dbContext con C mayúscula
                 var clientesFrecuentes = await _dbContext.Ventas
                     .Where(v => v.FechaVenta >= fechaInicio)
@@ -1249,7 +1249,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     .OrderByDescending(c => c.visitas)
                     .Take(10)
                     .ToListAsync();
-                
+
                 return Json(clientesFrecuentes);
             }
             catch (Exception ex)
@@ -1271,19 +1271,20 @@ namespace PeluqueriaSaaS.Web.Controllers
                 {
                     return Json(new { success = false, message = "Faltan datos obligatorios" });
                 }
-                
+
                 // Verificar si ya existe por teléfono - CORREGIDO: _dbContext
                 var existente = await _dbContext.Clientes
                     .FirstOrDefaultAsync(c => c.Telefono == telefono);
-                
+
                 if (existente != null)
                 {
-                    return Json(new { 
-                        success = false, 
-                        message = $"Ya existe un cliente con ese teléfono: {existente.Nombre} {existente.Apellido}" 
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Ya existe un cliente con ese teléfono: {existente.Nombre} {existente.Apellido}"
                     });
                 }
-                
+
                 // CORREGIDO: Usar el constructor correcto de Cliente
                 var nuevoCliente = new Cliente(
                     nombre: nombre,
@@ -1292,24 +1293,122 @@ namespace PeluqueriaSaaS.Web.Controllers
                     telefono: telefono,
                     fechaNacimiento: null
                 );
-                
+
                 // SetTenant si es necesario (ya se llama en el constructor con "default-tenant")
                 nuevoCliente.SetTenant(TENANT_ID);
-                
+
                 // CORREGIDO: _dbContext con C mayúscula
                 _dbContext.Clientes.Add(nuevoCliente);
                 await _dbContext.SaveChangesAsync();
-                
-                return Json(new { 
-                    success = true, 
+
+                return Json(new
+                {
+                    success = true,
                     clienteId = nuevoCliente.Id,
-                    message = "Cliente creado exitosamente" 
+                    message = "Cliente creado exitosamente"
                 });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error en CrearClienteRapido: {ex.Message}");
                 return Json(new { success = false, message = "Error al crear cliente" });
+            }
+        }
+
+        // GET: /Ventas/AsignacionRapida
+        [HttpGet]
+        public async Task<IActionResult> AsignacionRapida()
+        {
+            try
+            {
+                // Cargar datos para dropdowns
+                ViewBag.Clientes = await _dbContext.Clientes  // _dbContext, no _context
+                    .Where(c => c.EsActivo)
+                    .OrderBy(c => c.Nombre)
+                    .Select(c => new { c.Id, NombreCompleto = c.Nombre + " " + c.Apellido })
+                    .ToListAsync();
+
+                ViewBag.Servicios = await _servicioRepository.GetAllAsync(TENANT_ID); // TENANT_ID confirmado
+
+                ViewBag.Empleados = await _dbContext.Empleados
+                    .Where(e => e.EsActivo)
+                    .OrderBy(e => e.Nombre)
+                    .ToListAsync();
+
+                // Detectar empleado actual
+                var empleados = ViewBag.Empleados as List<Empleado>;
+                ViewBag.EmpleadoActualId = (empleados != null && empleados.Count > 0) ? empleados[0].Id : 0;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en AsignacionRapida: {ex.Message}"); // Console, no _logger
+                TempData["Error"] = "Error al cargar la vista de asignación";
+                return RedirectToAction("Index");
+            }
+        }
+
+
+        // POST: /Ventas/AsignacionRapida
+        [HttpPost]
+        public async Task<IActionResult> AsignacionRapida(AsignacionRapidaDto model)
+        {
+            try
+            {
+                // Crear venta con estado "EnProceso"
+                var venta = new Venta
+                {
+                    ClienteId = model.ClienteId,
+                    EmpleadoId = model.Asignaciones.FirstOrDefault()?.EmpleadoAsignadoId ?? 1,
+                    FechaVenta = DateTime.Now,
+                    EstadoVenta = "EnProceso",
+                    TenantId = TENANT_ID,  // TENANT_ID correcto
+                    SubTotal = 0,
+                    Total = 0,
+                    Descuento = 0,
+                    VentaDetalles = new List<VentaDetalle>()
+                };
+
+                // Agregar cada servicio
+                decimal subtotal = 0;
+                foreach (var asignacion in model.Asignaciones.Where(a => a.ServicioId > 0))
+                {
+                    var servicio = await _servicioRepository.GetByIdAsync(asignacion.ServicioId, TENANT_ID);
+                    if (servicio != null)
+                    {
+                        var detalle = new VentaDetalle
+                        {
+                            ServicioId = servicio.Id,
+                            NombreServicio = servicio.Nombre,
+                            PrecioUnitario = servicio.Precio.Valor,
+                            Cantidad = 1,
+                            Subtotal = servicio.Precio.Valor,
+                            EmpleadoAsignadoId = asignacion.EmpleadoAsignadoId,
+                            EstadoServicioId = 1, // Pendiente
+                            TenantId = TENANT_ID,
+                            FechaCreacion = DateTime.Now
+                        };
+
+                        venta.VentaDetalles.Add(detalle);
+                        subtotal += detalle.Subtotal;
+                    }
+                }
+
+                venta.SubTotal = subtotal;
+                venta.Total = subtotal;
+
+                // Guardar
+                await _ventaRepository.CreateAsync(venta);
+
+                TempData["Success"] = $"Orden de trabajo creada - {model.Asignaciones.Count} servicios asignados";
+                return RedirectToAction("Index", "Estaciones");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error creando asignación: {ex.Message}");
+                TempData["Error"] = "Error al crear la asignación";
+                return View(model);
             }
         }
     }

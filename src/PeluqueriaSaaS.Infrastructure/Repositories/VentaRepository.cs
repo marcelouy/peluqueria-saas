@@ -156,6 +156,7 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
         }
 
         // CreateAsync - CON WORKAROUND SQL DIRECTO (del chat anterior)
+        // CreateAsync - AHORA CON EF CORE NORMAL
         public async Task<Venta> CreateAsync(Venta venta)
         {
             try
@@ -178,73 +179,50 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
                         siguienteNumero = numero + 1;
                     }
                 }
-                
-                venta.NumeroVenta = $"VTA-{siguienteNumero:D6}";
-                
-                // 2. Guardar detalles temporalmente y limpiar
-                var detallesTemp = venta.VentaDetalles?.ToList();
-                venta.VentaDetalles = new List<VentaDetalle>();
-                
-                // 3. Guardar venta principal con EF
-                _context.Ventas.Add(venta);
-                await _context.SaveChangesAsync();
-                
-                Console.WriteLine($"✅ Venta guardada con ID: {venta.VentaId}, Número: {venta.NumeroVenta}");
 
-                // 4. Guardar detalles con SQL directo (WORKAROUND para bug ArticuloId2)
-                if (detallesTemp != null && detallesTemp.Any())
+                venta.NumeroVenta = $"VTA-{siguienteNumero:D6}";
+
+                // 2. Asegurar valores por defecto en detalles
+                if (venta.VentaDetalles != null)
                 {
-                    var connectionString = _context.Database.GetConnectionString();
-                    
-                    using (var connection = new SqlConnection(connectionString))
+                    foreach (var detalle in venta.VentaDetalles)
                     {
-                        await connection.OpenAsync();
-                        
-                        foreach (var detalle in detallesTemp)
+                        // Asignar EstadoServicioId por defecto
+                        if (detalle.EstadoServicioId == 0)
                         {
-                            using (var command = connection.CreateCommand())
-                            {
-                                command.CommandText = @"
-                                    INSERT INTO VentaDetalles 
-                                    (VentaId, ServicioId, Cantidad, PrecioUnitario, Subtotal, 
-                                     NombreServicio, NotasServicio, EmpleadoServicioId, 
-                                     TenantId, FechaCreacion)
-                                    VALUES 
-                                    (@VentaId, @ServicioId, @Cantidad, @PrecioUnitario, @Subtotal,
-                                     @NombreServicio, @NotasServicio, @EmpleadoServicioId,
-                                     @TenantId, @FechaCreacion)";
-                                
-                                command.Parameters.Add(new SqlParameter("@VentaId", venta.VentaId));
-                                
-                                // CORREGIDO: ServicioId es int, usar 0 si no tiene valor válido
-                                command.Parameters.Add(new SqlParameter("@ServicioId", 
-                                    detalle.ServicioId > 0 ? detalle.ServicioId : (object)DBNull.Value));
-                                
-                                command.Parameters.Add(new SqlParameter("@Cantidad", detalle.Cantidad));
-                                command.Parameters.Add(new SqlParameter("@PrecioUnitario", detalle.PrecioUnitario));
-                                command.Parameters.Add(new SqlParameter("@Subtotal", detalle.Subtotal));
-                                command.Parameters.Add(new SqlParameter("@NombreServicio", detalle.NombreServicio ?? ""));
-                                command.Parameters.Add(new SqlParameter("@NotasServicio", detalle.NotasServicio ?? (object)DBNull.Value));
-                                command.Parameters.Add(new SqlParameter("@EmpleadoServicioId", detalle.EmpleadoServicioId ?? (object)DBNull.Value));
-                                command.Parameters.Add(new SqlParameter("@TenantId", venta.TenantId));
-                                command.Parameters.Add(new SqlParameter("@FechaCreacion", DateTime.Now));
-                                
-                                await command.ExecuteNonQueryAsync();
-                                Console.WriteLine($"   ✅ Detalle guardado: {detalle.NombreServicio}");
-                            }
+                            detalle.EstadoServicioId = 1; // 1 = Pendiente
+                        }
+
+                        // Asignar TenantId
+                        if (string.IsNullOrEmpty(detalle.TenantId))
+                        {
+                            detalle.TenantId = venta.TenantId;
+                        }
+
+                        // Asignar FechaCreacion
+                        if (detalle.FechaCreacion == default)
+                        {
+                            detalle.FechaCreacion = DateTime.Now;
                         }
                     }
-                    
-                    venta.VentaDetalles = detallesTemp;
                 }
-                
-                Console.WriteLine($"✅ VentaRepository.CreateAsync completado - ID: {venta.VentaId}");
+
+                // 3. Guardar TODO con EF Core (¡MUCHO MÁS SIMPLE!)
+                _context.Ventas.Add(venta);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"✅ Venta guardada con ID: {venta.VentaId}, Número: {venta.NumeroVenta}");
+                Console.WriteLine($"✅ {venta.VentaDetalles?.Count ?? 0} detalles guardados automáticamente");
+
                 return venta;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error en CreateAsync: {ex.Message}");
-                Console.WriteLine($"   Stack: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"   Inner: {ex.InnerException.Message}");
+                }
                 throw;
             }
         }

@@ -27,7 +27,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             _pdfService = pdfService;
         }
 
-        // GET: Settings
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             try

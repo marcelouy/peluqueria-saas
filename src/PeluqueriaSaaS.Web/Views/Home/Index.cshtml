@@ -1,242 +1,390 @@
-﻿@{
-    ViewData["Title"] = "Dashboard";
+@{
+    ViewData["Title"] = "Inicio";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container-fluid">
-    <!-- Header Dashboard -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard</h2>
-            <p class="text-muted mb-0">Panel de control y métricas principales</p>
-        </div>
-        <div>
-            <span class="text-muted">
-                <i class="fas fa-calendar"></i> 
-                @DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("es-UY"))
-            </span>
-        </div>
-    </div>
+<style>
+    /* Reset y Base */
+    body {
+        background: #fafafa;
+    }
 
-    <!-- KPIs Cards Row 1 -->
-    <div class="row mb-4">
-        <!-- Ventas Hoy -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Ventas Hoy
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                @ViewBag.VentasHoy
-                            </div>
-                            <div class="text-xs text-success">
-                                $@ViewBag.IngresoHoy?.ToString("N0")
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-cash-register fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    /* Hero Minimalista */
+    .hero-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        position: relative;
+        padding: 2rem 0;
+    }
 
-        <!-- Ventas Mes -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Ventas Este Mes
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                @ViewBag.VentasMes
-                            </div>
-                            <div class="text-xs text-success">
-                                $@ViewBag.IngresoMes?.ToString("N0")
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    /* Patrón sutil de fondo */
+    .hero-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(255, 119, 198, 0.03) 0%, transparent 50%);
+        pointer-events: none;
+    }
 
-        <!-- Servicios Activos -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Servicios Activos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                @ViewBag.ServiciosActivos
-                            </div>
-                            <div class="text-xs text-muted">
-                                de @ViewBag.TotalServicios total
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-concierge-bell fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    /* Tipografía elegante */
+    .brand-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        letter-spacing: -1px;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+    }
 
-        <!-- Clientes Activos -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Clientes Activos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                @ViewBag.ClientesActivos
-                            </div>
-                            <div class="text-xs text-muted">
-                                de @ViewBag.TotalClientes total
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    .brand-title strong {
+        font-weight: 600;
+        color: #4a5568;
+    }
 
-    <!-- Charts Row -->
-    <div class="row mb-4">
-        <!-- Ventas Últimos 30 Días -->
-        <div class="col-xl-8 col-lg-7">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-line"></i> Ventas Últimos 30 Días
-                    </h6>
-                    <div class="dropdown no-arrow">
-                        <button class="btn btn-sm btn-outline-primary" id="refresh-ventas-btn">
-                            <i class="fas fa-sync-alt"></i> Actualizar
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-area">
-                        <canvas id="ventasChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+    .brand-tagline {
+        font-size: 1rem;
+        color: #718096;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        margin-bottom: 3rem;
+    }
 
-        <!-- Top Servicios -->
-        <div class="col-xl-4 col-lg-5">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-star"></i> Top Servicios
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
-                        <canvas id="serviciosChart" width="400" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    /* Grid de módulos */
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 4rem;
+    }
 
-    <!-- Statistics Row -->
-    <div class="row mb-4">
-        <!-- Distribución Servicios por Tipo -->
-        <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-bar"></i> Servicios por Categoría
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-bar">
-                        <canvas id="tiposChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+    .module-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
 
-        <!-- Quick Actions -->
-        <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-bolt"></i> Acciones Rápidas
-                    </h6>
+    .module-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, #4299e1, #9f7aea);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .module-card:hover {
+        border-color: #cbd5e0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .module-card:hover::after {
+        transform: scaleX(1);
+    }
+
+    .module-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f7fafc;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        color: #4a5568;
+    }
+
+    .module-name {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .module-description {
+        font-size: 0.875rem;
+        color: #a0aec0;
+        line-height: 1.5;
+    }
+
+    /* Menú rápido lateral */
+    .quick-access {
+        position: fixed;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        z-index: 100;
+    }
+
+    .quick-btn {
+        width: 48px;
+        height: 48px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4a5568;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .quick-btn:hover {
+        background: #4299e1;
+        color: white;
+        border-color: #4299e1;
+        transform: scale(1.1);
+    }
+
+    .quick-tooltip {
+        position: absolute;
+        right: 60px;
+        background: #2d3748;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .quick-btn:hover .quick-tooltip {
+        opacity: 1;
+    }
+
+    /* Botón principal de acción */
+    .main-action {
+        margin-top: 3rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 2rem;
+        background: #4299e1;
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .main-action:hover {
+        background: #3182ce;
+        color: white;
+        transform: translateX(4px);
+    }
+
+    /* Footer info */
+    .system-info {
+        position: fixed;
+        bottom: 1rem;
+        left: 1rem;
+        font-size: 0.75rem;
+        color: #a0aec0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        background: #48bb78;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 1024px) {
+        .quick-access {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .brand-title {
+            font-size: 2rem;
+        }
+        
+        .modules-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .hero-container {
+            padding: 1rem;
+        }
+    }
+
+    /* Animaciones sutiles */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .fade-in-delay-1 {
+        animation: fadeIn 0.6s ease-out 0.1s backwards;
+    }
+
+    .fade-in-delay-2 {
+        animation: fadeIn 0.6s ease-out 0.2s backwards;
+    }
+</style>
+
+<div class="hero-container">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-5 fade-in">
+                    <h1 class="brand-title">
+                        Peluquería<strong>SaaS</strong>
+                    </h1>
+                    <p class="brand-tagline">
+                        Sistema de gestión profesional para salones de belleza
+                    </p>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <a href="/Ventas/Create" class="btn btn-success btn-block">
-                                <i class="fas fa-plus"></i><br>
-                                Nueva Venta
-                            </a>
+
+                <!-- Módulos principales -->
+                <div class="modules-grid">
+                    <a href="/Ventas/POS" class="module-card fade-in-delay-1">
+                        <div class="module-icon">
+                            <i class="fas fa-cash-register"></i>
                         </div>
-                        <div class="col-6 mb-3">
-                            <a href="/Servicios" class="btn btn-primary btn-block">
-                                <i class="fas fa-concierge-bell"></i><br>
-                                Gestionar Servicios
-                            </a>
+                        <h3 class="module-name">Punto de Venta</h3>
+                        <p class="module-description">
+                            Gestión de ventas rápida y eficiente con interfaz optimizada para dispositivos móviles y tablets
+                        </p>
+                    </a>
+
+                    <a href="/Estaciones" class="module-card fade-in-delay-1">
+                        <div class="module-icon">
+                            <i class="fas fa-desktop"></i>
                         </div>
-                        <div class="col-6 mb-3">
-                            <a href="/Clientes" class="btn btn-info btn-block">
-                                <i class="fas fa-users"></i><br>
-                                Gestionar Clientes
-                            </a>
+                        <h3 class="module-name">Estaciones de Trabajo</h3>
+                        <p class="module-description">
+                            Control del flujo de trabajo con seguimiento en tiempo real del progreso de servicios
+                        </p>
+                    </a>
+
+                    <a href="/Clientes" class="module-card fade-in-delay-2">
+                        <div class="module-icon">
+                            <i class="fas fa-user-friends"></i>
                         </div>
-                        <div class="col-6 mb-3">
-                            <a href="/Empleados" class="btn btn-warning btn-block">
-                                <i class="fas fa-user-tie"></i><br>
-                                Gestionar Empleados
-                            </a>
+                        <h3 class="module-name">Gestión de Clientes</h3>
+                        <p class="module-description">
+                            Base de datos completa con historial de visitas y preferencias de cada cliente
+                        </p>
+                    </a>
+
+                    <a href="/Empleados" class="module-card fade-in-delay-2">
+                        <div class="module-icon">
+                            <i class="fas fa-id-badge"></i>
                         </div>
-                    </div>
-                    
-                    <!-- Estadísticas adicionales -->
-                    <hr>
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <div class="text-xs font-weight-bold text-uppercase text-muted mb-1">
-                                Promedio Venta
-                            </div>
-                            <div class="h6 mb-0 font-weight-bold text-success">
-                                $@ViewBag.PromedioVenta?.ToString("N0")
-                            </div>
+                        <h3 class="module-name">Personal</h3>
+                        <p class="module-description">
+                            Administración del equipo de trabajo con roles y permisos personalizados
+                        </p>
+                    </a>
+
+                    <a href="/Servicios" class="module-card fade-in-delay-2">
+                        <div class="module-icon">
+                            <i class="fas fa-cut"></i>
                         </div>
-                        <div class="col-6">
-                            <div class="text-xs font-weight-bold text-uppercase text-muted mb-1">
-                                Promedio Servicio
-                            </div>
-                            <div class="h6 mb-0 font-weight-bold text-info">
-                                $@ViewBag.PromedioServicioPrecio?.ToString("N0")
-                            </div>
+                        <h3 class="module-name">Catálogo de Servicios</h3>
+                        <p class="module-description">
+                            Organización de servicios por categorías con precios y duraciones definidas
+                        </p>
+                    </a>
+
+                    <a href="/Ventas/Reportes" class="module-card fade-in-delay-2">
+                        <div class="module-icon">
+                            <i class="fas fa-chart-bar"></i>
                         </div>
-                    </div>
+                        <h3 class="module-name">Reportes</h3>
+                        <p class="module-description">
+                            Análisis detallado del rendimiento del negocio con métricas clave
+                        </p>
+                    </a>
+                </div>
+
+                <!-- Acción principal -->
+                <div class="text-center">
+                    <a href="/Ventas/POS" class="main-action">
+                        Comenzar a vender
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="~/js/dashboard.js"></script>
-}
+<!-- Menú de acceso rápido -->
+<div class="quick-access">
+    <a href="/Ventas/POS" class="quick-btn">
+        <i class="fas fa-plus"></i>
+        <span class="quick-tooltip">Nueva Venta</span>
+    </a>
+    <a href="/Estaciones" class="quick-btn">
+        <i class="fas fa-tasks"></i>
+        <span class="quick-tooltip">Estaciones</span>
+    </a>
+    <a href="/Dashboard" class="quick-btn">
+        <i class="fas fa-tachometer-alt"></i>
+        <span class="quick-tooltip">Dashboard</span>
+    </a>
+    <a href="/Settings" class="quick-btn">
+        <i class="fas fa-cog"></i>
+        <span class="quick-tooltip">Configuración</span>
+    </a>
+</div>
+
+<!-- Info del sistema -->
+<div class="system-info">
+    <span class="status-indicator"></span>
+    <span>Sistema operativo</span>
+    <span>•</span>
+    <span>v1.0.0</span>
+</div>

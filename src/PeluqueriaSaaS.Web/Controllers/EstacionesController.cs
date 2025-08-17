@@ -41,12 +41,15 @@ namespace PeluqueriaSaaS.Web.Controllers
             {
                 var ventaIds = serviciosPendientes.Select(vd => vd.VentaId).Distinct().ToList();
                 
-                // NO USAR ToDictionaryAsync - tiene bug con WITH
-                var ventas = await _context.Ventas
-                    .AsNoTracking()
-                    .Include(v => v.Cliente)
-                    .Where(v => ventaIds.Contains(v.VentaId))
-                    .ToListAsync(); // <-- CAMBIO AQUÍ
+                var ventas = new List<Venta>();
+                foreach (var id in ventaIds)
+                {
+                    var venta = await _context.Ventas
+                        .Include(v => v.Cliente)
+                        .FirstOrDefaultAsync(v => v.VentaId == id);
+                    if (venta != null)
+                        ventas.Add(venta);
+                }
 
                 // Asignar manualmente
                 foreach (var detalle in serviciosPendientes)

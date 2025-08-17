@@ -1,0 +1,98 @@
+@model PeluqueriaSaaS.Application.DTOs.AsignacionRapidaDto
+@{
+    ViewData["Title"] = "Asignación Rápida";
+}
+
+<div class="container-fluid py-3">
+    <h2>🚀 Asignación Rápida de Servicios</h2>
+    
+    <form method="post" id="formAsignacion">
+        <!-- Selección de Cliente -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <label class="form-label">Cliente</label>
+                <select name="ClienteId" class="form-select" required>
+                    <option value="">Seleccionar cliente...</option>
+                    @if (ViewBag.Clientes != null)
+                    {
+                        @foreach (var cliente in ViewBag.Clientes)
+                        {
+                            <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Servicios -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>Servicios a Asignar</h5>
+                <div id="servicios-container">
+                    <div class="servicio-row mb-2">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <select name="Asignaciones[0].ServicioId" class="form-select">
+                                    <option value="0">Seleccionar servicio...</option>
+                                    @if (ViewBag.Servicios != null)
+                                    {
+                                        @foreach (var servicio in ViewBag.Servicios)
+                                        {
+                                            <option value="@servicio.Id">@servicio.Nombre - $@servicio.Precio.Valor</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <select name="Asignaciones[0].EmpleadoAsignadoId" class="form-select">
+                                    <option value="0">Seleccionar empleado...</option>
+                                    @if (ViewBag.Empleados != null)
+                                    {
+                                       @foreach (var empleado in ViewBag.Empleados)
+                                        {
+                                            @if (empleado.Id == (int?)ViewBag.EmpleadoActualId)
+                                            {
+                                                <option value="@empleado.Id" selected>
+                                                    @empleado.Nombre @empleado.Apellido
+                                                </option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@empleado.Id">
+                                                    @empleado.Nombre @empleado.Apellido
+                                                </option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-sm btn-danger remove-servicio" style="display:none;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" id="add-servicio" class="btn btn-secondary mt-2">
+                    <i class="fas fa-plus"></i> Agregar otro servicio
+                </button>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                <i class="fas fa-play"></i> Iniciar Trabajo
+            </button>
+            <a href="/Ventas/POS" class="btn btn-outline-secondary btn-lg">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/asignacion-rapida.js"></script>
+}
