@@ -1,143 +1,161 @@
-@model List<VentaDetalle>
-@using PeluqueriaSaaS.Domain.Entities
+@model IEnumerable<PeluqueriaSaaS.Domain.Entities.VentaDetalle>
 @{
-    ViewData["Title"] = "Estación de Trabajo";
-    var estados = ViewBag.Estados as List<PeluqueriaSaaS.Domain.Entities.EstadoServicio>;
-    var empleados = ViewBag.Empleados as List<PeluqueriaSaaS.Domain.Entities.Empleado>;
+    ViewData["Title"] = "Estaciones de Trabajo";
+    var estados = ViewBag.EstadosDiccionario as Dictionary<int, PeluqueriaSaaS.Domain.Entities.EstadoServicio>;
 }
 
-<div class="container-fluid mt-3">
-    <h2>🔧 Estación de Trabajo</h2>
-    
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="container-fluid py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-tools text-primary"></i> Estaciones de Trabajo</h2>
+            <p class="text-muted mb-0">Gestión de servicios en proceso</p>
         </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div>
+            <button class="btn btn-outline-primary" onclick="location.reload();">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
         </div>
-    }
+    </div>
 
-    <div class="row mt-4">
-        @if (Model.Any())
+    <!-- Tarjetas de servicios -->
+    <div class="row" id="servicios-container">
+        @foreach (var detalle in Model)
         {
-            @foreach (var grupo in Model.GroupBy(vd => vd.VentaId))
-            {
-                var venta = grupo.First().Venta;
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-user"></i> @venta.Cliente.NombreCompleto
-                            </h5>
-                            <small>Venta #@venta.NumeroVenta</small>
-                        </div>
-                        <div class="card-body">
-                            @foreach (var detalle in grupo)
-                            {
-                                var estadoActual = estados.FirstOrDefault(e => e.Id == detalle.EstadoServicioId);
-                                <div class="border rounded p-2 mb-2" style="border-left: 4px solid @estadoActual?.Color !important;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>@detalle.NombreServicio</strong>
-                                            <br/>
-                                            <span class="badge" style="background-color: @estadoActual?.Color">
-                                                @estadoActual?.Nombre
-                                            </span>
-                                            @if (detalle.EmpleadoAsignadoId.HasValue)
-                                            {
-                                                var empleado = empleados.FirstOrDefault(e => e.Id == detalle.EmpleadoAsignadoId);
-                                                <small class="text-muted">(@empleado?.Nombre)</small>
-                                            }
-                                        </div>
-                                        <div>
-                                            @if (detalle.EstadoServicioId == 1) // Pendiente
-                                            {
-                                                <form method="post" action="@Url.Action("ActualizarEstado", "Estaciones")" class="d-inline">
-                                                    <input type="hidden" name="ventaDetalleId" value="@detalle.VentaDetalleId" />
-                                                    <input type="hidden" name="nuevoEstadoId" value="2" />
-                                                    <select name="empleadoId" class="form-select form-select-sm mb-1" required>
-                                                        <option value="">Seleccionar...</option>
-                                                        @foreach (var emp in empleados)
-                                                        {
-                                                            <option value="@emp.Id">@emp.Nombre</option>
-                                                        }
-                                                    </select>
-                                                    <button type="submit" class="btn btn-sm btn-warning w-100">
-                                                        <i class="fas fa-play"></i> Iniciar
-                                                    </button>
-                                                </form>
-                                            }
-                                            else if (detalle.EstadoServicioId == 2) // En Proceso
-                                            {
-                                                <form method="post" action="@Url.Action("ActualizarEstado", "Estaciones")" class="d-inline">
-                                                    <input type="hidden" name="ventaDetalleId" value="@detalle.VentaDetalleId" />
-                                                    <input type="hidden" name="empleadoId" value="@detalle.EmpleadoAsignadoId" />
-                                                    <div class="btn-group-vertical">
-                                                        <button type="submit" name="nuevoEstadoId" value="3" class="btn btn-sm btn-success">
-                                                            <i class="fas fa-check"></i> Completar
-                                                        </button>
-                                                        <button type="submit" name="nuevoEstadoId" value="5" class="btn btn-sm btn-info">
-                                                            <i class="fas fa-pause"></i> Pausar
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            }
-                                            else if (detalle.EstadoServicioId == 5) // Pausado
-                                            {
-                                                <form method="post" action="@Url.Action("ActualizarEstado", "Estaciones")" class="d-inline">
-                                                    <input type="hidden" name="ventaDetalleId" value="@detalle.VentaDetalleId" />
-                                                    <input type="hidden" name="nuevoEstadoId" value="2" />
-                                                    <input type="hidden" name="empleadoId" value="@detalle.EmpleadoAsignadoId" />
-                                                    <button type="submit" class="btn btn-sm btn-warning">
-                                                        <i class="fas fa-play"></i> Reanudar
-                                                    </button>
-                                                </form>
-                                            }
-                                            else if (detalle.EstadoServicioId == 3) // Completado
-                                            {
-                                                <span class="text-success">
-                                                    <i class="fas fa-check-circle"></i> Completado
-                                                </span>
-                                            }
-                                        </div>
+            var estado = estados?.GetValueOrDefault(detalle.EstadoServicioId);
+            var colorEstado = GetColorEstado(detalle.EstadoServicioId);
+            var iconoEstado = GetIconoEstado(detalle.EstadoServicioId);
+            
+            <div class="col-md-6 col-lg-4 mb-3 servicio-card" data-detalle-id="@detalle.VentaDetalleId">
+                <div class="card h-100 @(detalle.EstadoServicioId == 2 ? "border-primary border-2" : "")">
+                    <!-- Header con estado -->
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info">
+                            <i class="fas fa-hashtag"></i> Servicio #@detalle.VentaDetalleId
+                        </span>
+                        <span class="badge @colorEstado estado-badge">
+                            @iconoEstado @estado?.Nombre
+                        </span>
+                    </div>
+                    
+                    <!-- Cuerpo de la tarjeta -->
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-cut"></i> @(detalle.Servicio?.Nombre ?? "Servicio")
+                        </h5>
+                        
+                        <div class="card-text">
+                            <div class="mb-2">
+                                <strong>Cliente:</strong> @(detalle.Venta?.Cliente?.NombreCompleto ?? "Cliente")<br>
+                                <strong>Precio:</strong> $@detalle.PrecioUnitario.ToString("N2")<br>
+                                <strong>Cantidad:</strong> @detalle.Cantidad
+                            </div>
+                            
+                            <!-- Información de tiempo -->
+                            <div class="tiempo-info mb-3">
+                                @if (detalle.InicioServicio.HasValue)
+                                {
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> Iniciado: @detalle.InicioServicio.Value.ToString("HH:mm")
+                                    </small>
+                                    <div class="timer-display" data-inicio="@detalle.InicioServicio.Value.ToString("o")">
+                                        <i class="fas fa-hourglass-half"></i> 
+                                        <span class="timer-text">Calculando...</span>
                                     </div>
-                                    @if (detalle.InicioServicio.HasValue)
-                                    {
-                                        <small class="text-muted">
-                                            Iniciado: @detalle.InicioServicio.Value.ToString("HH:mm")
-                                        </small>
-                                    }
-                                </div>
-                            }
+                                }
+                                else
+                                {
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> En espera
+                                    </small>
+                                }
+                            </div>
+                        </div>
+                        
+                        <!-- Dropdown para cambiar estado -->
+                        <div class="estado-control">
+                            <label class="form-label small">Cambiar Estado:</label>
+                            <select class="form-select estado-select" 
+                                    data-detalle-id="@detalle.VentaDetalleId" 
+                                    data-estado-actual="@detalle.EstadoServicioId">
+                                <option value="">-- Seleccionar Acción --</option>
+                                @foreach (var estadoOption in GetEstadosDisponibles(detalle.EstadoServicioId))
+                                {
+                                    <option value="@estadoOption.Value">@estadoOption.Text</option>
+                                }
+                            </select>
                         </div>
                     </div>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> No hay servicios pendientes en este momento.
                 </div>
             </div>
         }
     </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle fa-2x mb-2"></i>
+            <h5>No hay servicios activos</h5>
+            <p>Los servicios asignados aparecerán aquí automáticamente.</p>
+            <a href="/Ventas/AsignacionRapida" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Asignar Servicios
+            </a>
+        </div>
+    }
 </div>
 
+@functions {
+    string GetColorEstado(int estadoId)
+    {
+        return estadoId switch
+        {
+            1 => "bg-warning text-dark", // Esperando
+            2 => "bg-primary",            // En Proceso
+            3 => "bg-success",            // Completado
+            4 => "bg-danger",             // Cancelado
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetIconoEstado(int estadoId)
+    {
+        return estadoId switch
+        {
+            1 => "⏳",  // Esperando
+            2 => "🔄",  // En Proceso
+            3 => "✅",  // Completado
+            4 => "❌",  // Cancelado
+            _ => "❓"
+        };
+    }
+
+    List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> GetEstadosDisponibles(int estadoActual)
+    {
+        var opciones = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+        
+        switch (estadoActual)
+        {
+            case 1: // Esperando
+                opciones.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("🔄 Iniciar Trabajo", "2"));
+                opciones.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("❌ Cancelar", "4"));
+                break;
+            case 2: // En Proceso
+                opciones.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("✅ Completar", "3"));
+                opciones.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("⏸️ Volver a Espera", "1"));
+                opciones.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("❌ Cancelar", "4"));
+                break;
+            case 3: // Completado
+                // No hay opciones para completados (no deberían mostrarse)
+                break;
+            case 4: // Cancelado
+                // No hay opciones para cancelados (no deberían mostrarse)
+                break;
+        }
+        
+        return opciones;
+    }
+}
+
 @section Scripts {
-    <script>
-        // Auto-refresh cada 30 segundos
-        setTimeout(function() {
-            location.reload();
-        }, 30000);
-    </script>
+    <script src="~/js/estaciones.js"></script>
 }

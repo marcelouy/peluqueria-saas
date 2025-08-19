@@ -1,0 +1,179 @@
+/* estaciones.css - Estilos para la vista de estaciones de trabajo */
+
+/* Notificación flotante */
+.notificacion-flotante {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Tarjetas de servicio */
+.servicio-card .card {
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.servicio-card .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Tarjeta en proceso - borde animado */
+.servicio-card .card.border-primary {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+    }
+}
+
+/* Timer display */
+.timer-display {
+    font-size: 1.1em;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: rgba(0, 123, 255, 0.1);
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.timer-display.text-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.timer-display.text-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.timer-display.text-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* Estado badges */
+.estado-badge {
+    font-size: 0.9em;
+    padding: 5px 10px;
+}
+
+/* Select de estado */
+.estado-select {
+    font-size: 0.9em;
+}
+
+.estado-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Card headers */
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Tiempo info section */
+.tiempo-info {
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/* Animación de carga */
+.opacity-50 {
+    opacity: 0.5;
+    pointer-events: none;
+    position: relative;
+}
+
+.opacity-50::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .servicio-card {
+        margin-bottom: 1rem;
+    }
+    
+    .notificacion-flotante {
+        width: 90%;
+        right: 5%;
+        left: 5%;
+    }
+}
+
+/* Botón refresh */
+.btn-refresh {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Empty state */
+.alert-info.text-center {
+    padding: 3rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.alert-info.text-center h5 {
+    color: white;
+    margin-top: 1rem;
+}
+
+.alert-info.text-center p {
+    color: rgba(255, 255, 255, 0.9);
+}
