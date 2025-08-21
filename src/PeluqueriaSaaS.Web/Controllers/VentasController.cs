@@ -339,9 +339,12 @@ namespace PeluqueriaSaaS.Web.Controllers
                         PrecioUnitario = detalleDto.PrecioUnitario,
                         Cantidad = detalleDto.Cantidad,
                         Subtotal = detalleDto.Subtotal,
-                        EmpleadoServicioId = detalleDto.EmpleadoServicioId,
+                        EmpleadoAsignadoId = model.VentaActual.EmpleadoId,  // ✅ AGREGADO
+                        EmpleadoServicioId = model.VentaActual.EmpleadoId,  // ✅ AGREGADO
+                        EstadoServicioId = 1,                               // ✅ AGREGADO
                         NotasServicio = detalleDto.NotasServicio,
-                        TenantId = TENANT_ID
+                        TenantId = TENANT_ID,
+                        FechaCreacion = DateTime.Now                        // ✅ AGREGADO
                     };
 
                     Console.WriteLine($"VentaDetalle created:");
@@ -350,10 +353,13 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Console.WriteLine($"  PrecioUnitario: {ventaDetalle.PrecioUnitario}");
                     Console.WriteLine($"  Cantidad: {ventaDetalle.Cantidad}");
                     Console.WriteLine($"  Subtotal: {ventaDetalle.Subtotal}");
+                    Console.WriteLine($"  EmpleadoAsignadoId: {ventaDetalle.EmpleadoAsignadoId}");  // ✅ AGREGADO
+                    Console.WriteLine($"  EstadoServicioId: {ventaDetalle.EstadoServicioId}");      // ✅ AGREGADO
                     Console.WriteLine($"  TenantId: '{ventaDetalle.TenantId}'");
 
                     venta.VentaDetalles.Add(ventaDetalle);
                 }
+
 
                 Console.WriteLine($"Total VentaDetalles created: {venta.VentaDetalles.Count}");
                 Console.WriteLine($"================================================");
@@ -1385,6 +1391,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                             Cantidad = 1,
                             Subtotal = servicio.Precio.Valor,
                             EmpleadoAsignadoId = asignacion.EmpleadoAsignadoId,
+                            EmpleadoServicioId = asignacion.EmpleadoAsignadoId, 
                             EstadoServicioId = 1, // Pendiente
                             TenantId = TENANT_ID,
                             FechaCreacion = DateTime.Now

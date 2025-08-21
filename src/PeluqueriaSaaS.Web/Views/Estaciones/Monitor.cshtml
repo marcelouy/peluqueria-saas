@@ -1,0 +1,267 @@
+@{
+    ViewData["Title"] = "Monitor de Servicios";
+    var serviciosActivos = ViewBag.ServiciosActivos as List<PeluqueriaSaaS.Domain.Entities.VentaDetalle>;
+    var estados = ViewBag.Estados as List<PeluqueriaSaaS.Domain.Entities.EstadoServicio>;
+    var empleadosDisponibles = ViewBag.EmpleadosDisponibles as List<PeluqueriaSaaS.Domain.Entities.Empleado>;
+    var todosEmpleados = ViewBag.TodosEmpleados as List<PeluqueriaSaaS.Domain.Entities.Empleado>;
+    var cargaPorEmpleado = ViewBag.CargaPorEmpleado as dynamic;
+    var completadosHoy = ViewBag.CompletadosHoy ?? 0;
+    var facturadoHoy = ViewBag.FacturadoHoy ?? 0m;
+}
+
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h2><i class="fas fa-tv text-primary"></i> Monitor de Servicios</h2>
+            <p class="text-muted mb-0">Vista en tiempo real de todos los servicios activos</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <h3 id="reloj-digital" class="mb-0 text-primary">00:00:00</h3>
+            <small class="text-muted">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</small>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h4 class="text-primary" id="total-en-proceso">
+                        @(serviciosActivos?.Count(s => s.EstadoServicioId == 2) ?? 0)
+                    </h4>
+                    <small>En Proceso</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h4 class="text-warning" id="total-esperando">
+                        @(serviciosActivos?.Count(s => s.EstadoServicioId == 1) ?? 0)
+                    </h4>
+                    <small>En Espera</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h4 class="text-success">@completadosHoy</h4>
+                    <small>Completados Hoy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h4 class="text-info">$@facturadoHoy.ToString("N0")</h4>
+                    <small>Facturado Hoy</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paneles principales -->
+    <div class="row">
+        <!-- EN PROCESO -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">🔄 EN PROCESO</h5>
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    @if (serviciosActivos != null)
+                    {
+                        @foreach (var detalle in serviciosActivos.Where(s => s.EstadoServicioId == 2))
+                        {
+                            <div class="servicio-card mb-3 p-3 border rounded bg-light">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6><i class="fas fa-cut"></i> @detalle.NombreServicio</h6>
+                                        <small>Cliente: @(detalle.Venta?.Cliente?.NombreCompleto ?? "Cliente")</small><br>
+                                        <small>Empleado: 
+                                            @if (detalle.EmpleadoServicio != null)
+                                            {
+                                                <span class="text-success">@detalle.EmpleadoServicio.Nombre @detalle.EmpleadoServicio.Apellido</span>
+                                            }
+                                            else if (detalle.EmpleadoAsignadoId.HasValue)
+                                            {
+                                                <span>Empleado #@detalle.EmpleadoAsignadoId</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Sin Asignar</span>
+                                            }
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        @if (detalle.InicioServicio.HasValue)
+                                        {
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-clock"></i>
+                                                <span class="timer-live" data-inicio="@detalle.InicioServicio.Value.ToString("o")">00:00</span>
+                                            </span>
+                                        }
+                                        <br>
+                                        <small>$@detalle.PrecioUnitario.ToString("N0")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- EN ESPERA -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">⏳ EN ESPERA</h5>
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    @if (serviciosActivos != null)
+                    {
+                        @foreach (var detalle in serviciosActivos.Where(s => s.EstadoServicioId == 1))
+                        {
+                            <div class="servicio-card mb-3 p-3 border rounded">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6><i class="fas fa-cut"></i> @detalle.NombreServicio</h6>
+                                        <small>Cliente: @(detalle.Venta?.Cliente?.NombreCompleto ?? "Cliente")</small><br>
+                                        <small>
+                                            @if (detalle.EmpleadoAsignadoId.HasValue)
+                                            {
+                                                <span class="badge bg-info">Asignado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Sin Asignar</span>
+                                            }
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <small>Desde: @detalle.FechaCreacion.ToString("HH:mm")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO PANEL: Estado de Empleados -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Estado de Empleados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Empleados DISPONIBLES (Sin trabajo) -->
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">✅ DISPONIBLES</h6>
+                                </div>
+                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                                    @if (empleadosDisponibles != null && empleadosDisponibles.Any())
+                                    {
+                                        @foreach (var empleado in empleadosDisponibles)
+                                        {
+                                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                                <div>
+                                                    <i class="fas fa-user-check text-success"></i>
+                                                    <strong>@empleado.Nombre @empleado.Apellido</strong>
+                                                </div>
+                                                <span class="badge bg-success">Libre</span>
+                                            </div>
+                                        }
+                                        <div class="mt-2 text-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Pueden realizar tareas varias
+                                            </small>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted text-center mb-0">
+                                            <i class="fas fa-exclamation-circle"></i><br>
+                                            Todos ocupados
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empleados OCUPADOS con carga de trabajo -->
+                        <div class="col-md-8">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning">
+                                    <h6 class="mb-0">🔧 OCUPADOS - Carga de Trabajo</h6>
+                                </div>
+                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                                    <div class="row">
+                                        @if (cargaPorEmpleado != null)
+                                        {
+                                            @foreach (var carga in cargaPorEmpleado)
+                                            {
+                                                var empleado = todosEmpleados?.FirstOrDefault(e => e.Id == (int)carga.EmpleadoId);
+                                                var porcentajeCarga = (int)carga.Total * 33; // Aproximado
+                                                
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="p-2 border rounded">
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <strong>@(empleado?.Nombre ?? "Empleado") @(empleado?.Apellido ?? "")</strong>
+                                                            <span class="badge @((int)carga.EnProceso > 0 ? "bg-primary" : "bg-secondary")">
+                                                                @carga.Total servicios
+                                                            </span>
+                                                        </div>
+                                                        <div class="progress" style="height: 20px;">
+                                                            <div class="progress-bar @(porcentajeCarga > 66 ? "bg-danger" : porcentajeCarga > 33 ? "bg-warning" : "bg-success")" 
+                                                                 style="width: @Math.Min(porcentajeCarga, 100)%">
+                                                                @carga.EnProceso activo
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-play text-primary"></i> @carga.EnProceso proceso |
+                                                            <i class="fas fa-clock text-warning"></i> @carga.Esperando espera
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón refresh y controles -->
+    <div class="position-fixed bottom-0 end-0 p-3">
+        <div id="countdown-refresh" class="mb-2 text-center">
+            <!-- Se llena desde JavaScript -->
+        </div>
+        <div class="btn-group" role="group">
+            <button class="btn btn-primary" onclick="location.reload();" title="Actualizar ahora">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button id="btn-toggle-refresh" class="btn btn-secondary" onclick="toggleAutoRefresh();" title="Pausar/Reanudar auto-refresh">
+                <i class="fas fa-pause"></i> Pausar
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/monitor.js"></script>
+}

@@ -1,19 +1,54 @@
-// estaciones.js - Manejo de la vista de estaciones de trabajo
+// estaciones.js - Manejo de la vista de estaciones de trabajo con auto-refresh
 
 $(document).ready(function() {
     console.log('✅ Estaciones.js cargado');
     
-    // Inicializar timers
-    actualizarTimers();
+    // Variables globales
+    let refreshInterval;
+    const REFRESH_TIME = 30000; // 30 segundos
     
-    // Actualizar timers cada 30 segundos
-    setInterval(actualizarTimers, 30000);
+    // Inicializar
+    inicializar();
     
-    // Auto-refresh cada 2 minutos
-    setInterval(function() {
-        console.log('Auto-refresh de la página');
-        location.reload();
-    }, 120000);
+    function inicializar() {
+        // Inicializar timers
+        actualizarTimers();
+        
+        // Actualizar timers cada segundo
+        setInterval(actualizarTimers, 1000);
+        
+        // Auto-refresh cada 30 segundos - COMENTADO TEMPORALMENTE PARA PRUEBAS
+        // refreshInterval = setInterval(function() {
+        //     console.log('🔄 Auto-refresh estaciones...');
+        //     location.reload();
+        // }, REFRESH_TIME);
+        
+        // Mostrar countdown
+        mostrarCountdown();
+    }
+    
+    // Mostrar countdown para próximo refresh
+    function mostrarCountdown() {
+        let segundosRestantes = REFRESH_TIME / 1000;
+        
+        if ($('#countdown-container').length === 0) {
+            $('body').append(`
+                <div id="countdown-container" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+                    <small class="badge bg-info">
+                        Actualización en: <span id="countdown-seconds">${segundosRestantes}</span>s
+                    </small>
+                </div>
+            `);
+        }
+        
+        setInterval(function() {
+            segundosRestantes--;
+            if (segundosRestantes <= 0) {
+                segundosRestantes = REFRESH_TIME / 1000;
+            }
+            $('#countdown-seconds').text(segundosRestantes);
+        }, 1000);
+    }
     
     // Manejar cambio de estado
     $('.estado-select').on('change', function() {
@@ -137,31 +172,6 @@ $(document).ready(function() {
         }
     }
     
-    // Función para mostrar notificaciones
-    function mostrarNotificacion(tipo, mensaje) {
-        // Remover notificaciones anteriores
-        $('.notificacion-flotante').remove();
-        
-        const claseAlerta = tipo === 'success' ? 'alert-success' : 'alert-danger';
-        const icono = tipo === 'success' ? 'check-circle' : 'exclamation-circle';
-        
-        const $notificacion = $(`
-            <div class="notificacion-flotante alert ${claseAlerta} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${icono}"></i> ${mensaje}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `);
-        
-        $('body').append($notificacion);
-        
-        // Auto-cerrar después de 3 segundos
-        setTimeout(function() {
-            $notificacion.fadeOut(function() {
-                $(this).remove();
-            });
-        }, 3000);
-    }
-    
     // Resaltar tarjetas en proceso
     $('.servicio-card').each(function() {
         const $card = $(this);
@@ -187,11 +197,100 @@ $(document).ready(function() {
     });
 });
 
-// Función global para obtener estado de servicio
-window.obtenerEstadoServicio = function(ventaDetalleId) {
+// ========== FUNCIONES GLOBALES FUERA DEL DOCUMENT.READY ==========
+
+// Función para mostrar notificaciones (movida afuera para ser global)
+function mostrarNotificacion(tipo, mensaje) {
+    // Remover notificaciones anteriores
+    $('.notificacion-flotante').remove();
+    
+    const claseAlerta = tipo === 'success' ? 'alert-success' : 'alert-danger';
+    const icono = tipo === 'success' ? 'check-circle' : 'exclamation-circle';
+    
+    const $notificacion = $(`
+        <div class="notificacion-flotante alert ${claseAlerta} alert-dismissible fade show" 
+             style="position: fixed; top: 20px; right: 20px; z-index: 9999;" role="alert">
+            <i class="fas fa-${icono}"></i> ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+    
+    $('body').append($notificacion);
+    
+    // Auto-cerrar después de 3 segundos
+    setTimeout(function() {
+        $notificacion.fadeOut(function() {
+            $(this).remove();
+        });
+    }, 3000);
+}
+
+// Función para preparar el cambio de empleado
+function prepararCambioEmpleado(ventaDetalleId, empleadoActual, servicioNombre) {
+    console.log('📍 Preparando cambio - ID:', ventaDetalleId, 'Empleado:', empleadoActual);
+    $('#ventaDetalleIdModal').val(ventaDetalleId);
+    $('#empleadoActual').text(empleadoActual);
+    $('#servicioNombre').text(servicioNombre);
+    $('#nuevoEmpleadoSelect').val('');
+}
+
+// Función para confirmar el cambio de empleado
+function confirmarCambioEmpleado() {
+    const ventaDetalleId = $('#ventaDetalleIdModal').val();
+    const nuevoEmpleadoId = $('#nuevoEmpleadoSelect').val();
+    
+    console.log('📍 Confirmando cambio - VentaDetalle:', ventaDetalleId, 'Nuevo Empleado:', nuevoEmpleadoId);
+    
+    if (!nuevoEmpleadoId) {
+        alert('Por favor selecciona un empleado');
+        return;
+    }
+    
+    // Deshabilitar botón mientras procesa
+    const $btn = $('#cambiarEmpleadoModal .btn-primary');
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Cambiando...');
+    
+    // Hacer petición AJAX para cambiar empleado
+    $.ajax({
+        url: '/Estaciones/CambiarEmpleado',
+        type: 'POST',
+        data: {
+            ventaDetalleId: ventaDetalleId,
+            nuevoEmpleadoId: nuevoEmpleadoId
+        },
+        success: function(response) {
+            console.log('📍 Respuesta:', response);
+            if (response.success) {
+                // Cerrar modal
+                $('#cambiarEmpleadoModal').modal('hide');
+                
+                // Mostrar notificación de éxito
+                mostrarNotificacion('success', 'Empleado cambiado exitosamente');
+                
+                // Recargar página después de un breve delay
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                alert('❌ Error: ' + response.message);
+                // Restaurar botón
+                $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Confirmar Cambio');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Error AJAX:', error);
+            alert('❌ Error al cambiar empleado: ' + error);
+            // Restaurar botón
+            $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Confirmar Cambio');
+        }
+    });
+}
+
+// Función para obtener estado de servicio
+function obtenerEstadoServicio(ventaDetalleId) {
     return $.ajax({
         url: '/Estaciones/ObtenerEstadoServicio',
         type: 'GET',
         data: { ventaDetalleId: ventaDetalleId }
     });
-};
+}

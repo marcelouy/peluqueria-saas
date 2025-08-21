@@ -1,0 +1,43 @@
+/* monitor.css - Estilos para el monitor de servicios */
+
+.servicio-card {
+    transition: all 0.3s ease;
+}
+
+.servicio-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timer-live {
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 1.1em;
+}
+
+#reloj-digital {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+/* Animación para nuevos servicios */
+.nuevo-servicio {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Full screen mode */
+.fullscreen-mode {
+    padding: 0 !important;
+    margin: 0 !important;
+}
