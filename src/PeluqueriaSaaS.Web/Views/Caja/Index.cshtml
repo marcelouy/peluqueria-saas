@@ -1,0 +1,224 @@
+@model IEnumerable<PeluqueriaSaaS.Domain.Entities.Venta>
+@{
+    ViewData["Title"] = "Caja - Cobros Pendientes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-3">
+    <!-- Header con estadísticas -->
+    <div class="row mb-4">
+        <div class="col-lg-5">
+            <h2><i class="fas fa-cash-register text-success"></i> Caja - Gestión de Cobros</h2>
+            <p class="text-muted">Ventas completadas pendientes de cobro</p>
+        </div>
+        <div class="col-lg-3 text-center d-flex align-items-center justify-content-center">
+            <!-- Botones de navegación discretos -->
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="/Estaciones" class="btn btn-outline-primary">
+                    <i class="fas fa-clipboard-list"></i> Tareas
+                </a>
+                <a href="/Estaciones/Monitor" class="btn btn-outline-success">
+                    <i class="fas fa-desktop"></i> Monitor
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body p-2">
+                            <h5>$@ViewBag.TotalPendiente?.ToString("N2")</h5>
+                            <small>Total Pendiente</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card bg-success text-white">
+                        <div class="card-body p-2">
+                            <h5>$@ViewBag.TotalCobradoHoy?.ToString("N2")</h5>
+                            <small>Cobrado Hoy</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Mensajes de éxito/error -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filtros rápidos -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="btn-group" role="group">
+                <a href="/Caja" class="btn btn-outline-primary active">
+                    <i class="fas fa-clock"></i> Pendientes
+                </a>
+                <a href="/Caja/ResumenDiario" class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-day"></i> Resumen del Día
+                </a>
+                <a href="/Ventas/POS" class="btn btn-outline-primary">
+                    <i class="fas fa-plus"></i> Nueva Venta
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de ventas pendientes -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var venta in Model)
+            {
+                var tiempoTranscurrido = (DateTime.Now - venta.FechaVenta).TotalMinutes;
+                
+                var cardClass = tiempoTranscurrido > 60 ? "border-danger" : 
+                               tiempoTranscurrido > 30 ? "border-warning" : "border-primary";
+                
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card @cardClass">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>Venta #@venta.NumeroVenta</strong>
+                                @if (tiempoTranscurrido > 60)
+                                {
+                                    <span class="badge bg-danger ms-2">
+                                        <i class="fas fa-exclamation-triangle"></i> +1 hora
+                                    </span>
+                                }
+                            </span>
+                            <span class="text-muted small">
+                                @venta.FechaVenta.ToString("HH:mm")
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Cliente -->
+                            <div class="mb-2">
+                                <i class="fas fa-user text-primary"></i>
+                                <strong>@(venta.Cliente?.Nombre ?? "Cliente Ocasional")</strong>
+                                @if (!string.IsNullOrEmpty(venta.Cliente?.Telefono))
+                                {
+                                    <small class="text-muted">(@venta.Cliente.Telefono)</small>
+                                }
+                            </div>
+
+                            <!-- Servicios realizados -->
+                            <div class="mb-2">
+                                <small class="text-muted">Servicios:</small>
+                                <ul class="list-unstyled mb-1">
+                                    @foreach (var detalle in venta.VentaDetalles ?? new List<PeluqueriaSaaS.Domain.Entities.VentaDetalle>())
+                                    {
+                                        <li class="small">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            @detalle.NombreServicio
+                                            @if (detalle.EmpleadoServicio != null)
+                                            {
+                                                <span class="text-muted">
+                                                    (@detalle.EmpleadoServicio.Nombre)
+                                                </span>
+                                            }
+                                            - $@detalle.Subtotal.ToString("N2")
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <!-- Total y empleados -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>
+                                    <i class="fas fa-user-tie text-info"></i>
+                                    <small>@(venta.Empleado?.Nombre ?? "Sin asignar")</small>
+                                </span>
+                                <h5 class="mb-0 text-success">
+                                    $@venta.Total.ToString("N2")
+                                </h5>
+                            </div>
+
+                            <!-- Tiempo de espera -->
+                            @if (tiempoTranscurrido > 0)
+                            {
+                                <div class="text-center mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i>
+                                        Esperando hace @((int)tiempoTranscurrido) minutos
+                                    </small>
+                                </div>
+                            }
+
+                            <!-- Botones de acción -->
+                            <div class="d-grid gap-2">
+                                <a href="/Caja/Cobrar/@venta.VentaId" 
+                                   class="btn btn-success">
+                                    <i class="fas fa-dollar-sign"></i> COBRAR
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-outline-secondary btn-sm"
+                                        onclick="verDetalleVenta(@venta.VentaId)">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle fa-2x mb-3"></i>
+            <h5>No hay ventas pendientes de cobro</h5>
+            <p>Todas las ventas han sido cobradas o no hay servicios completados.</p>
+            <div class="d-flex gap-2 justify-content-center"></div>
+                <a href="/Estaciones" class="btn btn-primary">
+                    <i class="fas fa-clipboard-list"></i> Tareas Activas
+                </a>
+                <a href="/Estaciones/Monitor" class="btn btn-success">
+                    <i class="fas fa-desktop"></i> Vista Supervisor
+                </a>
+        </div>
+    }
+</div>
+
+<!-- Modal para ver detalle (opcional) -->
+<div class="modal fade" id="detalleVentaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle de Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleVentaContent">
+                <!-- Contenido cargado dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-refresh cada 30 segundos
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
+
+        function verDetalleVenta(ventaId) {
+            // TODO: Cargar detalle via AJAX
+            console.log('Ver detalle de venta:', ventaId);
+        }
+    </script>
+}

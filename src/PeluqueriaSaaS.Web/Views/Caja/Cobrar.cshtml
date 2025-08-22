@@ -1,0 +1,396 @@
+@model PeluqueriaSaaS.Domain.Entities.Venta
+@{
+    ViewData["Title"] = "Cobrar Venta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var tiemposServicio = ViewBag.TiemposServicio as Dictionary<int, string> ?? new Dictionary<int, string>();
+}
+
+<div class="container-fluid py-3">
+    <div class="row">
+        <!-- Panel izquierdo - Detalle de venta -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-invoice"></i> Venta #@Model.NumeroVenta
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Información del cliente -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Cliente</h6>
+                            <p class="mb-1">
+                                <strong>@(Model.Cliente?.Nombre ?? "Cliente Ocasional")</strong>
+                            </p>
+                            @if (!string.IsNullOrEmpty(Model.Cliente?.Telefono))
+                            {
+                                <p class="mb-0 text-muted">
+                                    <i class="fas fa-phone"></i> @Model.Cliente.Telefono
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.Cliente?.Email))
+                            {
+                                <p class="mb-0 text-muted">
+                                    <i class="fas fa-envelope"></i> @Model.Cliente.Email
+                                </p>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Información</h6>
+                            <p class="mb-1">
+                                <i class="fas fa-calendar"></i> 
+                                @Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-user-tie"></i> 
+                                Vendedor: @(Model.Empleado?.Nombre ?? "Sin asignar")
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Servicios realizados -->
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fas fa-cut"></i> Servicios Realizados
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Empleado</th>
+                                    <th>Tiempo</th>
+                                    <th class="text-end">Precio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in Model.VentaDetalles ?? new List<PeluqueriaSaaS.Domain.Entities.VentaDetalle>())
+                                {
+                                    <tr>
+                                        <td>
+                                            @detalle.NombreServicio
+                                            @if (detalle.EstadoServicioId == 3)
+                                            {
+                                                <span class="badge bg-success ms-1">
+                                                    <i class="fas fa-check"></i>
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @(detalle.EmpleadoServicio?.Nombre ?? "Sin asignar")
+                                        </td>
+                                        <td>
+                                            @if (tiemposServicio.ContainsKey(detalle.VentaDetalleId))
+                                            {
+                                                <span class="text-muted">@tiemposServicio[detalle.VentaDetalleId]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            $@detalle.Subtotal.ToString("N2")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                    <td class="text-end">
+                                        <strong>$@Model.VentaDetalles.Sum(vd => vd.Subtotal).ToString("N2")</strong>
+                                    </td>
+                                </tr>
+                                @if (Model.Descuento > 0)
+                                {
+                                    <tr class="text-danger">
+                                        <td colspan="3" class="text-end">Descuento aplicado:</td>
+                                        <td class="text-end">-$@Model.Descuento.ToString("N2")</td>
+                                    </tr>
+                                }
+                                <tr class="table-primary">
+                                    <td colspan="3" class="text-end"><h5 class="mb-0">TOTAL:</h5></td>
+                                    <td class="text-end">
+                                        <h5 class="mb-0">$@Model.Total.ToString("N2")</h5>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Agregar productos de último momento (opcional) -->
+                    <div class="mt-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-shopping-cart"></i> Agregar Productos (Opcional)
+                        </h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Funcionalidad de productos adicionales próximamente
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel derecho - Procesamiento de pago -->
+        <div class="col-lg-5">
+            <form asp-action="ProcesarCobro" method="post" id="formCobro">
+                <input type="hidden" name="ventaId" value="@Model.VentaId" />
+                
+                <div class="card shadow-sm border-success">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-dollar-sign"></i> Procesar Cobro
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Total a cobrar -->
+                        <div class="alert alert-success text-center">
+                            <h2 class="mb-0">$@Model.Total.ToString("N2")</h2>
+                            <small>Total a Cobrar</small>
+                        </div>
+
+                        <!-- Método de pago -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-credit-card"></i> Método de Pago
+                            </label>
+                            <select name="metodoPago" class="form-select form-select-lg" required>
+                                <option value="">Seleccionar método...</option>
+                                <option value="Efectivo">💵 Efectivo</option>
+                                <option value="Tarjeta">💳 Tarjeta Crédito/Débito</option>
+                                <option value="Transferencia">🏦 Transferencia Bancaria</option>
+                                <option value="Mixto">💰 Pago Mixto</option>
+                            </select>
+                        </div>
+
+                        <!-- Calculadora de vuelto (para efectivo) -->
+                        <div id="calculadoraEfectivo" class="mb-3" style="display:none;">
+                            <label class="form-label">Recibe:</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" id="montoRecibido" class="form-control" 
+                                       placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="mt-2 alert alert-info" id="vueltoInfo" style="display:none;">
+                                <strong>Vuelto: $<span id="vueltoMonto">0.00</span></strong>
+                            </div>
+                        </div>
+
+                        <!-- Descuento adicional -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-percentage"></i> Descuento Adicional (Opcional)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="descuentoAdicional" 
+                                       class="form-control" placeholder="0.00" 
+                                       step="0.01" min="0" max="@Model.Total"
+                                       id="descuentoAdicional">
+                            </div>
+                            <small class="text-muted">
+                                Descuento ya aplicado: $@Model.Descuento.ToString("N2")
+                            </small>
+                        </div>
+
+                        <!-- Total final con descuento -->
+                        <div class="alert alert-warning" id="totalConDescuento" style="display:none;">
+                            <strong>Total Final: $<span id="totalFinal">@Model.Total.ToString("N2")</span></strong>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-comment"></i> Observaciones
+                            </label>
+                            <textarea name="observaciones" class="form-control" 
+                                      rows="2" placeholder="Notas adicionales..."></textarea>
+                        </div>
+
+                        <!-- Opciones de comprobante -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="imprimirComprobante" checked>
+                                <label class="form-check-label" for="imprimirComprobante">
+                                    <i class="fas fa-print"></i> Imprimir comprobante
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="enviarPorEmail">
+                                <label class="form-check-label" for="enviarPorEmail">
+                                    <i class="fas fa-envelope"></i> Enviar por email
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success btn-lg" id="btnCobrar">
+                                <i class="fas fa-check-circle"></i> CONFIRMAR COBRO
+                            </button>
+                            <a href="/Caja" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación Bonito -->
+<div class="modal fade" id="modalConfirmarCobro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cash-register"></i> Confirmar Cobro
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-question-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h4>¿Confirmar el cobro de esta venta?</h4>
+                <div class="mt-3 p-3 bg-light rounded">
+                    <h3 class="text-success mb-1">
+                        $<span id="modalTotal">@Model.Total.ToString("N2")</span>
+                    </h3>
+                    <p class="mb-1">
+                        <strong>Cliente:</strong> @(Model.Cliente?.Nombre ?? "Cliente Ocasional")
+                    </p>
+                    <p class="mb-0">
+                        <strong>Método:</strong> <span id="modalMetodoPago">-</span>
+                    </p>
+                </div>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Esta acción no se puede deshacer
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success btn-lg" id="btnConfirmarCobro">
+                    <i class="fas fa-check-circle"></i> SÍ, COBRAR
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Mostrar/ocultar calculadora de efectivo
+            $('select[name="metodoPago"]').change(function() {
+                if ($(this).val() === 'Efectivo') {
+                    $('#calculadoraEfectivo').show();
+                } else {
+                    $('#calculadoraEfectivo').hide();
+                    $('#vueltoInfo').hide();
+                }
+            });
+
+            // Calcular vuelto
+            $('#montoRecibido').on('input', function() {
+                var recibido = parseFloat($(this).val()) || 0;
+                var total = parseFloat('@Model.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)');
+                var descuento = parseFloat($('#descuentoAdicional').val()) || 0;
+                var totalFinal = total - descuento;
+                
+                if (recibido >= totalFinal) {
+                    var vuelto = recibido - totalFinal;
+                    $('#vueltoMonto').text(vuelto.toFixed(2));
+                    $('#vueltoInfo').show();
+                } else {
+                    $('#vueltoInfo').hide();
+                }
+            });
+
+            // Calcular total con descuento adicional
+            $('#descuentoAdicional').on('input', function() {
+                var descuento = parseFloat($(this).val()) || 0;
+                var totalOriginal = parseFloat('@Model.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)');
+                var totalFinal = totalOriginal - descuento;
+                
+                if (descuento > 0) {
+                    $('#totalFinal').text(totalFinal.toFixed(2));
+                    $('#totalConDescuento').show();
+                } else {
+                    $('#totalConDescuento').hide();
+                }
+                
+                // Recalcular vuelto si hay monto recibido
+                $('#montoRecibido').trigger('input');
+            });
+
+            // Confirmación antes de cobrar con modal bonito
+            $('#btnCobrar').on('click', function(e) {
+                e.preventDefault();
+                
+                var metodoPago = $('select[name="metodoPago"]').val();
+                if (!metodoPago) {
+                    // Alert temporal para método de pago faltante
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Método de pago requerido',
+                        text: 'Por favor seleccione un método de pago',
+                        confirmButtonColor: '#28a745'
+                    });
+                    return false;
+                }
+                
+                // Actualizar información en el modal
+                var descuento = parseFloat($('#descuentoAdicional').val()) || 0;
+                var totalOriginal = parseFloat('@Model.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)');
+                var totalFinal = totalOriginal - descuento;
+                
+                $('#modalTotal').text(totalFinal.toFixed(2));
+                $('#modalMetodoPago').text(metodoPago);
+                
+                // Mostrar modal de confirmación
+                $('#modalConfirmarCobro').modal('show');
+            });
+            
+            // Confirmar cobro desde el modal
+            $('#btnConfirmarCobro').on('click', function() {
+                $('#modalConfirmarCobro').modal('hide');
+                $('#formCobro').submit();
+            });
+        });
+        
+        // SweetAlert2 fallback si no tienes Bootstrap modal
+        function mostrarAlertBonito() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¿Confirmar cobro?',
+                    html: `
+                        <div class="text-center">
+                            <h3 class="text-success">${$('#totalFinal').text() || '@Model.Total.ToString("N2")'}</h3>
+                            <p>Cliente: @(Model.Cliente?.Nombre ?? "Cliente Ocasional")</p>
+                            <p>Método: ${$('select[name="metodoPago"]').val()}</p>
+                        </div>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'SÍ, COBRAR',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#formCobro').submit();
+                    }
+                });
+            }
+        }
+    </script>
+}
