@@ -3,8 +3,8 @@ using PeluqueriaSaaS.Infrastructure.Data;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Repositories;
 using PeluqueriaSaaS.Infrastructure.Services;
-using MediatR;
-using System.Reflection;
+using PeluqueriaSaaS.Application.Services; // Agregar este using
+using PeluqueriaSaaS.Infrastructure.Data; // Si usas DbContext
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +45,7 @@ builder.Services.AddScoped<IServicioRepository, ServicioRepository>();
 builder.Services.AddScoped<ITipoServicioRepository, TipoServicioRepository>();
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 
-// ✅ 8. USER IDENTIFICATION SERVICE - DESPUÉS de EmpleadoRepository
+// Buscar donde están los otros AddScoped y agregar:
 builder.Services.AddScoped<IUserIdentificationService, UserIdentificationService>();
 
 // ✅ 9. ARTICULO REPOSITORY - DESPUÉS de UserIdentificationService (depende de él)
@@ -55,6 +55,12 @@ builder.Services.AddScoped<IArticuloRepository, ArticuloRepository>();
 builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
 builder.Services.AddScoped<IEstadoServicioRepository, EstadoServicioRepository>();
+// Repositories
+builder.Services.AddScoped<IComprobanteRepository, ComprobanteRepository>();
+
+// Services
+builder.Services.AddScoped<IComprobanteService, ComprobanteService>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
 var app = builder.Build();
 

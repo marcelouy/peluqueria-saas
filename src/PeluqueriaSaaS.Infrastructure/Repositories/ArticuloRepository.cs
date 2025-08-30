@@ -5,6 +5,7 @@ using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Data;
 using PeluqueriaSaaS.Infrastructure.Services;
 using System.Reflection;
+using PeluqueriaSaaS.Application.Services;
 
 namespace PeluqueriaSaaS.Infrastructure.Repositories
 {

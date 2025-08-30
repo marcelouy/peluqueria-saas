@@ -1,4 +1,4 @@
-﻿using PeluqueriaSaaS.Domain.Entities;
+using PeluqueriaSaaS.Domain.Entities;
 
 namespace PeluqueriaSaaS.Domain.Interfaces
 {
@@ -15,6 +15,10 @@ namespace PeluqueriaSaaS.Domain.Interfaces
         // ✅ MÉTODOS ADICIONALES EXISTENTES
         Task<Empleado> CreateAsync(Empleado empleado);
         Task<IEnumerable<Empleado>> GetActivosAsync();
+        
+        // ✅ NUEVOS MÉTODOS PARA EMPLEADO SISTEMA
+        Task<Empleado?> GetByEmailAsync(string email);  // Sin tenantId para búsqueda simple
+        Task<Empleado> CreateSistemaAsync();  // Crear empleado sistema automáticamente
         
         // ✅ MÉTODOS PARA USERIDENTIFICATIONSERVICE (ya implementados)
         Task<Empleado?> GetByEmailAsync(string email, string tenantId);

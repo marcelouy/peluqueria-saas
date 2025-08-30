@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PeluqueriaSaaS.Domain.Entities;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Data;
@@ -87,6 +87,43 @@ namespace PeluqueriaSaaS.Infrastructure.Repositories
                 .OrderBy(e => e.Apellido)
                 .ThenBy(e => e.Nombre)
                 .ToListAsync();
+        }
+
+        // ✅ NUEVO: Método simplificado para buscar por email sin tenantId
+        public async Task<Empleado?> GetByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            return await _context.Empleados
+                .FirstOrDefaultAsync(e => 
+                    e.Email != null &&
+                    e.Email.ToLower() == email.ToLower());
+        }
+
+        // ✅ NUEVO: Método para crear el empleado Sistema automáticamente
+        public async Task<Empleado> CreateSistemaAsync()
+        {
+            var empleadoSistema = new Empleado
+            {
+                Nombre = "Sistema",
+                Apellido = "Automático",
+                Email = "sistema@peluqueria.com",
+                Telefono = "0000000",
+                Direccion = "N/A",
+                Ciudad = "Sistema",
+                Cargo = "Sistema",
+                Salario = 0,
+                FechaContratacion = DateTime.Now,
+                FechaNacimiento = new DateTime(2000, 1, 1),
+                EsActivo = true,
+                FechaRegistro = DateTime.Now
+            };
+            
+            _context.Empleados.Add(empleadoSistema);
+            await _context.SaveChangesAsync();
+            
+            return empleadoSistema;
         }
 
         // ✅ MÉTODOS PARA USERIDENTIFICATIONSERVICE - CORREGIDOS PARA ENTIDAD REAL

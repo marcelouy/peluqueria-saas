@@ -29,6 +29,8 @@ namespace PeluqueriaSaaS.Infrastructure.Data
         public DbSet<ServicioImpuesto> ServiciosImpuestos { get; set; }
         public DbSet<HistoricoTasaImpuesto> HistoricoTasasImpuestos { get; set; }
         public DbSet<EstadoServicio> EstadosServicio { get; set; }
+        public DbSet<Comprobante> Comprobantes { get; set; }
+        public DbSet<ComprobanteDetalle> ComprobanteDetalles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -419,6 +421,32 @@ namespace PeluqueriaSaaS.Infrastructure.Data
                 entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
 
                 entity.HasIndex(e => e.Codigo).IsUnique();
+            });
+
+            // Configuración de Comprobantes
+            modelBuilder.Entity<Comprobante>(entity =>
+            {
+                entity.ToTable("Comprobantes");
+                entity.Property(e => e.Id).HasColumnName("ComprobanteId");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Serie).HasMaxLength(10);
+                entity.Property(e => e.MetodoPago).HasMaxLength(50);
+                entity.Property(e => e.Estado).HasMaxLength(20);
+
+                entity.HasMany(e => e.Detalles)
+                    .WithOne(d => d.Comprobante)
+                    .HasForeignKey(d => d.ComprobanteId);
+            });
+
+            // Configuración de ComprobanteDetalles
+            modelBuilder.Entity<ComprobanteDetalle>(entity =>
+            {
+                entity.ToTable("ComprobanteDetalles");
+                entity.Property(e => e.Id).HasColumnName("DetalleId");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.TipoItem).HasMaxLength(20);
             });
         }
     }

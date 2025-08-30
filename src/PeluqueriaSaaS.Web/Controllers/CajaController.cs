@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Infrastructure.Data;
 using System;
 using System.Linq;
@@ -10,10 +11,12 @@ namespace PeluqueriaSaaS.Web.Controllers
     public class CajaController : Controller
     {
         private readonly PeluqueriaDbContext _context;
+        private readonly IComprobanteService _comprobanteService;
 
-        public CajaController(PeluqueriaDbContext context)
+        public CajaController(PeluqueriaDbContext context, IComprobanteService comprobanteService)
         {
             _context = context;
+            _comprobanteService = comprobanteService;
         }
 
         // GET: Caja - Lista de ventas pendientes de cobro
@@ -132,7 +135,6 @@ namespace PeluqueriaSaaS.Web.Controllers
                 // Actualizar estado y observaciones
                 venta.EstadoVenta = "Pagada";
                 venta.Observaciones = $"Método de pago: {metodoPago}. {observaciones}";
-                // Guardamos la fecha de pago en Observaciones ya que no existe FechaPago
 
                 // Marcar todos los detalles como completados
                 foreach (var detalle in venta.VentaDetalles)
@@ -146,10 +148,17 @@ namespace PeluqueriaSaaS.Web.Controllers
 
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = $"Venta #{venta.NumeroVenta} cobrada exitosamente. Total: ${venta.Total:N2}";
-                
-                // TODO: Aquí se generaría el comprobante/factura
-                // return RedirectToAction("GenerarComprobante", new { id = ventaId });
+                // GENERAR COMPROBANTE AUTOMÁTICAMENTE
+                try
+                {
+                    var comprobante = await _comprobanteService.GenerarComprobanteAsync(ventaId);
+                    TempData["Success"] = $"Venta #{venta.NumeroVenta} cobrada exitosamente. Total: ${venta.Total:N2}. Comprobante: {comprobante.NumeroCompleto}";
+                }
+                catch (Exception exComprobante)
+                {
+                    // Si falla el comprobante, al menos la venta se cobró
+                    TempData["Warning"] = $"Venta cobrada pero no se pudo generar el comprobante: {exComprobante.Message}";
+                }
                 
                 return RedirectToAction(nameof(Index));
             }
@@ -198,6 +207,25 @@ namespace PeluqueriaSaaS.Web.Controllers
 
             ViewBag.Resumen = resumen;
             return View(ventasDelDia);
+        }
+
+        // GET: Caja/VerComprobante/5 - Ver comprobante generado
+        public async Task<IActionResult> VerComprobante(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var comprobante = await _comprobanteService.ObtenerComprobanteAsync(id.Value);
+            
+            if (comprobante == null)
+            {
+                TempData["Error"] = "Comprobante no encontrado";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(comprobante);
         }
     }
 }
