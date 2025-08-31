@@ -1,7 +1,4 @@
-﻿// ✅ REEMPLAZAR COMPLETO: src/PeluqueriaSaaS.Web/Controllers/EmpleadosController.cs
-// FIXED: Edit GET method con dropdown data + mejor cargo options
-
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PeluqueriaSaaS.Domain.Interfaces;
 using PeluqueriaSaaS.Application.DTOs;
@@ -63,19 +60,17 @@ namespace PeluqueriaSaaS.Web.Controllers
         // GET: Empleados/Create
         public IActionResult Create()
         {
-            // ✅ PREPARAR DROPDOWN DATA PARA CREATE
             PrepararDropdownData();
             return View();
         }
 
-         // POST: Empleados/Create
+        // POST: Empleados/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EmpleadoCreateDto empleadoDto)
         {
             if (!ModelState.IsValid)
             {
-                // ✅ REPOBLAR DROPDOWN DATA EN CASO DE ERROR
                 PrepararDropdownData();
                 return View(empleadoDto);
             }
@@ -96,7 +91,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Ciudad = empleadoDto.Ciudad,
                     CodigoPostal = empleadoDto.CodigoPostal,
                     Horario = empleadoDto.Horario,
-                    Notas = empleadoDto.Notas ?? "",  // Evitar NULL como en Clientes
+                    Notas = empleadoDto.Notas ?? "",
                     EsActivo = empleadoDto.EsActivo
                 };
 
@@ -107,12 +102,12 @@ namespace PeluqueriaSaaS.Web.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error creando empleado: {ex.Message}";
-                PrepararDropdownData(); // ✅ REPOBLAR EN CASO DE ERROR
+                PrepararDropdownData();
                 return View(empleadoDto);
             }
         }
 
-        // ✅ FIXED: GET: Empleados/Edit/5
+        // GET: Empleados/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -130,16 +125,14 @@ namespace PeluqueriaSaaS.Web.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // ✅ CRITICAL FIX: PREPARAR DROPDOWN DATA ANTES DE MOSTRAR VIEW
-                PrepararDropdownData(empleado.Cargo);
-
-                Console.WriteLine($"🔍 DEBUG Edit: Empleado {empleado.Nombre} - Cargo: '{empleado.Cargo}'");
-
+                // ✅ FIX: Cargar opciones para dropdowns
+                PrepararDropdownData(empleado.Cargo, empleado.Horario);
+                
                 return View(empleado);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"Error cargando empleado para editar: {ex.Message}";
+                TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -157,15 +150,12 @@ namespace PeluqueriaSaaS.Web.Controllers
 
             if (!ModelState.IsValid)
             {
-                // ✅ REPOBLAR DROPDOWN DATA EN CASO DE ERROR
-                PrepararDropdownData(empleado.Cargo);
+                PrepararDropdownData(empleado.Cargo, empleado.Horario);
                 return View(empleado);
             }
 
             try
             {
-                Console.WriteLine($"🔍 DEBUG Save: Empleado {empleado.Nombre} - Cargo: '{empleado.Cargo}'");
-                
                 await _empleadoRepository.UpdateAsync(empleado);
                 TempData["Success"] = "Empleado actualizado exitosamente";
                 return RedirectToAction(nameof(Index));
@@ -173,7 +163,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error actualizando empleado: {ex.Message}";
-                PrepararDropdownData(empleado.Cargo);
+                PrepararDropdownData(empleado.Cargo, empleado.Horario);
                 return View(empleado);
             }
         }
@@ -200,7 +190,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"Error cargando empleado para eliminar: {ex.Message}";
+                TempData["Error"] = $"Error cargando empleado: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -231,40 +221,38 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        // ✅ NUEVO MÉTODO: PREPARAR DROPDOWN DATA
-        private void PrepararDropdownData(string? cargoSeleccionado = null)
+        // ✅ MÉTODO HELPER PARA DROPDOWNS
+        private void PrepararDropdownData(string cargoSeleccionado = null, string horarioSeleccionado = null)
         {
-            // ✅ CARGO OPTIONS - INCLUIR TODOS LOS VALORES POSIBLES
-            var cargosOptions = new List<SelectListItem>
+            // Cargos disponibles
+            var cargos = new[]
             {
-                new SelectListItem { Value = "", Text = "Seleccionar cargo...", Selected = string.IsNullOrEmpty(cargoSeleccionado) },
-                new SelectListItem { Value = "Estilista", Text = "Estilista", Selected = cargoSeleccionado == "Estilista" },
-                new SelectListItem { Value = "Estilista Senior", Text = "Estilista Senior", Selected = cargoSeleccionado == "Estilista Senior" },
-                new SelectListItem { Value = "Colorista", Text = "Colorista", Selected = cargoSeleccionado == "Colorista" },
-                new SelectListItem { Value = "Barbero", Text = "Barbero", Selected = cargoSeleccionado == "Barbero" },
-                new SelectListItem { Value = "Manicurista", Text = "Manicurista", Selected = cargoSeleccionado == "Manicurista" },
-                new SelectListItem { Value = "Recepcionista", Text = "Recepcionista", Selected = cargoSeleccionado == "Recepcionista" },
-                new SelectListItem { Value = "Gerente", Text = "Gerente", Selected = cargoSeleccionado == "Gerente" },
-                new SelectListItem { Value = "Asistente", Text = "Asistente", Selected = cargoSeleccionado == "Asistente" }
+                "Estilista",
+                "Estilista Senior", 
+                "Colorista",
+                "Barbero",
+                "Manicurista",
+                "Recepcionista",
+                "Gerente",
+                "Auxiliar",
+                "Sistema"
             };
 
-            ViewBag.CargosOptions = cargosOptions;
+            ViewBag.CargosOptions = new SelectList(cargos, cargoSeleccionado);
 
-            // ✅ HORARIO OPTIONS - INCLUIR TODOS LOS VALORES POSIBLES
-            var horariosOptions = new List<SelectListItem>
+            // Horarios disponibles
+            var horarios = new[]
             {
-                new SelectListItem { Value = "", Text = "Seleccionar horario..." },
-                new SelectListItem { Value = "Lun-Vie 8:00-16:00", Text = "Lun-Vie 8:00-16:00" },
-                new SelectListItem { Value = "Lun-Vie 9:00-17:00", Text = "Lun-Vie 9:00-17:00" },
-                new SelectListItem { Value = "Lun-Vie 10:00-18:00", Text = "Lun-Vie 10:00-18:00" },
-                new SelectListItem { Value = "Lun-Sab 9:00-17:00", Text = "Lun-Sab 9:00-17:00" },
-                new SelectListItem { Value = "Mar-Sab 9:00-17:00", Text = "Mar-Sab 9:00-17:00" },
-                new SelectListItem { Value = "Tiempo Parcial", Text = "Tiempo Parcial" }
+                "Lunes a Viernes 9:00 - 18:00",
+                "Lunes a Sábado 9:00 - 18:00",
+                "Turno Mañana 8:00 - 14:00",
+                "Turno Tarde 14:00 - 20:00",
+                "Part-time Mañanas",
+                "Part-time Tardes",
+                "Flexible"
             };
 
-            ViewBag.HorariosOptions = horariosOptions;
-
-            Console.WriteLine($"🔍 DEBUG PrepararDropdownData: Cargo seleccionado = '{cargoSeleccionado}'");
+            ViewBag.HorariosOptions = new SelectList(horarios, horarioSeleccionado);
         }
     }
 }

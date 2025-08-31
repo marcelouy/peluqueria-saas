@@ -168,6 +168,63 @@ function initializeVentasChart(ventasData) {
     console.log('✅ Gráfico ventas inicializado');
 }
 
+
+// === FIX PARA MODAL DE ESTADÍSTICAS ===
+$(document).ready(function() {
+    
+    // Función para cerrar modal completamente
+    function cerrarModalEstadisticas() {
+        $('#estadisticasModal').modal('hide');
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+        $('body').css('padding-right', '');
+    }
+    
+    // Opción 1: Cerrar con el botón X
+    $('#estadisticasModal .close, #estadisticasModal .btn-close').off('click').on('click', function(e) {
+        e.preventDefault();
+        cerrarModalEstadisticas();
+    });
+    
+    // Opción 2: Cerrar con botón "Cerrar" 
+    $('#estadisticasModal .btn-secondary').off('click').on('click', function(e) {
+        e.preventDefault();
+        cerrarModalEstadisticas();
+    });
+    
+    // Opción 3: Cerrar con ESC
+    $(document).on('keyup', function(e) {
+        if (e.key === "Escape" && $('#estadisticasModal').hasClass('show')) {
+            cerrarModalEstadisticas();
+        }
+    });
+    
+    // Opción 4: Click fuera del modal
+    $('#estadisticasModal').on('click', function(e) {
+        if ($(e.target).hasClass('modal')) {
+            cerrarModalEstadisticas();
+        }
+    });
+    
+    // Limpiar cuando se oculta el modal
+    $('#estadisticasModal').on('hidden.bs.modal', function () {
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+        $('body').css('padding-right', '');
+    });
+});
+
+// Función para abrir modal de estadísticas (si existe)
+function verEstadisticas(ventaId) {
+    $.get('/Ventas/GetEstadisticas/' + ventaId)
+        .done(function(data) {
+            $('#estadisticasContent').html(data);
+            $('#estadisticasModal').modal('show');
+        })
+        .fail(function() {
+            alert('Error al cargar estadísticas');
+        });
+}
 // ============================================================================
 // SERVICIOS CHART (DOUGHNUT CHART)
 // ============================================================================

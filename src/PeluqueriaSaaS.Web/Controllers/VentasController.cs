@@ -121,6 +121,9 @@ namespace PeluqueriaSaaS.Web.Controllers
                 // ⚡ CARGAR CLIENTES DESDE TABLA UNIFICADA CLIENTES
                 var clientes = await _dbContext.Clientes
                     .Where(c => c.EsActivo)
+                    .OrderBy(c => c.Nombre == "CLIENTE" && c.Apellido == "OCASIONAL" ? 0 : 1) // Cliente ocasional primero
+                    .ThenBy(c => c.Nombre)
+                    .ThenBy(c => c.Apellido)
                     .Select(c => new { c.Id, c.Nombre, c.Apellido })
                     .ToListAsync();
 
@@ -130,12 +133,8 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Nombre = $"{c.Nombre} {c.Apellido}".Trim()
                 }).ToList();
 
-                // ✅ AGREGAR CLIENTE OCASIONAL COMO PRIMERA OPCIÓN
-                model.Clientes.Insert(0, new ClienteBasicoDto
-                {
-                    ClienteId = 0,
-                    Nombre = "Cliente Ocasional (Walk-in)"
-                });
+                // ❌ ELIMINADO: Ya no agregamos "Cliente Ocasional (Walk-in)"
+                // El cliente ocasional ya existe en la BD con ID=8
 
                 // Cargar servicios
                 model.ServiciosAgrupados = await CargarServiciosAgrupados();
@@ -472,9 +471,12 @@ namespace PeluqueriaSaaS.Web.Controllers
 
                 Console.WriteLine($"✅ Empleados cargados: {model.Empleados.Count}");
 
-                // Recargar clientes para dropdown
+                // Recargar clientes para dropdown - CLIENTE OCASIONAL primero
                 var clientes = await _dbContext.Clientes
                     .Where(c => c.EsActivo)
+                    .OrderBy(c => c.Nombre == "CLIENTE" && c.Apellido == "OCASIONAL" ? 0 : 1) // Cliente ocasional primero
+                    .ThenBy(c => c.Nombre)
+                    .ThenBy(c => c.Apellido)
                     .Select(c => new { c.Id, c.Nombre, c.Apellido })
                     .ToListAsync();
 
@@ -484,12 +486,8 @@ namespace PeluqueriaSaaS.Web.Controllers
                     Nombre = $"{c.Nombre} {c.Apellido}".Trim()
                 }).ToList();
 
-                // ✅ AGREGAR OPCIÓN "CLIENTE OCASIONAL" AL INICIO
-                model.Clientes.Insert(0, new ClienteBasicoDto
-                {
-                    ClienteId = 0,
-                    Nombre = "Cliente Ocasional (Walk-in)"
-                });
+                // ❌ ELIMINADO: Ya no agregamos "Cliente Ocasional (Walk-in)"
+                // El cliente ocasional ya existe en la BD con ID=8
 
                 Console.WriteLine($"✅ Clientes cargados: {model.Clientes.Count}");
 
@@ -520,6 +518,7 @@ namespace PeluqueriaSaaS.Web.Controllers
                 model.VentaActual.Detalles ??= new List<CreateVentaDetalleDto>();
             }
         }
+
 
         public async Task<IActionResult> Details(int id)
         {
@@ -840,10 +839,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtiene ID del primer cliente activo para ventas walk-in
-        /// Método agregado para permitir ventas sin cliente específico
-        /// </summary>
+        
         private async Task<int> ObtenerClientePorDefectoId()
         {
             try

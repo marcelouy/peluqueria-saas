@@ -160,6 +160,30 @@
         </a>
     </li>
     
+    <!-- Modal de Estadísticas (agregar antes de los scripts finales) -->
+    <div class="modal fade" id="estadisticasModal" tabindex="-1" aria-labelledby="estadisticasModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="estadisticasModalLabel">
+                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="estadisticasContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/dashboard.js"></script>
 </body>
 </html>
