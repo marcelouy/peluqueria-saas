@@ -1,0 +1,179 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var topEmpleados = ViewBag.TopEmpleadosMes as List<dynamic> ?? new List<dynamic>();
+}
+
+<div class="container-fluid py-4">
+    <h2><i class="fas fa-tachometer-alt"></i> Dashboard - Métricas Reales</h2>
+
+    <!-- KPIs -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6>Ventas Hoy</h6>
+                    <h3>@ViewBag.VentasHoy</h3>
+                    <p>$@string.Format("{0:N0}", ViewBag.IngresoHoy)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6>Ventas del Mes</h6>
+                    <h3>@ViewBag.VentasMes</h3>
+                    <p>$@string.Format("{0:N0}", ViewBag.IngresoMes)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6>Promedio Venta</h6>
+                    <h3>$@string.Format("{0:N0}", ViewBag.PromedioVenta)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6>Total Empleados</h6>
+                    <h3>@topEmpleados.Count</h3>
+                    <p>Con ventas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP EMPLEADOS -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-trophy"></i> Top Empleados del Mes</h5>
+                </div>
+                <div class="card-body">
+                    @if(topEmpleados.Any())
+                    {
+                        var pos = 1;
+                        @foreach(var emp in topEmpleados)
+                        {
+                            <div class="d-flex justify-content-between mb-2 p-2 border-bottom">
+                                <div>
+                                    <span class="badge bg-primary">@pos</span>
+                                    <strong>@emp.Nombre</strong>
+                                    <br><small>@emp.CantidadVentas ventas</small>
+                                </div>
+                                <div>
+                                    <strong class="text-success">$@string.Format("{0:N0}", emp.TotalVentas)</strong>
+                                </div>
+                            </div>
+                            pos++;
+                        }
+                    }
+                    else
+                    {
+                        <p>No hay datos</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Ventas por Empleado</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="empleadosChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts originales -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="ventasChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="serviciosChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Cargar datos y crear charts
+fetch('/Home/GetDashboardData')
+    .then(r => r.json())
+    .then(data => {
+        console.log('Datos recibidos:', data);
+        
+        // Chart Empleados
+        if(data.ventasPorEmpleado && data.ventasPorEmpleado.length > 0) {
+            new Chart(document.getElementById('empleadosChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.ventasPorEmpleado.map(e => e.empleadoNombre),
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: data.ventasPorEmpleado.map(e => e.totalVentas),
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Chart Ventas
+        if(data.ventasUltimos30Dias) {
+            new Chart(document.getElementById('ventasChart'), {
+                type: 'line',
+                data: {
+                    labels: data.ventasUltimos30Dias.map(v => v.fecha),
+                    datasets: [{
+                        label: 'Ingresos',
+                        data: data.ventasUltimos30Dias.map(v => v.total),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+
+        // Chart Servicios
+        if(data.topServicios) {
+            new Chart(document.getElementById('serviciosChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.topServicios.map(s => s.nombre),
+                    datasets: [{
+                        data: data.topServicios.map(s => s.ventas),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)'
+                        ]
+                    }]
+                }
+            });
+        }
+    })
+    .catch(error => console.error('Error:', error));
+</script>
+}
