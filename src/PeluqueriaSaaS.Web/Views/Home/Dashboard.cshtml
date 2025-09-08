@@ -4,7 +4,22 @@
 }
 
 <div class="container-fluid py-4">
-    <h2><i class="fas fa-tachometer-alt"></i> Dashboard - Métricas Reales</h2>
+    <!-- Header con selector de fechas -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard - Métricas Reales</h2>
+        </div>
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="date" id="fechaInicio" class="form-control" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
+                <span class="input-group-text">a</span>
+                <input type="date" id="fechaFin" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                <button class="btn btn-primary" onclick="actualizarDashboard()">
+                    <i class="fas fa-sync"></i> Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- KPIs -->
     <div class="row mb-4">
@@ -12,17 +27,17 @@
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h6>Ventas Hoy</h6>
-                    <h3>@ViewBag.VentasHoy</h3>
-                    <p>$@string.Format("{0:N0}", ViewBag.IngresoHoy)</p>
+                    <h3 id="ventasHoy">@ViewBag.VentasHoy</h3>
+                    <p id="ingresoHoy">$@string.Format("{0:N0}", ViewBag.IngresoHoy)</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h6>Ventas del Mes</h6>
-                    <h3>@ViewBag.VentasMes</h3>
-                    <p>$@string.Format("{0:N0}", ViewBag.IngresoMes)</p>
+                    <h6>Ventas Período</h6>
+                    <h3 id="ventasPeriodo">@ViewBag.VentasMes</h3>
+                    <p id="ingresoPeriodo">$@string.Format("{0:N0}", ViewBag.IngresoMes)</p>
                 </div>
             </div>
         </div>
@@ -30,7 +45,7 @@
             <div class="card bg-info text-white">
                 <div class="card-body">
                     <h6>Promedio Venta</h6>
-                    <h3>$@string.Format("{0:N0}", ViewBag.PromedioVenta)</h3>
+                    <h3 id="promedioVenta">$@string.Format("{0:N0}", ViewBag.PromedioVenta)</h3>
                 </div>
             </div>
         </div>
@@ -38,7 +53,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <h6>Total Empleados</h6>
-                    <h3>@topEmpleados.Count</h3>
+                    <h3 id="totalEmpleados">@topEmpleados.Count</h3>
                     <p>Con ventas</p>
                 </div>
             </div>
@@ -50,9 +65,9 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5><i class="fas fa-trophy"></i> Top Empleados del Mes</h5>
+                    <h5><i class="fas fa-trophy"></i> Top Empleados del Período</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="topEmpleadosLista">
                     @if(topEmpleados.Any())
                     {
                         var pos = 1;
@@ -73,7 +88,7 @@
                     }
                     else
                     {
-                        <p>No hay datos</p>
+                        <p class="text-muted text-center">No hay ventas en el período seleccionado</p>
                     }
                 </div>
             </div>
@@ -95,6 +110,9 @@
     <div class="row">
         <div class="col-md-8">
             <div class="card">
+                <div class="card-header">
+                    <h5>Tendencia de Ventas</h5>
+                </div>
                 <div class="card-body">
                     <canvas id="ventasChart" height="100"></canvas>
                 </div>
@@ -102,6 +120,9 @@
         </div>
         <div class="col-md-4">
             <div class="card">
+                <div class="card-header">
+                    <h5>Servicios Más Vendidos</h5>
+                </div>
                 <div class="card-body">
                     <canvas id="serviciosChart" height="200"></canvas>
                 </div>
@@ -113,67 +134,162 @@
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Cargar datos y crear charts
-fetch('/Home/GetDashboardData')
-    .then(r => r.json())
-    .then(data => {
-        console.log('Datos recibidos:', data);
-        
-        // Chart Empleados
-        if(data.ventasPorEmpleado && data.ventasPorEmpleado.length > 0) {
-            new Chart(document.getElementById('empleadosChart'), {
-                type: 'bar',
-                data: {
-                    labels: data.ventasPorEmpleado.map(e => e.empleadoNombre),
-                    datasets: [{
-                        label: 'Ventas ($)',
-                        data: data.ventasPorEmpleado.map(e => e.totalVentas),
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-        
-        // Chart Ventas
-        if(data.ventasUltimos30Dias) {
-            new Chart(document.getElementById('ventasChart'), {
-                type: 'line',
-                data: {
-                    labels: data.ventasUltimos30Dias.map(v => v.fecha),
-                    datasets: [{
-                        label: 'Ingresos',
-                        data: data.ventasUltimos30Dias.map(v => v.total),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                }
-            });
-        }
+let chartEmpleados = null;
+let chartVentas = null;
+let chartServicios = null;
 
-        // Chart Servicios
-        if(data.topServicios) {
-            new Chart(document.getElementById('serviciosChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: data.topServicios.map(s => s.nombre),
-                    datasets: [{
-                        data: data.topServicios.map(s => s.ventas),
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 205, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)',
-                            'rgba(153, 102, 255, 0.8)'
-                        ]
-                    }]
-                }
-            });
+// Función para actualizar dashboard con rango de fechas
+async function actualizarDashboard() {
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
+    
+    if (!fechaInicio || !fechaFin) {
+        alert('Seleccione ambas fechas');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/Home/GetDashboardDataConFechas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+        const data = await response.json();
+        
+        console.log('Datos recibidos con fechas:', data);
+        
+        // Actualizar KPIs
+        if (data.kpis) {
+            document.getElementById('ventasPeriodo').textContent = data.kpis.totalVentas;
+            document.getElementById('ingresoPeriodo').textContent = '$' + data.kpis.totalIngresos.toLocaleString();
+            document.getElementById('promedioVenta').textContent = '$' + data.kpis.promedioVenta.toLocaleString();
+            document.getElementById('totalEmpleados').textContent = data.kpis.empleadosConVentas;
         }
-    })
-    .catch(error => console.error('Error:', error));
+        
+        // Actualizar lista de top empleados
+        actualizarTopEmpleados(data.topEmpleados);
+        
+        // Actualizar gráficos
+        actualizarGraficos(data);
+        
+    } catch (error) {
+        console.error('Error actualizando dashboard:', error);
+    }
+}
+
+function actualizarTopEmpleados(empleados) {
+    const container = document.getElementById('topEmpleadosLista');
+    
+    if (!empleados || empleados.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No hay ventas en el período seleccionado</p>';
+        return;
+    }
+    
+    let html = '';
+    empleados.forEach((emp, index) => {
+        html += `
+            <div class="d-flex justify-content-between mb-2 p-2 border-bottom">
+                <div>
+                    <span class="badge bg-primary">${index + 1}</span>
+                    <strong>${emp.nombre}</strong>
+                    <br><small>${emp.cantidadVentas} ventas</small>
+                </div>
+                <div>
+                    <strong class="text-success">$${emp.totalVentas.toLocaleString()}</strong>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function actualizarGraficos(data) {
+    // Destruir gráficos existentes si existen
+    if (chartEmpleados) chartEmpleados.destroy();
+    if (chartVentas) chartVentas.destroy();
+    if (chartServicios) chartServicios.destroy();
+    
+    // Gráfico de empleados
+    if (data.ventasPorEmpleado && data.ventasPorEmpleado.length > 0) {
+        const ctx = document.getElementById('empleadosChart').getContext('2d');
+        chartEmpleados = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.ventasPorEmpleado.map(e => e.empleadoNombre),
+                datasets: [{
+                    label: 'Ventas ($)',
+                    data: data.ventasPorEmpleado.map(e => e.totalVentas),
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de ventas (línea de tiempo)
+    if (data.ventasUltimos30Dias) {
+        const ctx2 = document.getElementById('ventasChart').getContext('2d');
+        chartVentas = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: data.ventasUltimos30Dias.map(v => v.fecha),
+                datasets: [{
+                    label: 'Ingresos',
+                    data: data.ventasUltimos30Dias.map(v => v.total),
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+    
+    // Gráfico de servicios
+    if (data.topServicios) {
+        const ctx3 = document.getElementById('serviciosChart').getContext('2d');
+        chartServicios = new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: data.topServicios.map(s => s.nombre),
+                datasets: [{
+                    data: data.topServicios.map(s => s.ventas),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 205, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+}
+
+// Cargar datos iniciales al cargar la página
+window.addEventListener('DOMContentLoaded', function() {
+    // Usar las fechas por defecto (últimos 30 días)
+    actualizarDashboard();
+});
 </script>
 }

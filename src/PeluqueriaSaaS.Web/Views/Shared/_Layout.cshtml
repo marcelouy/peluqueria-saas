@@ -14,11 +14,13 @@
     <!-- Toastr CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     
+    <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- CSS UNIFICADO -->
     <link href="~/css/peluqueria-styles.css" rel="stylesheet" />
     
@@ -28,12 +30,15 @@
     <!-- CSS Mejoras Ventas -->
     <link href="~/css/ventas-mejoras.css" rel="stylesheet" />
     
+    <!-- CSS Monitor -->
+    <link rel="stylesheet" href="~/css/monitor.css" />
+    
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <!-- Navbar principal -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
+    <!-- Navbar principal REORGANIZADO -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-cut me-2"></i>
                 PeluqueriaSaaS
@@ -44,41 +49,184 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
+                    <!-- INICIO -->
                     <li class="nav-item">
                         <a class="nav-link" href="/">
-                            <i class="fas fa-home me-1"></i>
-                            Inicio
+                            <i class="fas fa-home me-1"></i> Inicio
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("POS", "Ventas")">
-                            <i class="fas fa-cash-register text-success"></i>
-                            POS
+                    
+                    <!-- VENTAS DROPDOWN -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="ventasDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cash-register text-success me-1"></i> Ventas
                         </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="/Ventas/POS">
+                                    <i class="fas fa-shopping-cart text-success"></i> Punto de Venta (POS)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Ventas">
+                                    <i class="fas fa-list"></i> Lista de Ventas
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Caja">
+                                    <i class="fas fa-money-bill-wave"></i> Caja
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/Ventas/Reportes">
+                                    <i class="fas fa-chart-bar"></i> Reportes de Ventas
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Articulos" asp-action="Index">
-                            <i class="fas fa-box"></i> Artículos
+                    
+                    <!-- GESTIÓN DROPDOWN -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-1"></i> Gestión
                         </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="/Clientes">
+                                    <i class="fas fa-user-friends text-primary"></i> Clientes
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Empleados">
+                                    <i class="fas fa-id-badge text-info"></i> Empleados
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Servicios">
+                                    <i class="fas fa-cut text-warning"></i> Servicios
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Articulos">
+                                    <i class="fas fa-box text-success"></i> Artículos/Productos
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/Estaciones">
+                                    <i class="fas fa-desktop text-secondary"></i> Estaciones de Trabajo
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Servicios">
-                            <i class="fas fa-scissors me-1"></i>
-                            Servicios
+                    
+                    <!-- REPORTES DROPDOWN -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-chart-line me-1"></i> Reportes
                         </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="/Home/Dashboard">
+                                    <i class="fas fa-tachometer-alt text-primary"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Ventas/Reportes">
+                                    <i class="fas fa-file-invoice-dollar"></i> Reporte Ventas
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Estaciones/Monitor">
+                                    <i class="fas fa-tv"></i> Monitor Estaciones
+                                </a>
+                            </li>
+                            <!-- Futuros reportes
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/Reportes/Empleados">
+                                    <i class="fas fa-user-chart"></i> Reporte Empleados
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Home/Comisiones">
+                                    <i class="fas fa-money-bill-wave text-success"></i> Comisiones
+                                </a>
+                            </li>
+                            -->
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Clientes">
-                            <i class="fas fa-user-friends me-1"></i>
-                            Clientes
+                    
+                    <!-- CONFIGURACIÓN DROPDOWN -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="configDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-wrench me-1"></i> Configuración
                         </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="/Settings">
+                                    <i class="fas fa-sliders-h"></i> Configuración General
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Settings/Comprobantes">
+                                    <i class="fas fa-receipt"></i> Config. Comprobantes
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/Impuestos">
+                                    <i class="fas fa-percent"></i> Impuestos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/TiposServicio">
+                                    <i class="fas fa-tags"></i> Tipos de Servicio
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Empleados">
-                            <i class="fas fa-users me-1"></i>
-                            Empleados
+                </ul>
+                
+                <!-- PARTE DERECHA DEL NAVBAR -->
+                <ul class="navbar-nav ms-auto">
+                    <!-- ACCESOS RÁPIDOS -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-warning" href="#" id="rapidoDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-star me-1"></i> Rápido
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item text-success fw-bold" href="/Ventas/POS">
+                                    <i class="fas fa-plus-circle"></i> Nueva Venta
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Clientes/Create">
+                                    <i class="fas fa-user-plus"></i> Nuevo Cliente
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/Servicios/Create">
+                                    <i class="fas fa-plus"></i> Nuevo Servicio
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/Home/Dashboard">
+                                    <i class="fas fa-chart-pie"></i> Ver Dashboard
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- INDICADOR DE ESTADO -->
+                    <li class="nav-item">
+                        <span class="nav-link text-success">
+                            <i class="fas fa-circle"></i> Online
+                        </span>
                     </li>
                 </ul>
             </div>
@@ -125,6 +273,9 @@
                     <p class="text-muted mb-0">
                         © @DateTime.Now.Year - Todos los derechos reservados
                     </p>
+                    <p class="text-muted small">
+                        Sistema al 95% funcional
+                    </p>
                     <!-- Botón temporal para toggle admin -->
                     <button onclick="toggleAdminMode()" class="btn btn-sm btn-outline-secondary mt-2">
                         <i class="fas fa-user-shield"></i> Toggle Admin
@@ -133,34 +284,8 @@
             </div>
         </div>
     </footer>
-
-    <!-- jQuery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     
-    <!-- Bootstrap Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Toastr JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    
-    <!-- Configuración Toastr -->
-    <script src="~/js/toastr-config.js"></script>
-    
-    <!-- Validación y preservación de ventas -->
-    <script src="~/js/ventas-validacion.js"></script>
-    
-    <!-- Control de fecha por rol -->
-    <script src="~/js/ventas-fecha-control.js"></script>
-    
-    <link rel="stylesheet" href="~/css/monitor.css" />
-
-    <li class="nav-item"></li>
-        <a class="nav-link" href="/Caja">
-            <i class="fas fa-cash-register"></i> Caja
-        </a>
-    </li>
-    
-    <!-- Modal de Estadísticas (agregar antes de los scripts finales) -->
+    <!-- Modal de Estadísticas -->
     <div class="modal fade" id="estadisticasModal" tabindex="-1" aria-labelledby="estadisticasModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -183,7 +308,25 @@
             </div>
         </div>
     </div>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Configuración Toastr -->
+    <script src="~/js/toastr-config.js"></script>
+    
+    <!-- Validación y preservación de ventas -->
+    <script src="~/js/ventas-validacion.js"></script>
+    
+    <!-- Control de fecha por rol -->
+    <script src="~/js/ventas-fecha-control.js"></script>
+    
     @await RenderSectionAsync("Scripts", required: false)
-    <script src="~/js/dashboard.js"></script>
 </body>
 </html>

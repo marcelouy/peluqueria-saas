@@ -115,23 +115,20 @@ namespace PeluqueriaSaaS.Web.Controllers
                     v.FechaVenta.Month == DateTime.Now.Month && 
                     v.FechaVenta.Year == DateTime.Now.Year);
 
-                var ventasPorEmpleado = ventasMes
-                    .GroupBy(v => v.EmpleadoId)
-                    .Select(g => {
-                        var empleado = empleados.FirstOrDefault(e => e.Id == g.Key);
-                        if(empleado?.Email == "sistema@peluqueria.com") return null;
-                        
-                        return new {
-                            empleadoNombre = empleado != null ? 
-                                $"{empleado.Nombre} {empleado.Apellido}" : "Desconocido",
-                            totalVentas = g.Sum(v => v.Total),
-                            cantidadVentas = g.Count()
-                        };
-                    })
-                    .Where(x => x != null)
-                    .OrderByDescending(x => x.totalVentas)
-                    .Take(10)
-                    .ToList();
+                var ventasPorEmpleado = new List<object>();
+                foreach (var grupo in ventasMes.GroupBy(v => v.EmpleadoId))
+                {
+                    var empleado = empleados.FirstOrDefault(e => e.Id == grupo.Key);
+                    if (empleado != null && empleado.Email != "sistema@peluqueria.com")
+                    {
+                        ventasPorEmpleado.Add(new
+                        {
+                            empleadoNombre = $"{empleado.Nombre} {empleado.Apellido}",
+                            totalVentas = grupo.Sum(v => v.Total),
+                            cantidadVentas = grupo.Count()
+                        });
+                    }
+                }
 
                 // Top servicios
                 var topServicios = servicios
@@ -166,6 +163,121 @@ namespace PeluqueriaSaaS.Web.Controllers
                 return Json(new { error = "Error" });
             }
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetDashboardDataConFechas(DateTime fechaInicio, DateTime fechaFin)
+        {
+            try
+            {
+                var ventas = await _ventaRepository.GetAllAsync(_tenantId);
+                var servicios = await _servicioRepository.GetAllAsync(_tenantId);
+                var empleados = await _empleadoRepository.GetAllAsync();
+
+                // Filtrar ventas por rango de fechas
+                var ventasPeriodo = ventas.Where(v =>
+                    v.FechaVenta.Date >= fechaInicio.Date &&
+                    v.FechaVenta.Date <= fechaFin.Date).ToList();
+
+                // KPIs del período
+                var kpis = new
+                {
+                    totalVentas = ventasPeriodo.Count(),
+                    totalIngresos = ventasPeriodo.Sum(v => v.Total),
+                    promedioVenta = ventasPeriodo.Any() ? Math.Round(ventasPeriodo.Average(v => v.Total), 0) : 0,
+                    empleadosConVentas = ventasPeriodo.Select(v => v.EmpleadoId).Distinct().Count()
+                };
+
+                // Ventas por día en el período
+                var totalDias = (fechaFin - fechaInicio).Days + 1;
+                var ventasPorDia = new List<object>();
+
+                for (int i = 0; i < totalDias && i < 60; i++) // Máximo 60 días para no sobrecargar
+                {
+                    var fecha = fechaInicio.AddDays(i);
+                    if (fecha > fechaFin) break;
+
+                    var ventasDia = ventasPeriodo.Where(v => v.FechaVenta.Date == fecha.Date);
+                    ventasPorDia.Add(new
+                    {
+                        fecha = fecha.ToString("dd/MM"),
+                        total = ventasDia.Sum(v => v.Total),
+                        cantidad = ventasDia.Count()
+                    });
+                }
+
+                // Ventas por Empleado en el período
+                var ventasPorEmpleado = new List<object>();
+                var gruposEmpleados = ventasPeriodo.GroupBy(v => v.EmpleadoId);
+
+                foreach (var grupo in gruposEmpleados)
+                {
+                    var empleado = empleados.FirstOrDefault(e => e.Id == grupo.Key);
+                    if (empleado != null && empleado.Email != "sistema@peluqueria.com")
+                    {
+                        ventasPorEmpleado.Add(new
+                        {
+                            empleadoNombre = $"{empleado.Nombre} {empleado.Apellido}",
+                            totalVentas = grupo.Sum(v => v.Total),
+                            cantidadVentas = grupo.Count()
+                        });
+                    }
+                }
+
+                ventasPorEmpleado = ventasPorEmpleado
+                    .OrderByDescending(e => ((dynamic)e).totalVentas)
+                    .Take(10)
+                    .ToList();
+
+                // Top 5 empleados para la lista
+                var topEmpleados = ventasPorEmpleado.Take(5).Select(e =>
+                {
+                    dynamic emp = e;
+                    return new
+                    {
+                        nombre = emp.empleadoNombre,
+                        totalVentas = emp.totalVentas,
+                        cantidadVentas = emp.cantidadVentas
+                    };
+                }).ToList();
+
+                // Top servicios (simulados por ahora, después lo haremos real)
+                var topServicios = servicios
+                    .Where(s => s.EsActivo)
+                    .Take(5)
+                    .Select(s => new
+                    {
+                        nombre = s.Nombre,
+                        precio = s.Precio.Valor,
+                        ventas = Random.Shared.Next(5, 30)
+                    })
+                    .ToList();
+
+                // Respuesta completa
+                var resultado = new
+                {
+                    kpis,
+                    ventasUltimos30Dias = ventasPorDia, // Realmente son los días del período
+                    topServicios,
+                    ventasPorEmpleado,
+                    topEmpleados
+                };
+
+                Console.WriteLine($"Dashboard período {fechaInicio:dd/MM} - {fechaFin:dd/MM}: {ventasPeriodo.Count} ventas, {ventasPorEmpleado.Count} empleados");
+
+                return Json(resultado);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error GetDashboardDataConFechas: {ex.Message}");
+                return Json(new
+                {
+                    error = "Error obteniendo datos",
+                    mensaje = ex.Message
+                });
+            }
+        }
+
 
         public IActionResult Privacy() => View();
     }
