@@ -22,6 +22,16 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/pos.css" />
     <link rel="stylesheet" href="~/css/pos-tablet.css" />
+    <style>
+        #ventaTabs .nav-link {
+            display: flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+        }
+        #ventaTabs .nav-link i {
+            margin-right: 5px !important;
+        }
+    </style>
 }
 
 <div class="container-fluid">
@@ -88,85 +98,129 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">
-                                    <i class="fas fa-cut me-2"></i>Servicios Disponibles
+                                    <i class="fas fa-cut me-2"></i>Servicios y Productos
                                 </h6>
                                 <small class="text-muted">
-                                    <span id="serviciosCount">@Model.ServiciosAgrupados.Sum(g => g.Value.Count())</span> servicios
+                                    <span id="serviciosCount">@Model.ServiciosAgrupados.Sum(g => g.Value.Count())</span> servicios disponibles
                                 </small>
                             </div>
-                            
-                            <!-- BUSCADOR MÓVIL OPTIMIZADO -->
-                            <div class="mb-3">
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-search"></i>
-                                    </span>
-                                    <input type="text" 
-                                           id="buscadorServicios" 
-                                           class="form-control form-control-lg" 
-                                           placeholder="🔍 Buscar servicios..."
-                                           autocomplete="off">
-                                </div>
-                            </div>
-                            <!-- SERVICIOS CATEGORIZADOS - UX MEJORADA -->
-                            <div id="categoriasServicios">
-                                @foreach (var grupo in Model.ServiciosAgrupados.Select((value, index) => new { value, index }))
-                                {
-                                    <div class="categoria-servicio mb-2" data-categoria="@grupo.value.Key.ToLower()">
-                                        <!-- HEADER CATEGORÍA MEJORADO -->
-                                        <button type="button" 
-                                                class="btn btn-outline-primary w-100 text-start categoria-toggle d-flex justify-content-between align-items-center"
-                                                data-bs-toggle="collapse" 
-                                                data-bs-target="#categoria-@grupo.index"
-                                                aria-expanded="@(grupo.index == 0 ? "true" : "false")"
-                                                data-categoria-id="@grupo.index">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-@(GetCategoriaIcon(grupo.value.Key)) me-2 text-primary"></i>
-                                                <strong>@grupo.value.Key</strong>
-                                                <span class="badge bg-primary ms-2">@grupo.value.Value.Count</span>
-                                            </div>
-                                            <i class="fas fa-chevron-down categoria-chevron"></i>
+
+                            <!-- TABS PARA SERVICIOS Y ARTÍCULOS -->
+                            <div class="mb-4">
+                                <ul class="nav nav-tabs" id="ventaTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="servicios-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#servicios-content" type="button">
+                                            <i class="fas fa-cut"></i> Servicios
                                         </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="articulos-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#articulos-content" type="button">
+                                            <i class="fas fa-box"></i> Artículos
+                                            <span class="badge bg-danger ms-1">Nuevo</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="ventaTabsContent">
+                                    <!-- TAB SERVICIOS -->
+                                    <div class="tab-pane fade show active" id="servicios-content">
+                                        <!-- BUSCADOR MÓVIL OPTIMIZADO -->
+                                        <div class="mb-3 mt-3">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                                <input type="text" 
+                                                    id="buscadorServicios" 
+                                                    class="form-control form-control-lg" 
+                                                    placeholder="Buscar servicios..."
+                                                    autocomplete="off">
+                                            </div>
+                                        </div>
                                         
-                                        <!-- SERVICIOS DE LA CATEGORÍA -->
-                                        <div class="collapse @(grupo.index == 0 ? "show" : "")" 
-                                             id="categoria-@grupo.index" 
-                                             data-bs-parent="#categoriasServicios">
-                                            <div class="categoria-content mt-2">
-                                                @foreach (var servicio in grupo.value.Value)
-                                                {
-                                                    <div class="servicio-item mb-2" 
-                                                         data-nombre="@servicio.Nombre.ToLower()" 
-                                                         data-tipo="@servicio.TipoServicioNombre.ToLower()">
-                                                        <button type="button" 
-                                                                class="btn btn-outline-success w-100 btn-agregar-servicio servicio-btn-mobile" 
-                                                                data-servicio-id="@servicio.ServicioId"
-                                                                data-servicio-nombre="@servicio.Nombre"
-                                                                data-servicio-precio="@servicio.Precio.ToString("F2")"
-                                                                data-servicio-tipo="@servicio.TipoServicioNombre">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <div class="servicio-info">
-                                                                    <div class="servicio-nombre">@servicio.Nombre</div>
-                                                                    <small class="servicio-duracion text-muted">@servicio.DuracionMinutos min</small>
+                                        <!-- SERVICIOS CATEGORIZADOS - UX MEJORADA -->
+                                        <div id="categoriasServicios">
+                                            @foreach (var grupo in Model.ServiciosAgrupados.Select((value, index) => new { value, index }))
+                                            {
+                                                <div class="categoria-servicio mb-2" data-categoria="@grupo.value.Key.ToLower()">
+                                                    <!-- HEADER CATEGORÍA MEJORADO -->
+                                                    <button type="button" 
+                                                            class="btn btn-outline-primary w-100 text-start categoria-toggle d-flex justify-content-between align-items-center"
+                                                            data-bs-toggle="collapse" 
+                                                            data-bs-target="#categoria-@grupo.index"
+                                                            aria-expanded="@(grupo.index == 0 ? "true" : "false")"
+                                                            data-categoria-id="@grupo.index">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-@(GetCategoriaIcon(grupo.value.Key)) me-2 text-primary"></i>
+                                                            <strong>@grupo.value.Key</strong>
+                                                            <span class="badge bg-primary ms-2">@grupo.value.Value.Count</span>
+                                                        </div>
+                                                        <i class="fas fa-chevron-down categoria-chevron"></i>
+                                                    </button>
+                                                    
+                                                    <!-- SERVICIOS DE LA CATEGORÍA -->
+                                                    <div class="collapse @(grupo.index == 0 ? "show" : "")" 
+                                                        id="categoria-@grupo.index" 
+                                                        data-bs-parent="#categoriasServicios">
+                                                        <div class="categoria-content mt-2">
+                                                            @foreach (var servicio in grupo.value.Value)
+                                                            {
+                                                                <div class="servicio-item mb-2" 
+                                                                    data-nombre="@servicio.Nombre.ToLower()" 
+                                                                    data-tipo="@servicio.TipoServicioNombre.ToLower()">
+                                                                    <button type="button" 
+                                                                            class="btn btn-outline-success w-100 btn-agregar-servicio servicio-btn-mobile" 
+                                                                            data-servicio-id="@servicio.ServicioId"
+                                                                            data-servicio-nombre="@servicio.Nombre"
+                                                                            data-servicio-precio="@servicio.Precio.ToString("F2")"
+                                                                            data-servicio-tipo="@servicio.TipoServicioNombre">
+                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                            <div class="servicio-info">
+                                                                                <div class="servicio-nombre">@servicio.Nombre</div>
+                                                                                <small class="servicio-duracion text-muted">@servicio.DuracionMinutos min</small>
+                                                                            </div>
+                                                                            <div class="servicio-precio-container">
+                                                                                <span class="servicio-precio fw-bold text-success">$@servicio.Precio.ToString("N0")</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </button>
                                                                 </div>
-                                                                <div class="servicio-precio-container">
-                                                                    <span class="servicio-precio fw-bold text-success">$@servicio.Precio.ToString("N0")</span>
-                                                                </div>
-                                                            </div>
-                                                        </button>
+                                                            }
+                                                        </div>
                                                     </div>
-                                                }
+                                                </div>
+                                            }
+                                        </div>
+                                        
+                                        <!-- MENSAJE SIN RESULTADOS -->
+                                        <div id="sinResultados" class="text-center py-4" style="display: none;">
+                                            <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                                            <p class="text-muted">No se encontraron servicios</p>
+                                            <small class="text-muted">Intenta con otros términos de búsqueda</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- TAB ARTÍCULOS -->
+                                    <div class="tab-pane fade" id="articulos-content">
+                                        <div class="mt-3">
+                                            <!-- Buscador de artículos -->
+                                            <div class="input-group mb-3">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                                <input type="text" id="buscadorArticulos" class="form-control" 
+                                                    placeholder="Buscar artículos por nombre o código...">
+                                            </div>
+                                            
+                                            <!-- Grid de artículos -->
+                                            <div id="articulosDisponibles" class="row g-2">
+                                                <!-- Se carga dinámicamente -->
                                             </div>
                                         </div>
                                     </div>
-                                }
-                            </div>
-                            
-                            <!-- MENSAJE SIN RESULTADOS -->
-                            <div id="sinResultados" class="text-center py-4" style="display: none;">
-                                <i class="fas fa-search fa-2x text-muted mb-2"></i>
-                                <p class="text-muted">No se encontraron servicios</p>
-                                <small class="text-muted">Intenta con otros términos de búsqueda</small>
+                                </div>
                             </div>
                         </div>
 
@@ -174,13 +228,13 @@
                         <div class="mb-3">
                             <h6 class="border-bottom pb-2">
                                 <i class="fas fa-list"></i>
-                                Servicios en la Venta
+                                Items en la Venta
                             </h6>
                             <div class="table-responsive">
                                 <table class="table table-sm" id="tablaServicios">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Servicio</th>
+                                            <th>Item</th>
                                             <th>Precio</th>
                                             <th>Cantidad</th>
                                             <th>Subtotal</th>
@@ -188,12 +242,12 @@
                                         </tr>
                                     </thead>
                                     <tbody id="serviciosVenta">
-                                        <!-- Los servicios se agregan dinámicamente con JavaScript -->
+                                        <!-- Los items se agregan dinámicamente con JavaScript -->
                                     </tbody>
                                 </table>
-                                <div id="noServicios" class="text-center text-muted py-3" style="display: none;">
+                                <div id="noServicios" class="text-center text-muted py-3">
                                     <i class="fas fa-info-circle"></i>
-                                    No hay servicios agregados a la venta
+                                    No hay items agregados a la venta
                                 </div>
                             </div>
                         </div>
@@ -278,7 +332,7 @@
                         <small class="text-muted">
                             <ul class="list-unstyled mb-0">
                                 <li><i class="fas fa-check text-success"></i> Seleccione empleado y cliente</li>
-                                <li><i class="fas fa-check text-success"></i> Agregue servicios haciendo clic</li>
+                                <li><i class="fas fa-check text-success"></i> Agregue servicios o artículos</li>
                                 <li><i class="fas fa-check text-success"></i> Ajuste cantidad si necesario</li>
                                 <li><i class="fas fa-check text-success"></i> Aplique descuento opcional</li>
                                 <li><i class="fas fa-check text-success"></i> Procese la venta</li>
@@ -289,42 +343,43 @@
             </div>
         </div>
 
-        <!-- ⚡ HIDDEN INPUTS MOVIDOS DENTRO DEL FORM -->
+        <!-- HIDDEN INPUTS MOVIDOS DENTRO DEL FORM -->
         <div id="hiddenInputsContainer"></div>
     }
+</div>
     
-    @section Scripts {
-        <script src="~/js/pos-funciones.js"></script>
-        <script>
-            // MEJORA UX: Solo una categoría abierta a la vez
-            $(document).ready(function() {
-                // Configurar accordion behavior
-                $('#categoriasServicios .categoria-toggle').on('click', function() {
-                    const target = $(this).attr('data-bs-target');
-                    const isExpanded = $(this).attr('aria-expanded') === 'true';
+@section Scripts {
+    <script src="~/js/pos-funciones.js"></script>
+    <script src="~/js/pos-articulos.js"></script> 
+    <script>
+        // MEJORA UX: Solo una categoría abierta a la vez
+        $(document).ready(function() {
+            // Configurar accordion behavior
+            $('#categoriasServicios .categoria-toggle').on('click', function() {
+                const target = $(this).attr('data-bs-target');
+                const isExpanded = $(this).attr('aria-expanded') === 'true';
+                
+                if (!isExpanded) {
+                    // Cerrar todas las demás categorías
+                    $('#categoriasServicios .collapse.show').each(function() {
+                        if ($(this).attr('id') !== target.substring(1)) {
+                            $(this).collapse('hide');
+                        }
+                    });
                     
-                    if (!isExpanded) {
-                        // Cerrar todas las demás categorías
-                        $('#categoriasServicios .collapse.show').each(function() {
-                            if ($(this).attr('id') !== target.substring(1)) {
-                                $(this).collapse('hide');
-                            }
-                        });
-                        
-                        // Actualizar aria-expanded de otros botones
-                        $('#categoriasServicios .categoria-toggle').not(this).attr('aria-expanded', 'false');
-                    }
-                });
-                
-                // Rotar chevron en accordion
-                $('#categoriasServicios .collapse').on('show.bs.collapse', function() {
-                    $(this).prev().find('.categoria-chevron').css('transform', 'rotate(180deg)');
-                });
-                
-                $('#categoriasServicios .collapse').on('hide.bs.collapse', function() {
-                    $(this).prev().find('.categoria-chevron').css('transform', 'rotate(0deg)');
-                });
+                    // Actualizar aria-expanded de otros botones
+                    $('#categoriasServicios .categoria-toggle').not(this).attr('aria-expanded', 'false');
+                }
             });
-        </script>
-    }
+            
+            // Rotar chevron en accordion
+            $('#categoriasServicios .collapse').on('show.bs.collapse', function() {
+                $(this).prev().find('.categoria-chevron').css('transform', 'rotate(180deg)');
+            });
+            
+            $('#categoriasServicios .collapse').on('hide.bs.collapse', function() {
+                $(this).prev().find('.categoria-chevron').css('transform', 'rotate(0deg)');
+            });
+        });
+    </script>
 }

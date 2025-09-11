@@ -66,7 +66,22 @@ namespace PeluqueriaSaaS.Domain.Entities
         /// </summary>
         [StringLength(200)]
         public string? NotasServicio { get; set; }
-        
+        /// <summary>
+        /// Tipo de item: SERVICIO o ARTICULO
+        /// </summary>
+        [Required]
+        [StringLength(20)]
+        public string TipoItem { get; set; } = "SERVICIO";
+
+        /// <summary>
+        /// FK al artículo vendido (opcional - solo cuando TipoItem = ARTICULO)
+        /// </summary>
+        public int? ArticuloId { get; set; }
+
+        /// <summary>
+        /// Navegación al artículo vendido
+        /// </summary>
+        public virtual Articulo? Articulo { get; set; }
         /// <summary>
         /// CRÍTICO: Multi-tenant identifier
         /// MANTENER "default" para consistencia sistema

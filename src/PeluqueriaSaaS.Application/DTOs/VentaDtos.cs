@@ -106,6 +106,8 @@ namespace PeluqueriaSaaS.Application.DTOs
     {
         [Required(ErrorMessage = "Debe seleccionar un servicio")]
         public int ServicioId { get; set; }
+        public string TipoItem { get; set; } = "SERVICIO";
+        public int? ArticuloId { get; set; }
 
         [Required(ErrorMessage = "El nombre del servicio es obligatorio")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]

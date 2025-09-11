@@ -101,11 +101,41 @@ namespace PeluqueriaSaaS.Web.Controllers
             return View(articulo);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetArticulosParaVenta()
+        {
+            try
+            {
+                var articulos = await _context.Articulos
+                    .Where(a => a.Activo && a.TenantId == "default")
+                    .Select(a => new
+                    {
+                        id = a.Id,
+                        codigo = a.Codigo,
+                        nombre = a.Nombre,
+                        precio = a.Precio,
+                        stock = a.Stock,
+                        categoria = a.Categoria
+                    })
+                    .OrderBy(a => a.nombre)
+                    .ToListAsync();
+
+                return Json(articulos);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en GetArticulosParaVenta: {ex.Message}");
+                return Json(new { error = ex.Message });
+            }
+        }
+
+
+
         // GET: Articulos/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
             Console.WriteLine($"🔧 GET Edit - ID recibido: {id}");
-            
+
             if (id <= 0)
             {
                 Console.WriteLine("❌ ID inválido para Edit");
@@ -126,7 +156,7 @@ namespace PeluqueriaSaaS.Web.Controllers
             await PrepararDropdownData();
             await CargarImpuestos();
             await CargarImpuestosArticulo(id);
-            
+
             return View(articulo);
         }
 

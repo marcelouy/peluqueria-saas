@@ -7,6 +7,7 @@ using PeluqueriaSaaS.Application.Features.Clientes.Queries;
 using PeluqueriaSaaS.Domain.Entities;
 using PeluqueriaSaaS.Domain.Interfaces;
 using System.Linq;
+using System.Text.Json;
 
 namespace PeluqueriaSaaS.Web.Controllers
 {
@@ -327,41 +328,49 @@ namespace PeluqueriaSaaS.Web.Controllers
 
                 foreach (var detalleDto in model.VentaActual.Detalles)
                 {
-                    Console.WriteLine($"Processing detalle: ServicioId={detalleDto.ServicioId}");
+                    Console.WriteLine($"Processing detalle: TipoItem={detalleDto.TipoItem}, ServicioId={detalleDto.ServicioId}, ArticuloId={detalleDto.ArticuloId}");
 
                     var ventaDetalle = new VentaDetalle
                     {
-                        ServicioId = detalleDto.ServicioId,
+                        ServicioId = detalleDto.ServicioId > 0 ? detalleDto.ServicioId : 1,
+                        TipoItem = detalleDto.TipoItem,
+                        ArticuloId = detalleDto.ArticuloId,
                         NombreServicio = !string.IsNullOrEmpty(detalleDto.NombreServicio)
                             ? detalleDto.NombreServicio
-                            : $"Servicio-{detalleDto.ServicioId}",
+                            : $"Item-{detalleDto.ServicioId}",
                         PrecioUnitario = detalleDto.PrecioUnitario,
                         Cantidad = detalleDto.Cantidad,
                         Subtotal = detalleDto.Subtotal,
-                        EmpleadoAsignadoId = model.VentaActual.EmpleadoId,  // ✅ AGREGADO
-                        EmpleadoServicioId = model.VentaActual.EmpleadoId,  // ✅ AGREGADO
-                        EstadoServicioId = 1,                               // ✅ AGREGADO
+                        EmpleadoAsignadoId = model.VentaActual.EmpleadoId,
+                        EmpleadoServicioId = model.VentaActual.EmpleadoId,
+                        EstadoServicioId = 1,
                         NotasServicio = detalleDto.NotasServicio,
                         TenantId = TENANT_ID,
-                        FechaCreacion = DateTime.Now                        // ✅ AGREGADO
+                        FechaCreacion = DateTime.Now
                     };
 
-                    Console.WriteLine($"VentaDetalle created:");
-                    Console.WriteLine($"  ServicioId: {ventaDetalle.ServicioId}");
-                    Console.WriteLine($"  NombreServicio: '{ventaDetalle.NombreServicio}'");
-                    Console.WriteLine($"  PrecioUnitario: {ventaDetalle.PrecioUnitario}");
-                    Console.WriteLine($"  Cantidad: {ventaDetalle.Cantidad}");
-                    Console.WriteLine($"  Subtotal: {ventaDetalle.Subtotal}");
-                    Console.WriteLine($"  EmpleadoAsignadoId: {ventaDetalle.EmpleadoAsignadoId}");  // ✅ AGREGADO
-                    Console.WriteLine($"  EstadoServicioId: {ventaDetalle.EstadoServicioId}");      // ✅ AGREGADO
-                    Console.WriteLine($"  TenantId: '{ventaDetalle.TenantId}'");
+                    // Si es artículo, verificar y descontar stock
+                    if (detalleDto.TipoItem == "ARTICULO" && detalleDto.ArticuloId.HasValue)
+                    {
+                        var articulo = await _dbContext.Articulos.FindAsync(detalleDto.ArticuloId.Value);
+                        if (articulo != null)
+                        {
+                            if (articulo.Stock < detalleDto.Cantidad)
+                            {
+                                TempData["Warning"] = $"Stock insuficiente para {articulo.Nombre}. Disponible: {articulo.Stock}";
+                                await CargarDatosPOS(model);
+                                return View(model);
+                            }
+
+                            articulo.Stock -= detalleDto.Cantidad;
+                            _dbContext.Articulos.Update(articulo);
+                            Console.WriteLine($"Stock descontado: {articulo.Nombre} - Nuevo stock: {articulo.Stock}");
+                        }
+                    }
 
                     venta.VentaDetalles.Add(ventaDetalle);
+                    Console.WriteLine($"VentaDetalle created - TipoItem: {ventaDetalle.TipoItem}");
                 }
-
-
-                Console.WriteLine($"Total VentaDetalles created: {venta.VentaDetalles.Count}");
-                Console.WriteLine($"================================================");
 
                 // 🔍 DEBUG NIVEL 8: REPOSITORY SAVE
                 Console.WriteLine($"=== DEBUG POST VENTA NIVEL 8 - REPOSITORY SAVE ===");
